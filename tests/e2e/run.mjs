@@ -3,7 +3,7 @@
 // Drives real input (keyboard, pointer, menus) and inspects the resulting book.
 // Screenshots of every view land in .e2e/ for visual review.
 import assert from 'node:assert/strict';
-import { mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launch } from './cdp.mjs';
@@ -307,6 +307,30 @@ try {
     assert.doesNotMatch(await text('.status'), /slow\.json/);
   });
 
+  await check('calendar export: dialog counts events and downloads a valid .ics', async () => {
+    await fileMenu('Load example book');
+    await ev(`window.__blobs = []; const orig = URL.createObjectURL; URL.createObjectURL = b => { window.__blobs.push(b); return orig.call(URL, b); }; true`);
+    await fileMenu('Export to calendar');
+    const countText = () => text('.export-count');
+    const before = await countText();
+    assert.match(before, /^\d+ events? will be exported/);
+    await page.clickText('.check-row', 'Task due dates');
+    assert.notEqual(await countText(), before, 'count follows the checkboxes');
+    await page.clickText('.modal .btn', 'Download .ics file');
+    await page.wait(150);
+    const ics = await ev(`window.__blobs.at(-1).text()`);
+    writeFileSync(join(shots, 'export.ics'), ics); // for manual import tests and external validation
+    const type = await ev(`window.__blobs.at(-1).type`);
+    assert.equal(type, 'text/calendar;charset=utf-8');
+    assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
+    assert.match(ics, /SUMMARY:◆ Contractor chosen\r\n/);
+    assert.match(ics, /SUMMARY:Due: /);
+    assert.equal((ics.match(/BEGIN:VEVENT/g) || []).length, Number((await countText()).match(/\d+/)[0]));
+    await page.clickText('.export-help summary', 'How to import');
+    await page.screenshot(join(shots, 'x1-calendar-export.png'), { full: false });
+    await ev(`document.querySelector('dialog').close(); true`);
+  });
+
   await check('appearance: style and theme switch from the menu and persist across reloads', async () => {
     const bg = () => ev('getComputedStyle(document.body).backgroundColor');
     const pickAppearance = async label => { await page.click('#appearance'); await page.clickText('.menu-item', label); await page.wait(80); };
@@ -328,6 +352,96 @@ try {
     await pickAppearance('Match Windows');
     assert.equal(await ev('document.documentElement.dataset.scheme ?? "none"'), 'none');
     assert.equal(await bg(), fluentLight);
+  });
+
+  await check('beginner’s guide opens offline from welcome, sidebar and help — no online links', async () => {
+    await fileMenu('New book');
+    const openAndInspect = async () => {
+      await page.wait(150);
+      const info = await ev(`(async () => {
+        const d = document.querySelector('dialog.guide-modal');
+        const imgs = [...d.querySelectorAll('.guide img')];
+        for (const i of imgs) { i.loading = 'eager'; await i.decode().catch(() => {}); }
+        return { sections: d.querySelectorAll('.guide h2').length, toc: d.querySelectorAll('.guide-toc a').length,
+          images: imgs.length, loaded: imgs.filter(i => i.naturalWidth > 0).length,
+          online: [...d.querySelectorAll('a[href]')].filter(a => !a.getAttribute('href').startsWith('#')).length };
+      })()`);
+      return info;
+    };
+    await page.clickText('.welcome .guide-open', 'beginner');
+    const info = await openAndInspect();
+    assert.ok(info.sections >= 10, `sections: ${info.sections}`);
+    assert.equal(info.toc, info.sections, 'one contents entry per section');
+    assert.equal(info.images, 3);
+    assert.equal(info.loaded, 3, 'embedded diagrams render without a network');
+    assert.equal(info.online, 0, 'no links leave the app');
+    await page.clickText('.guide-toc a', 'Step 9');
+    // Smooth scrolling over ~12,000 px takes a moment: wait until the pane stops moving.
+    const settled = await ev(`new Promise(resolve => { const g = document.querySelector('dialog.guide-modal .guide'); let last = -1; const tick = () => { if (g.scrollTop === last) return resolve(true); last = g.scrollTop; setTimeout(tick, 150); }; setTimeout(tick, 150); })`);
+    assert.ok(settled);
+    const offset = await ev(`(() => { const d = document.querySelector('dialog.guide-modal'); const a = [...d.querySelectorAll('.guide-toc a')].find(x => x.textContent.startsWith('Step 9')); return Math.round(d.querySelector('#' + CSS.escape(a.dataset.goto)).getBoundingClientRect().top - d.querySelector('.guide').getBoundingClientRect().top); })()`);
+    assert.ok(offset >= 0 && offset < 40, `contents link scrolls to its section (heading ${offset}px below the pane top)`);
+    assert.ok(!(await ev('location.hash')), 'page address unchanged');
+    await page.screenshot(join(shots, 'g1-guide.png'), { full: false });
+    await ev(`document.querySelector('dialog').close(); true`);
+    await page.click('#guide');
+    assert.equal((await openAndInspect()).images, 3, 'sidebar entry opens it too');
+    await ev(`document.querySelector('dialog').close(); true`);
+    await page.click('.foot-link:last-child');
+    await page.clickText('.modal .guide-open', 'beginner');
+    assert.equal(await count('dialog.guide-modal'), 1, 'help opens it');
+    await ev(`for (const d of document.querySelectorAll('dialog')) d.close(); true`);
+  });
+
+  await check('resume note still shows when nothing is planned for today', async () => {
+    await fileMenu('Load example book');
+    // Clear today's plan so only the fallback can supply a resume note.
+    const titles = await ev(`[...document.querySelectorAll('.today-main section:first-child .row-title')].map(b => b.textContent)`);
+    for (const title of titles) {
+      await page.clickText('.today-main .row-title', title);
+      await ev(`(() => { const el = document.getElementById('d-plannedDay'); el.value = ''; el.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+      await page.key('Escape', { keyCode: 27 });
+    }
+    await nav(1);
+    assert.match(await text('.today-main section:first-child'), /Nothing planned for today/, 'nothing planned today (suggestions shown instead)');
+    assert.ok(await count('.today-side .resume') >= 1, 'a resume note is shown');
+  });
+
+  await check('notebook: Lessons learned page, earlier jobs’ lessons, breakdown hint', async () => {
+    await nav(5);
+    await page.clickText('.tabs button', 'Working notes');
+    assert.match(await ev(`document.getElementById('note-text').placeholder`), /fishbone/i);
+    await page.clickText('.tabs button', 'Lessons learned');
+    await ev(`document.getElementById('note-text').focus(); true`);
+    await page.type('Double estimates for writing.');
+    await page.wait(200);
+    await page.clickText('.notes-job', 'Kitchen refit');
+    await page.clickText('.tabs button', 'Lessons learned');
+    await page.click('.earlier-lessons summary');
+    assert.match(await text('.earlier-lessons'), /Methodology chapter[\s\S]*Double estimates for writing\./);
+    await page.screenshot(join(shots, 'n1-lessons.png'), { full: false });
+  });
+
+  await check('shortcut hints follow the platform: Ctrl on Windows, ⌘ on macOS', async () => {
+    const helpKeys = async () => {
+      await page.click('.foot-link:last-child');
+      const t = await ev(`[...document.querySelectorAll('.modal kbd')].map(k => k.textContent).join(' ')`);
+      await ev(`document.querySelector('dialog').close(); true`);
+      return t;
+    };
+    assert.match(await helpKeys(), /Ctrl\+S Ctrl\+Shift\+S/);
+    const ua = await ev('navigator.userAgent');
+    const mac = ua.replace(/\(Windows[^)]*\)/, '(Macintosh; Intel Mac OS X 10_15_7)');
+    await page.send('Emulation.setUserAgentOverride', { userAgent: mac, platform: 'MacIntel', userAgentMetadata: { platform: 'macOS', platformVersion: '14.0.0', architecture: 'arm', model: '', mobile: false } });
+    await page.reload();
+    await ev(STUB_FS);
+    const macKeys = await helpKeys();
+    await page.send('Emulation.setUserAgentOverride', { userAgent: ua });
+    await page.reload();
+    await ev(STUB_FS);
+    assert.match(macKeys, /⌘S ⇧⌘S/);
+    assert.match(macKeys, /⌘Z ⇧⌘Z/);
+    assert.doesNotMatch(macKeys, /Ctrl/);
   });
 
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));

@@ -1,15 +1,17 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // App frame: sidebar, top bar (quick add + file status), main view and drawer.
-import { fill, h, icon } from './dom.js';
+import { appMark, fill, h, icon } from './dom.js';
 import { fmtEffort, parseQuickAdd } from '../core/parse.js';
 import { fmtDate } from '../core/dates.js';
 import { jobSummary, liveJobs } from '../core/query.js';
-import { APP_VERSION, VIEWS, closeDrawer, rerender, setFocus, setView, store, today, ui } from './state.js';
+import { APP_VERSION, IS_MAC, VIEWS, keys, closeDrawer, rerender, setFocus, setView, store, today, ui } from './state.js';
 import { btn, iconBtn, jobColor } from './components.js';
 import { createJob, quickAdd, redo, undo } from './commands.js';
 import { canLinkFiles, file, loadExample, newBlankBook, openFile, prefs, reconnect, save, setPref } from './files.js';
 import { showMenu, showModal } from './overlay.js';
 import { appearanceMenu } from './appearance.js';
+import { showCalendarExport } from './export.js';
+import { guideButton, showGuide } from './guide.js';
 import { renderDrawer } from './drawer.js';
 import { renderToday } from './views/today.js';
 import { renderWeek } from './views/week.js';
@@ -53,7 +55,7 @@ function sidebar() {
   const book = store.book;
   const jobs = liveJobs(book);
   return [
-    h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('book', 20)), h('div', null, h('strong', null, 'Tas-Time'),
+    h('div', { class: 'brand' }, appMark(30), h('div', null, h('strong', null, 'Tas-Time'),
       h('button', { class: 'book-name', title: 'Rename this planning book', onclick: renameBook }, book.name))),
     h('nav', { class: 'nav', 'aria-label': 'Views' }, VIEWS.map(v => h('button', {
       class: ['nav-item', ui.view === v.id && 'on'], 'aria-current': ui.view === v.id ? 'page' : null, onclick: () => setView(v.id),
@@ -71,6 +73,7 @@ function sidebar() {
     })),
     jobs.length ? null : h('p', { class: 'jobs-empty' }, 'No jobs yet.'),
     h('div', { class: 'side-foot' },
+      h('button', { class: 'foot-link', id: 'guide', onclick: showGuide }, icon('book', 16), 'Beginner’s guide'),
       h('button', { class: 'foot-link', id: 'appearance', 'aria-haspopup': 'menu', onclick: e => appearanceMenu(e.currentTarget) }, icon('palette', 16), 'Appearance'),
       h('button', { class: 'foot-link', onclick: showHelp }, icon('keyboard', 16), 'Shortcuts & help')),
   ];
@@ -94,7 +97,7 @@ export function renderStatus() {
   else { label = file.name || 'New book'; title = 'No changes'; }
   fill(host,
     h('button', { class: ['status', kind], title, onclick }, h('span', { class: 'status-dot' }), h('span', { class: 'status-text' }, label)),
-    !file.handle ? btn('Save', () => save(), { kind: dirty ? 'primary sm' : 'sm', iconName: 'save', title: 'Save (Ctrl+S)' }) : null,
+    !file.handle ? btn('Save', () => save(), { kind: dirty ? 'primary sm' : 'sm', iconName: 'save', title: `Save (${keys('S')})` }) : null,
     iconBtn('more', 'File menu', e => showMenu(e.currentTarget, fileMenu()), { id: 'file-menu', 'aria-haspopup': 'menu' }));
   if (file.restoredAt) {
     const banner = document.getElementById('banner');
@@ -108,17 +111,18 @@ export function renderStatus() {
 function fileMenu() {
   const p = prefs();
   return [
-    { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => save() },
-    { label: 'Save as…', icon: 'copy', hint: 'Ctrl+Shift+S', run: () => save({ saveAs: true }) },
-    { label: 'Open…', icon: 'open', hint: 'Ctrl+O', run: openFile },
+    { label: 'Save', icon: 'save', hint: keys('S'), run: () => save() },
+    { label: 'Save as…', icon: 'copy', hint: keys('Shift+S'), run: () => save({ saveAs: true }) },
+    { label: 'Open…', icon: 'open', hint: keys('O'), run: openFile },
     'separator',
-    { label: 'Undo', icon: 'undo', hint: 'Ctrl+Z', run: undo, disabled: !store.canUndo },
-    { label: 'Redo', icon: 'redo', hint: 'Ctrl+Y', run: redo, disabled: !store.canRedo },
+    { label: 'Undo', icon: 'undo', hint: keys('Z'), run: undo, disabled: !store.canUndo },
+    { label: 'Redo', icon: 'redo', hint: keys(IS_MAC ? 'Shift+Z' : 'Y'), run: redo, disabled: !store.canRedo },
     'separator',
     { label: 'New book', icon: 'plus', run: newBlankBook },
     { label: 'Load example book', icon: 'book', run: () => loadExample(today()) },
     { label: 'Rename book…', icon: 'notes', run: renameBook },
-    { label: 'Print this view', icon: 'print', hint: 'Ctrl+P', run: () => window.print() },
+    { label: 'Export to calendar (.ics)…', icon: 'week', run: showCalendarExport },
+    { label: 'Print this view', icon: 'print', hint: keys('P'), run: () => window.print() },
     'separator',
     { label: p.recovery ? 'Recovery copy: on' : 'Recovery copy: off', icon: p.recovery ? 'check' : 'x', run: () => setPref('recovery', !p.recovery) },
   ];
@@ -188,6 +192,7 @@ export function initKeys() {
 export function showHelp() {
   const row = (keys, what) => h('tr', null, h('td', null, keys.map(k => h('kbd', null, k))), h('td', null, what));
   showModal('Shortcuts & help', [
+    h('p', { class: 'guide-link' }, 'New to planning? ', guideButton(), ' — a step-by-step walkthrough of one real project, from first idea to finished.'),
     h('div', { class: 'help-grid' },
       h('section', null,
         h('h3', null, 'Quick add'),
@@ -197,8 +202,8 @@ export function showHelp() {
           row(['@tue', '@today'], 'day you’ll work on it'), row(['!fri', '!2026-12-01'], 'due date'), row(['*'], 'at the start: a milestone')),
         h('h3', null, 'Keys'),
         h('table', { class: 'keys' },
-          row(['N', '/'], 'Quick add'), row(['1–5'], 'Today, Week, Plan, Board, Notes'), row(['Ctrl+S'], 'Save'), row(['Ctrl+Shift+S'], 'Save as'),
-          row(['Ctrl+O'], 'Open'), row(['Ctrl+Z', 'Ctrl+Y'], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
+          row(['N', '/'], 'Quick add'), row(['1–5'], 'Today, Week, Plan, Board, Notes'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
+          row([keys('O')], 'Open'), row([keys('Z'), keys(IS_MAC ? 'Shift+Z' : 'Y')], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
           row(['← →'], 'Move a focused bar on the Plan'), row(['Shift+← →'], 'Change its finish'))),
       h('section', null,
         h('h3', null, 'How it fits together'),

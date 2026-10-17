@@ -12,8 +12,9 @@ const HINTS = {
   restart: 'Where you stopped.\nWhat is unresolved.\nThe next concrete step.',
   scope: 'What is in and out of scope, acceptance criteria, assumptions…',
   decisions: 'Date — decision — reason — evidence — who agreed',
-  working: 'Observations, comparisons, open questions, draft reasoning…',
+  working: 'Brain dump, mind-map branches, fishbone causes, 5 Whys, pre-mortem stories — anything from breaking the goal down. Also observations and open questions…',
   references: 'Zotero links, citation keys, document references (kept as plain text)…',
+  lessons: 'What went well?\nWhat went badly?\nWhat surprised me?\nWhat will I do differently next time?',
 };
 
 export function renderNotes() {
@@ -54,7 +55,18 @@ export function renderNotes() {
           onclick: () => { ui.notesPage = key; rerender(); },
         }, label, job.notes[key].trim() ? h('span', { class: 'tab-dot', 'aria-label': 'has notes' }) : null))),
         page === 'decisions' ? h('div', { class: 'paper-tools' }, btn('Insert today’s date', insertDate, { kind: 'sm ghost', iconName: 'clock' })) : null,
-        area)));
+        area,
+        page === 'lessons' ? earlierLessons(book, job) : null)));
+}
+
+/** Lessons from every other job, archived ones included, so the next plan starts smarter. */
+function earlierLessons(book, current) {
+  const others = book.jobs.filter(j => j.id !== current.id && j.notes.lessons.trim());
+  if (!others.length) return null;
+  return h('details', { class: 'earlier-lessons' }, h('summary', null, `Lessons from ${others.length} earlier job${others.length === 1 ? '' : 's'}`),
+    others.map(j => h('div', { class: 'earlier-lesson', style: { '--job': jobColor(j) } },
+      h('strong', null, j.title || 'Untitled job', j.archived ? h('span', { class: 'muted' }, ' · archived') : null),
+      h('p', null, j.notes.lessons.trim()))));
 }
 
 function filled(job) { return NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length; }

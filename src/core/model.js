@@ -14,6 +14,7 @@ export const NOTE_PAGES = [
   ['decisions', 'Decisions'],
   ['working', 'Working notes'],
   ['references', 'References'],
+  ['lessons', 'Lessons learned'],
 ];
 export const COLORS = {
   forest: { label: 'Forest', hex: '#2f6b4f' },
@@ -134,13 +135,21 @@ export function findCycle(items) {
   return seen !== items.length;
 }
 
+/** Notebook pages added after a book was saved start empty instead of failing validation. */
+function addMissingNotePages(book) {
+  for (const j of Array.isArray(book.jobs) ? book.jobs : []) {
+    if (j && j.notes && typeof j.notes === 'object') for (const [k] of NOTE_PAGES) if (j.notes[k] === undefined) j.notes[k] = '';
+  }
+  return book;
+}
+
 const V2_STATUS = { 'Not started': 'todo', 'In progress': 'doing', Done: 'done' };
 const V2_JOB_STATUS = { Active: 'active', 'On hold': 'hold', Complete: 'done' };
 
 /** Upgrades version 1 and 2 books to the current schema without dropping data. */
 export function migrate(raw) {
   if (!raw || raw.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
-  if (raw.version === VERSION) return raw;
+  if (raw.version === VERSION) return addMissingNotePages(raw);
   if (raw.version !== 1 && raw.version !== 2) fail(`Unsupported planning-book version ${raw.version}.`);
   const book = newBook(String(raw.name || 'Imported planning book'));
   book.baselineDate = raw.baselineDate || '';

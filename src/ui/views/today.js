@@ -3,7 +3,7 @@
 import { h, autosize } from '../dom.js';
 import { addDays, fmtDate, fmtLong, mondayOf, relDay } from '../../core/dates.js';
 import { fmtEffort, fmtHours } from '../../core/parse.js';
-import { jobOf, liveJobs, openEffort, readyToPlan, todayList, upcomingMilestones, weekLoad } from '../../core/query.js';
+import { jobOf, lastWorkedJob, liveJobs, openEffort, readyToPlan, todayList, upcomingMilestones, weekLoad } from '../../core/query.js';
 import { patchItem, setNote } from '../../core/ops.js';
 import { DEFAULT_CAPACITY } from '../../core/model.js';
 import { act, setView, store, today, ui } from '../state.js';
@@ -52,7 +52,7 @@ export function renderToday() {
     h('section', { class: 'panel' },
       h('div', { class: 'panel-head' }, h('h2', null, 'This week'), btn('Open week', () => setView('week'), { kind: 'ghost sm' })),
       meter(load.planned, capacity)),
-    resumeNotes(book, planned, day),
+    resumeNotes(book, planned, carried, day),
     milestones(book, day));
 
   return h('div', { class: 'view today' },
@@ -70,12 +70,16 @@ function suggestions(book, day) {
 }
 
 /** Restart notes for the jobs you are touching today (or the focused job). */
-function resumeNotes(book, planned, day) {
-  const ids = ui.focus ? [ui.focus] : [...new Set(planned.map(t => t.jobId))];
-  const jobs = ids.map(id => jobOf(book, id)).filter(Boolean);
+function resumeNotes(book, planned, carried, day) {
+  // Today's jobs first; otherwise carried-over work; otherwise whatever you touched last.
+  let ids = ui.focus ? [ui.focus] : [...new Set(planned.map(t => t.jobId))];
+  if (!ids.length) ids = [...new Set(carried.map(t => t.jobId))].slice(0, 2);
+  const fallback = !ids.length;
+  if (fallback) ids = [lastWorkedJob(book, day)?.id].filter(Boolean);
+  const jobs = ids.map(id => jobOf(book, id)).filter(j => j && !j.archived);
   if (!jobs.length) return null;
   return h('section', { class: 'panel' },
-    h('div', { class: 'panel-head' }, h('h2', null, 'Resume where you left off')),
+    h('div', { class: 'panel-head' }, h('h2', null, 'Resume where you left off'), fallback ? h('span', { class: 'muted' }, 'last job you worked on') : null),
     jobs.map(job => {
       const area = h('textarea', {
         class: 'resume-text', rows: 2, 'aria-label': `Resume note for ${job.title}`, id: `resume-${job.id}`,

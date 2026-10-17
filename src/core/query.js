@@ -100,6 +100,16 @@ export function todayList(book, today, focus = '') {
   return { planned, carried, overdue };
 }
 
+/** The live job touched most recently: latest completion or planned day up to today. */
+export function lastWorkedJob(book, today) {
+  let best = null; let bestDay = '';
+  for (const t of liveItems(book)) {
+    const day = [t.doneOn, t.plannedDay <= today ? t.plannedDay : ''].filter(Boolean).sort().at(-1) || '';
+    if (day > bestDay) { bestDay = day; best = t.jobId; }
+  }
+  return jobOf(book, best) || liveJobs(book).find(j => j.notes.restart.trim()) || null;
+}
+
 export function upcomingMilestones(book, today, days = 21, focus = '') {
   const end = addDays(today, days);
   return liveItems(book)

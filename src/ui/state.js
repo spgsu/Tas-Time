@@ -66,5 +66,13 @@ export function closeDrawer() {
   rerender();
 }
 
+const PLATFORM = globalThis.navigator?.userAgentData?.platform || globalThis.navigator?.platform || '';
+export const IS_MAC = /mac/i.test(PLATFORM);
+
+/** Shortcut label in the platform's convention: keys('Shift+S') → "Ctrl+Shift+S" or "⇧⌘S". Both Ctrl and ⌘ work everywhere. */
+export function keys(combo) {
+  return IS_MAC ? `${combo.startsWith('Shift+') ? '⇧' : ''}⌘${combo.replace('Shift+', '')}` : `Ctrl+${combo}`;
+}
+
 /** Replaced with package.json's version by the build. */
 export const APP_VERSION = '{{VERSION}}';

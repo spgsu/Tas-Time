@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { addDays, fmtDate, mondayOf, parseDayWord, relDay, isIsoDate } from '../src/core/dates.js';
 import { decodeBook, encodeBook, newBook, validate, findCycle } from '../src/core/model.js';
 import { addItem, addJob, captureBaseline, deleteItem, deleteJob, deletePhase, movePhase, patchItem, shiftItem } from '../src/core/ops.js';
-import { blockers, boardColumn, dependents, planRows, readyToPlan, slip, todayList, weekLoad } from '../src/core/query.js';
+import { blockers, boardColumn, dependents, lastWorkedJob, planRows, readyToPlan, slip, todayList, weekLoad } from '../src/core/query.js';
 import { fmtEffort, parseEffort, parseQuickAdd } from '../src/core/parse.js';
 import { createStore } from '../src/core/store.js';
 import { exampleBook } from '../src/core/example.js';
@@ -209,6 +209,29 @@ test('file round trip and migration from version 2', () => {
   assert.equal(up.book.weeks['2026-10-12'].capacity, 240);
   assert.throws(() => decodeBook('{nope'), /not valid JSON/);
   assert.throws(() => decodeBook('{"format":"other"}'), /not a Tas-Time/);
+});
+
+test('books saved before the Lessons learned page existed still open, with that page empty', () => {
+  const ex = exampleBook(TODAY);
+  const old = JSON.parse(encodeBook(ex));
+  for (const j of old.jobs) delete j.notes.lessons;
+  const { book, upgradedFrom } = decodeBook(JSON.stringify(old));
+  assert.equal(upgradedFrom, null);
+  assert.ok(book.jobs.every(j => j.notes.lessons === ''));
+  assert.equal(book.jobs[0].notes.restart, ex.jobs[0].notes.restart, 'other pages untouched');
+});
+
+test('last worked job: latest completion or planned day up to today', () => {
+  const { b, job } = book2();
+  const other = addJob(b, { title: 'Other', code: 'OTH' });
+  assert.equal(lastWorkedJob(b, TODAY), null, 'nothing worked on and no resume notes');
+  other.notes.restart = 'Pick up here';
+  assert.equal(lastWorkedJob(b, TODAY).id, other.id, 'falls back to a job with a resume note');
+  addItem(b, { jobId: job.id, title: 'Done last week', status: 'done', doneOn: addDays(TODAY, -5) });
+  addItem(b, { jobId: other.id, title: 'Future plan', plannedDay: addDays(TODAY, 3) });
+  assert.equal(lastWorkedJob(b, TODAY).id, job.id, 'future planned days do not count');
+  addItem(b, { jobId: other.id, title: 'Planned yesterday', plannedDay: addDays(TODAY, -1) });
+  assert.equal(lastWorkedJob(b, TODAY).id, other.id);
 });
 
 test('example book is valid and exercises every state', () => {

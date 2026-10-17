@@ -5,6 +5,7 @@ import { btn } from '../components.js';
 import { createJob } from '../commands.js';
 import { loadExample, openFile } from '../files.js';
 import { today } from '../state.js';
+import { guideButton } from '../guide.js';
 
 export function welcome() {
   const step = (n, title, body) => h('li', null, h('span', { class: 'step-n' }, n), h('div', null, h('strong', null, title), h('p', null, body)));
@@ -17,6 +18,7 @@ export function welcome() {
         btn('Create your first job', () => createJob(), { kind: 'primary lg', iconName: 'plus' }),
         btn('Open a planning book', openFile, { kind: 'lg', iconName: 'open' }),
         btn('Explore an example', () => loadExample(today()), { kind: 'ghost lg' })),
+      h('p', { class: 'guide-link' }, 'Never planned your time before? ', guideButton(), ' first — about an hour, start to finish.'),
       h('ol', { class: 'steps' },
         step('1', 'Jobs and phases', 'A job is an outcome — a chapter, a refit, a project. Phases give it shape.'),
         step('2', 'Plan', 'Give tasks dates and prerequisites. Drag bars on the programme to re-forecast.'),

@@ -1,73 +1,135 @@
 # Tas-Time
 
-An offline planning book for people who think in programmes: jobs broken into phases with dated tasks and prerequisites (construction-style), connected to a realistic week and a focused day.
+**A planning book for people who think in programmes.** Break goals into phases and dated tasks the way a construction planner would, then turn that long view into an honest week and a focused day. Everything runs offline from a single HTML file and saves to a file you own.
 
-One HTML file. No install, account, server or network access.
+![The Plan view: two jobs broken into phases, with a Gantt chart showing forecast bars, baselines, slippage and prerequisite links](docs/img/screen-plan.png)
 
-## Use it
+## Why Tas-Time
 
-1. Open **`dist/Tas-Time.html`** in Microsoft Edge or Google Chrome — or double-click **`dist/Open Tas-Time.cmd`** for a dedicated Edge app window (keep both files in the same folder).
-2. Choose **Create your first job**, **Open a planning book**, or **Explore an example**.
-3. Press **Ctrl+S** once to choose where your book (`.json`) lives. After that, every change is saved to that file automatically.
+Most to-do apps are good at today and bad at the next six weeks. Most project tools are the opposite, and need accounts, servers and a team. Tas-Time sits in between, for one person juggling a few real goals: coursework and a part-time job, a PhD and a family, a renovation and a day job.
 
-| View | What it is for |
-| --- | --- |
-| **Today** (1) | Today's planned work, anything carried over or past due, and a resume note per job. |
-| **Week** (2) | The hours you really have this week vs. the effort you've planned. Drag tasks onto days. |
-| **Plan** (3) | The programme: jobs → phases → tasks on a calendar-day Gantt with baselines, slippage and prerequisite links. Drag bars to re-forecast. |
-| **Board** (4) | Status at a glance: To do, Doing, Blocked, Done. |
-| **Notes** (5) | Per-job notebook: resume here, scope, decisions, working notes, references. |
+- **The long view and the next step, connected.** The same tasks appear on a programme Gantt, in a weekly plan and on today's list. You never copy work between lists.
+- **Honest about time.** Effort (your working hours) is tracked separately from duration (calendar days). Each week you set the hours you really have, and the app shows when you have promised more.
+- **Nothing reschedules itself.** Dates are forecasts you control. A baseline shows how far they have moved since you first planned.
+- **Private by construction.** No account, no server, no network access: the page's security policy blocks it. Your plan is one `.json` file on your disk.
 
-**Appearance** (bottom of the sidebar): choose the **Fluent** style (Microsoft 365 look, default) or **Notebook** (warm paper look), and **Match Windows / Light / Dark**. The choice is remembered in this browser, not in the book. Requires Edge or Chrome 123 or newer (2024).
+## Getting started
 
-**Quick add** — press `N` anywhere and type, e.g. `Draft limitations #phd 2h @tue !fri`:
-`#job` (code or name) · `2h` / `45m` / `1h30` effort · `@day` the day you'll work on it · `!day` due date · leading `*` makes a milestone. Press `?` in the app for all shortcuts.
+You need **Microsoft Edge or Google Chrome**, version 123 or later (2024 onwards), on Windows, macOS or Linux.
 
-### How the planning rules work
+1. Download this repository (green **Code** button → **Download ZIP**) and unzip it. Everything you need is in the `dist` folder.
+2. Open **`dist/Tas-Time.html`**. For a dedicated app window, double-click the launcher beside it instead:
+   - **Windows:** `Open Tas-Time.cmd` opens it in an Edge app window.
+   - **macOS:** `Open Tas-Time.command` uses Edge or Chrome, whichever is installed. The first time, right-click it and choose **Open** so macOS allows a downloaded script.
+3. Choose **Explore an example** to look around, or **Create your first job**.
+4. Press **Ctrl+S** (**⌘S** on a Mac) once to choose where your planning book is saved. After that, every change saves itself.
 
-- **Dates are forecasts you control.** Nothing reschedules itself. Dragging a bar or editing a date is the re-forecast.
-- **Effort is not duration.** A two-week external review may need 30 minutes of your time; effort is what the Week view adds up.
-- **Blocked is derived, never set by hand.** A task is blocked when it has a written constraint, or when its prerequisites are unfinished once it is due to start (or in progress). Before then it is simply *waiting*, shown as "After …".
-- **Done requires prerequisites done** (finish-to-start).
-- **Baseline** freezes the current dates; the Plan then shows slippage (`+3d`) against it.
-- **Planning a day** in Week/Today never changes programme dates.
+**Never planned your time before?** Open **Beginner's guide** at the bottom of the sidebar. It walks through one real project from first idea to finished: writing an outcome, breaking the goal down with a mind map, a fishbone diagram and working backwards from the deadline, then planning weeks and days. The guide is built into the app and works offline. It is also in this repository as [docs/TUTORIAL.md](docs/TUTORIAL.md).
 
-### Your data
+## How it works
 
-- The book is a single JSON file you choose. Keep backups by copying it, or with **Save as…**.
-- After a relaunch the browser may ask you to **Reconnect** the file (one click) before autosave resumes.
-- A **recovery copy** is kept in this browser's local storage so an accidental close loses nothing. Turn it off from the **⋯** menu on a shared computer.
-- Books from earlier Tas-Time versions (format v1/v2) open and are upgraded; the original file is never overwritten — you choose where to save the upgraded copy.
-- Keep work and personal books in their own environments. The app cannot enforce an employer's policy; check that local HTML is permitted at work.
-- Browsers without the File System Access API (e.g. Firefox) fall back to downloading the file on Save, which the app cannot confirm.
+A **job** is a goal with an outcome, such as *Science fair project* or *Kitchen refit*. Jobs have **phases**, phases have **tasks** and **milestones**, and tasks can depend on each other. Five views show that same data at different distances.
 
-## Develop
+| View | Key | What it is for |
+| --- | --- | --- |
+| **Today** | 1 | What is planned for today, what carried over, what is past due, and a resume note so you can restart in seconds. |
+| **Week** | 2 | Your real capacity for the week against the effort you have planned. Drag tasks onto days. |
+| **Plan** | 3 | The programme: a Gantt chart by job and phase. Drag a bar to re-forecast, set a baseline, see slippage and prerequisite links. |
+| **Board** | 4 | To do, Doing, Blocked and Done at a glance, with job colours. |
+| **Notes** | 5 | A notebook per job: resume here, scope, decisions, working notes, references and lessons learned. |
 
-Requires **Node.js 22+** (uses built-in `fetch`, `WebSocket` and `node:test`). No npm packages.
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/screen-today.png" alt="Today view: planned tasks, carried-over work, resume notes and milestones ahead"></td>
+    <td width="50%"><img src="docs/img/screen-week.png" alt="Week view: capacity meter, tasks on day columns and the unplanned list"></td>
+  </tr>
+</table>
 
-```powershell
-npm run build   # bundles src/ into dist/Tas-Time.html and dist/Open Tas-Time.cmd
-npm test        # unit tests for the planning core (tests/*.test.js)
-npm run e2e     # build, then drive the real app in headless Edge/Chrome (tests/e2e/)
+### Quick add
+
+Press **N** anywhere, type a line and press Enter:
+
+```
+Write method section #phd 2h @tue !fri
+```
+
+| Code | Meaning | Examples |
+| --- | --- | --- |
+| `#job` | which job, by code or name | `#phd`, `#kitchen` |
+| `2h`, `45m`, `1h30` | effort | |
+| `@day` | the day you will work on it | `@today`, `@tue`, `@2026-11-02` |
+| `!day` | due date | `!fri`, `!2026-11-27` |
+| `*` at the start | it is a milestone | `*Supervisor signs off !2026-11-30` |
+
+Days are `today`, `tomorrow`, a weekday name or a date written `YYYY-MM-DD`. A line with an unknown job or day is refused, and your text is kept so you can fix it. Press **?** in the app for every shortcut.
+
+### Planning rules
+
+- **Prerequisites are finish-to-start.** A task cannot be marked done while a prerequisite is open, and the app refuses dependency loops.
+- **Blocked is worked out, never set by hand.** A task is *blocked* when it has a written constraint, or when its start date has arrived and a prerequisite is still open. Before that, it is just *waiting*, shown quietly as "After …".
+- **Planning a day never moves programme dates.** The Plan is the forecast; the Week is what you commit to.
+- **Mistakes are undoable.** Ctrl+Z (⌘Z) outside a text box reverts any change to the book, including deletes.
+
+### Calendar export
+
+**⋯ → Export to calendar (.ics)** saves planned work days, milestones and, optionally, due dates as a calendar file for Google Calendar or Outlook. Events are all-day and marked as free time, so they never block meetings. Export is one-way: import into a separate *Tas-Time* calendar, and to refresh, delete it and import a new file.
+
+### Appearance
+
+**Appearance** in the sidebar switches between the **Fluent** style (Microsoft 365, the default) and **Notebook** (warm paper), and between light, dark and matching your system. The choice is stored in the browser, not in your planning book.
+
+## Your data
+
+- **One file.** Your planning book is a JSON file at a location you choose. Back it up by copying it, or with **⋯ → Save as…**.
+- **Autosave.** After the first save, Edge and Chrome write every change to that file. After restarting the browser, it may ask you to **Reconnect** once.
+- **Recovery copy.** The browser also keeps a copy of unsaved work, so closing the window by accident loses nothing. Turn it off in the **⋯** menu on a shared computer.
+- **Older books.** Files from earlier Tas-Time versions open and are upgraded. The original file is never overwritten; you choose where to save the new version.
+- **Work and personal.** Keep separate books in separate environments. Tas-Time cannot enforce an employer's rules, so check that running a local HTML file is allowed at work.
+
+### Browser support
+
+| Browser | Works | Autosave to your file |
+| --- | --- | --- |
+| Edge, Chrome (123+) | Yes, tested | Yes |
+| Safari 17.5+, Firefox 120+ | Expected to work, not yet tested | No: **Save** downloads a copy each time |
+
+## Development
+
+Tas-Time is plain JavaScript and CSS with **no runtime or build dependencies**. Node.js **22 or later** is needed only to build and test.
+
+```sh
+npm run build   # bundle src/ and docs/ into dist/Tas-Time.html, plus the launchers
+npm test        # unit tests: planning logic, file format, calendar export, guide conversion
+npm run e2e     # build, then drive the real app in headless Edge or Chrome
 npm run check   # all of the above
 ```
 
-The e2e suite needs Edge or Chrome installed (or `BROWSER=<path to a Chromium executable>`). It writes screenshots of every view, at desktop and phone widths and in dark mode, to `.e2e/` for visual review.
+The end-to-end suite controls a real browser through the DevTools protocol: typing quick adds, dragging Gantt bars, saving, reloading, importing old files and switching themes. It needs Edge or Chrome installed, or `BROWSER=<path to a Chromium executable>`. Screenshots of every view, at desktop and phone widths and in dark mode, are written to `.e2e/` for review.
 
-### Layout
+### Project layout
 
 ```
 src/
-  core/        Pure planning logic, no DOM: dates, model (schema, validation, migration),
-               query (derived state), ops (mutations), parse (effort, quick add), store (undo/redo)
-  ui/          DOM layer: dom.js (safe element builder), shell, drawer, files (save/open/recovery),
-               overlay (toasts, menus), views/ (today, week, plan, board, notes, welcome)
-  index.html   Page template;  styles.css  all styles (light/dark/print)
-scripts/build.mjs   Zero-dependency bundler: one script scope, unique top-level names enforced
-launcher/           Edge app-window launcher source
-tests/              core.test.js (node:test) and e2e/ (headless browser over DevTools protocol)
+  core/          Planning logic with no DOM: dates, model (schema, validation, migration),
+                 query (derived state), ops (changes), parse (quick add), store (undo/redo), ics
+  ui/            Interface: dom.js (safe element builder), shell, drawer, files (save, open,
+                 recovery), overlay (menus, toasts), appearance, export, guide, views/
+  index.html     Page template
+  styles.css     All styles: Fluent and Notebook, light and dark, print
+docs/            Beginner's guide (TUTORIAL.md) and images, bundled into the app at build time
+scripts/         build.mjs (bundler) and markdown.mjs (guide converter)
+launcher/        Windows (.cmd) and macOS (.command) app-window launchers
+tests/           Unit tests (node:test) and e2e/ (headless browser)
+dist/            Built app, committed so it can be used without Node
 ```
 
-Conventions: ES modules with named exports only; two-space indentation; user text is only ever inserted as DOM text (never `innerHTML`); every change goes through `store.commit()` so it is validated and undoable. The bundler fails the build on duplicate top-level names across modules, default exports or import aliases.
+### Conventions
 
-Copyright © 2026 Selami Pazarbasi. Released under the MIT License — see `LICENSE`.
+- **Safety first.** User text only ever becomes DOM text, never `innerHTML`. A strict Content Security Policy blocks all network access.
+- **Every change goes through `store.commit()`.** It validates the whole book before accepting a change, and makes it undoable.
+- **ES modules with named exports.** The bundler places all modules in one scope and fails the build on duplicate top-level names, default exports or import aliases.
+- Two-space indentation, LF line endings (CRLF for `.cmd`), UTF-8.
+
+## License
+
+Copyright © 2026 Selami Pazarbasi. Released under the [MIT License](LICENSE).
