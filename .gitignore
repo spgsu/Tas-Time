@@ -1,0 +1,21 @@
+# Dependencies (none today; guard against accidental installs)
+node_modules/
+
+# Local test output (screenshots from npm run e2e)
+.e2e/
+
+# Personal planning books: keep your own data out of the repository
+*.json
+!package.json
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp
+*.log
+
+# Private project diary (contains personal context)
+ACTIVITY_LOG.md

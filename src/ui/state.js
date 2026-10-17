@@ -1,0 +1,70 @@
+// Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
+// Shared UI state. The book itself lives in the store; this is view state only.
+import { mondayOf, todayIso } from '../core/dates.js';
+import { createStore } from '../core/store.js';
+import { newBook } from '../core/model.js';
+
+export const VIEWS = [
+  { id: 'today', label: 'Today', key: '1', icon: 'today' },
+  { id: 'week', label: 'Week', key: '2', icon: 'week' },
+  { id: 'plan', label: 'Plan', key: '3', icon: 'plan' },
+  { id: 'board', label: 'Board', key: '4', icon: 'board' },
+  { id: 'notes', label: 'Notes', key: '5', icon: 'notes' },
+];
+
+export const store = createStore(newBook());
+
+export const ui = {
+  view: 'today',
+  focus: '',            // job id the views are narrowed to
+  week: mondayOf(todayIso()),
+  drawer: null,         // { type: 'item' | 'job', id }
+  notesJob: '',
+  notesPage: 'restart',
+  planRange: '6w',      // '6w' | '3m' | 'all'
+  planShowDone: true,
+  planShowArchived: false,
+  boardAllDone: false,
+  addingIn: '',         // phase key with an open inline-add row in Plan
+};
+
+export function today() { return todayIso(); }
+
+/** Commits a change and turns validation errors into a toast instead of an exception. */
+export function act(label, fn, options) {
+  try { return store.commit(label, fn, options); } catch (error) { notify(error.message, { kind: 'error' }); return undefined; }
+}
+
+const notifiers = [];
+export function onNotify(fn) { notifiers.push(fn); }
+export function notify(message, options = {}) { for (const fn of notifiers) fn(message, options); }
+
+const renderers = [];
+export function onRender(fn) { renderers.push(fn); }
+export function rerender() { for (const fn of renderers) fn(); }
+
+export function setView(view) {
+  ui.view = view;
+  rerender();
+  document.getElementById('main')?.focus({ preventScroll: true });
+}
+
+export function setFocus(jobId) {
+  ui.focus = ui.focus === jobId ? '' : jobId;
+  if (ui.focus) ui.notesJob = ui.focus;
+  rerender();
+}
+
+export function openDrawer(type, id, focusField = '') {
+  ui.drawer = { type, id, focusField };
+  rerender();
+}
+
+export function closeDrawer() {
+  if (!ui.drawer) return;
+  ui.drawer = null;
+  rerender();
+}
+
+/** Replaced with package.json's version by the build. */
+export const APP_VERSION = '{{VERSION}}';

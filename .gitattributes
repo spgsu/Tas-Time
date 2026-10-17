@@ -1,0 +1,8 @@
+# Normalise text to LF in the repository and working tree.
+* text=auto eol=lf
+
+# Windows batch files must keep CRLF or cmd.exe can misparse them.
+*.cmd text eol=crlf
+
+# Build output: committed so the app runs without Node, but collapsed in diffs.
+dist/** linguist-generated=true -diff

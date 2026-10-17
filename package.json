@@ -1,0 +1,18 @@
+{
+  "name": "tas-time",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Offline planning book: programme, week and today views in a single HTML file.",
+  "author": "Selami Pazarbasi",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test",
+    "e2e": "node scripts/build.mjs && node tests/e2e/run.mjs",
+    "check": "node scripts/build.mjs && node --test && node tests/e2e/run.mjs"
+  }
+}

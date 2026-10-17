@@ -1,0 +1,3188 @@
+<!doctype html>
+<html lang="en" data-style="fluent">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="generator" content="Tas-Time 3.0.0">
+<meta name="copyright" content="© 2026 Selami Pazarbasi. MIT License.">
+<title>Tas-Time</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6b4f'/%3E%3Cpath d='M8 10h9M11 16h13M14 22h10' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+/* Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT */
+/* ── Tokens ─────────────────────────────────────────────── */
+/* Every colour is light-dark(light, dark). color-scheme picks the side:
+   "light dark" follows Windows; data-scheme="light"/"dark" forces one. */
+:root {
+  color-scheme: light dark;
+  --font: "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
+  --mono: "Cascadia Mono", Consolas, ui-monospace, monospace;
+  --sidebar: 236px; --drawer: 440px;
+}
+:root[data-scheme="light"] { color-scheme: light; }
+:root[data-scheme="dark"] { color-scheme: dark; }
+
+/* Notebook: warm paper, soft cards, green ink. */
+:root[data-style="notebook"] {
+  --bg: light-dark(#f6f5f1, #121715); --surface: light-dark(#ffffff, #1a201e);
+  --surface-2: light-dark(#f0eee8, #212826); --surface-3: light-dark(#e8e5dd, #2a3330);
+  --line: light-dark(#e3e0d7, #2c3532); --line-strong: light-dark(#cfcabd, #3b4642);
+  --ink: light-dark(#1c2622, #e7ece9); --ink-2: light-dark(#44514b, #b9c3be); --muted: light-dark(#7b847f, #8a9590);
+  --accent: light-dark(#2f6b4f, #5fae86); --accent-strong: light-dark(#245a41, #79c39d);
+  --accent-soft: light-dark(#e2ede6, #1f3a2d); --on-accent: light-dark(#fff, #0d1a13);
+  --danger: light-dark(#b3432e, #ec8a74); --danger-soft: light-dark(#fbe8e3, #3d221c);
+  --warn: light-dark(#94650c, #e2b459); --warn-soft: light-dark(#fbf0d6, #3a2f17); --good: light-dark(#2d7a4c, #6cc394);
+  --focus: #c08a2e;
+  --shadow-1: light-dark(rgb(20 30 25 / .06), rgb(0 0 0 / .4)) 0 1px 2px;
+  --shadow-2: light-dark(rgb(20 30 25 / .14), rgb(0 0 0 / .5)) 0 8px 28px;
+  --radius: 10px; --radius-sm: 7px;
+}
+
+/* Fluent: Microsoft 365 circa 2020 — neutral greys, Office blue, 2px corners, depth shadows. */
+:root[data-style="fluent"] {
+  --font: "Segoe UI", "Segoe UI Web (West European)", system-ui, -apple-system, sans-serif;
+  --font-display: var(--font);
+  --bg: light-dark(#faf9f8, #1b1a19); --surface: light-dark(#ffffff, #252423);
+  --surface-2: light-dark(#f3f2f1, #2d2c2b); --surface-3: light-dark(#edebe9, #3b3a39);
+  --line: light-dark(#edebe9, #3b3a39); --line-strong: light-dark(#c8c6c4, #605e5c);
+  --ink: light-dark(#323130, #f3f2f1); --ink-2: light-dark(#484644, #d2d0ce); --muted: light-dark(#605e5c, #a19f9d);
+  --accent: light-dark(#0078d4, #2899f5); --accent-strong: light-dark(#106ebe, #6cb8f6);
+  --accent-soft: light-dark(#deecf9, #0b3557); --on-accent: light-dark(#ffffff, #0b1a29);
+  --danger: light-dark(#a4262c, #f1707b); --danger-soft: light-dark(#fde7e9, #442726);
+  --warn: light-dark(#8a5300, #fce100); --warn-soft: light-dark(#fff4ce, #433519); --good: light-dark(#107c10, #92c353);
+  --focus: light-dark(#323130, #f3f2f1);
+  --shadow-1: light-dark(rgb(0 0 0 / .13), rgb(0 0 0 / .45)) 0 1.6px 3.6px, light-dark(rgb(0 0 0 / .11), rgb(0 0 0 / .35)) 0 .3px .9px;
+  --shadow-2: light-dark(rgb(0 0 0 / .18), rgb(0 0 0 / .55)) 0 6.4px 14.4px, light-dark(rgb(0 0 0 / .13), rgb(0 0 0 / .4)) 0 1.2px 3.6px;
+  --radius: 2px; --radius-sm: 2px;
+  --header: light-dark(#0078d4, #1b1a19); --on-header: #ffffff;
+}
+
+/* ── Base ───────────────────────────────────────────────── */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: 0; padding: 0; }
+button:disabled { cursor: default; opacity: .45; }
+input, select, textarea {
+  background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+  padding: 7px 10px; min-width: 0; width: 100%;
+}
+input:hover, select:hover, textarea:hover { border-color: var(--muted); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+input[type=checkbox] { width: auto; accent-color: var(--accent); }
+textarea { resize: vertical; line-height: 1.55; }
+.resume-text, .week-notes, .note-text, .drawer textarea { field-sizing: content; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
+kbd { font: 11px/1 var(--mono); padding: 2px 5px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 4px; color: var(--muted); background: var(--surface); }
+h1, h2, h3, p { margin: 0; }
+.icon { flex-shrink: 0; display: block; }
+.muted { color: var(--muted); }
+.danger { color: var(--danger); }
+.warn-text { color: var(--warn); }
+.spacer { flex: 1; }
+[hidden] { display: none !important; }
+
+/* ── Frame ──────────────────────────────────────────────── */
+.app { display: grid; grid-template-columns: var(--sidebar) 1fr; height: 100vh; }
+.sidebar { background: var(--surface-2); border-right: 1px solid var(--line); padding: 16px 12px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.workspace { display: flex; flex-direction: column; min-width: 0; height: 100vh; transition: margin-right .18s ease; }
+.main { flex: 1; overflow: auto; padding: 28px 36px 64px; outline: none; }
+@media (min-width: 1360px) { body.has-drawer .workspace { margin-right: var(--drawer); } }
+
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; }
+.brand-mark { width: 34px; height: 34px; border-radius: 9px; background: var(--accent); color: var(--on-accent); display: grid; place-items: center; }
+.brand strong { display: block; font: 600 15px/1.2 var(--font-display); letter-spacing: -.2px; }
+.book-name { font-size: 12px; color: var(--muted); text-align: left; max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.book-name:hover { color: var(--ink); text-decoration: underline; }
+
+.nav { display: grid; gap: 2px; margin-bottom: 14px; }
+.nav-item { display: flex; align-items: center; gap: 11px; padding: 8px 10px; border-radius: var(--radius-sm); color: var(--ink-2); font-weight: 500; }
+.nav-item span { flex: 1; text-align: left; }
+.nav-item kbd { opacity: 0; transition: opacity .15s; }
+.nav:hover kbd { opacity: 1; }
+.nav-item:hover { background: var(--surface-3); color: var(--ink); }
+.nav-item.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); }
+.nav-item.on .icon { color: var(--accent); }
+
+.jobs-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.jobs { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.job-link { width: 100%; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--ink-2); }
+.job-link:hover { background: var(--surface-3); color: var(--ink); }
+.job-link.on { background: color-mix(in srgb, var(--job) 14%, var(--surface)); color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--job); }
+.job-link .dot, .job-tag .dot, .notes-job .dot, .drawer-crumbs .dot { width: 9px; height: 9px; border-radius: 3px; background: var(--job); flex-shrink: 0; }
+.job-name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { font-size: 11px; color: var(--muted); min-width: 18px; text-align: right; font-variant-numeric: tabular-nums; }
+.late-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--danger); flex-shrink: 0; }
+.jobs-empty { padding: 4px 10px; color: var(--muted); font-size: 13px; }
+.side-foot { margin-top: auto; padding-top: 12px; }
+.foot-link { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; padding: 6px 10px; border-radius: var(--radius-sm); width: 100%; }
+.foot-link:hover { color: var(--ink); background: var(--surface-3); }
+
+/* ── Top bar ────────────────────────────────────────────── */
+.topbar { display: flex; align-items: center; gap: 16px; padding: 10px 36px; border-bottom: 1px solid var(--line); background: var(--surface); position: relative; z-index: 5; }
+.quick { flex: 1; max-width: 720px; position: relative; display: flex; align-items: center; }
+.quick-icon { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+#quick-add { padding: 9px 44px 9px 38px; background: var(--surface-2); border-color: transparent; border-radius: 9px; }
+#quick-add:focus { background: var(--surface); border-color: var(--accent); }
+#quick-add::placeholder { color: var(--muted); }
+.quick-kbd { position: absolute; right: 10px; pointer-events: none; }
+#quick-add:focus ~ .quick-kbd { display: none; }
+.quick-preview { position: absolute; top: calc(100% + 6px); left: 0; right: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); padding: 10px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.qp-title { font-weight: 600; margin-right: 4px; }
+.qp-help { margin-left: auto; color: var(--muted); font-size: 12px; }
+.file-status { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 6px 10px; border-radius: 99px; max-width: 280px; }
+.status:hover { background: var(--surface-2); color: var(--ink); }
+.status-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line-strong); flex-shrink: 0; }
+.status.ok .status-dot { background: var(--good); }
+.status.warn { color: var(--warn); } .status.warn .status-dot { background: var(--warn); }
+.status.danger { color: var(--danger); } .status.danger .status-dot { background: var(--danger); }
+.status.busy .status-dot { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .3; } }
+.banner { display: flex; align-items: center; gap: 12px; padding: 10px 36px; background: var(--warn-soft); color: var(--ink); border-bottom: 1px solid var(--line); }
+.banner > span { flex: 1; }
+
+/* ── Buttons & controls ─────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: var(--radius-sm); border: 1px solid var(--line-strong); background: var(--surface); font-weight: 500; white-space: nowrap; }
+.btn:hover:not(:disabled) { background: var(--surface-2); border-color: var(--muted); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.primary:hover:not(:disabled) { background: var(--accent-strong); border-color: var(--accent-strong); }
+.btn.ghost { border-color: transparent; background: transparent; color: var(--ink-2); }
+.btn.ghost:hover:not(:disabled) { background: var(--surface-2); border-color: transparent; color: var(--ink); }
+.btn.sm { padding: 4px 10px; font-size: 13px; gap: 5px; }
+.btn.lg { padding: 10px 18px; font-size: 15px; }
+.icon-btn { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: var(--radius-sm); color: var(--ink-2); flex-shrink: 0; }
+.icon-btn:hover:not(:disabled) { background: var(--surface-2); color: var(--ink); }
+.icon-btn.sm { width: 24px; height: 24px; }
+.icon-btn.sm .icon { width: 15px; height: 15px; }
+.icon-btn.on { color: var(--accent); background: var(--accent-soft); }
+.segmented { display: inline-flex; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 2px; gap: 2px; }
+.segmented button { padding: 4px 11px; border-radius: 6px; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+.segmented button:hover { color: var(--ink); }
+.segmented button.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-1); font-weight: 600; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.link { color: var(--accent); text-align: left; }
+.link:hover { text-decoration: underline; }
+
+.chip { display: inline-flex; align-items: center; gap: 4px; padding: 1px 7px; border-radius: 5px; font-size: 12px; background: var(--surface-2); color: var(--ink-2); white-space: nowrap; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.chip.danger { background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+.chip.warn { background: var(--warn-soft); color: var(--warn); }
+.chip.accent { background: var(--accent-soft); color: var(--accent-strong); font-weight: 600; }
+.chip.muted { color: var(--muted); }
+.job-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: color-mix(in srgb, var(--job) 80%, var(--ink)); white-space: nowrap; }
+.effort { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ── Page structure ─────────────────────────────────────── */
+.view { max-width: 1320px; margin: 0 auto; }
+.view.plan, .view.week, .view.board { max-width: none; }
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; flex-wrap: wrap; }
+.page-head h1 { font: 600 28px/1.2 var(--font-display); letter-spacing: -.5px; }
+.page-head .sub { color: var(--muted); margin-top: 4px; max-width: 70ch; }
+.page-actions { display: flex; align-items: center; gap: 6px; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .9px; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-1); }
+.panel + .panel { margin-top: 16px; }
+.panel-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.panel-head h2 { font-size: 15px; font-weight: 600; }
+.panel-head .btn { margin-left: auto; }
+.hint { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+.empty { text-align: center; padding: 28px 16px; color: var(--muted); }
+.empty h3 { color: var(--ink); font-size: 15px; margin-bottom: 4px; }
+.empty-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: center; }
+
+/* ── Rows (Today) ───────────────────────────────────────── */
+.list { display: grid; }
+.row-item { display: flex; align-items: flex-start; gap: 12px; padding: 10px 6px; border-top: 1px solid var(--line); border-radius: 0; }
+.row-item:first-child { border-top: 0; }
+.row-item:hover { background: color-mix(in srgb, var(--surface-2) 60%, transparent); }
+.row-main { flex: 1; min-width: 0; }
+.row-title { font-weight: 500; text-align: left; line-height: 1.35; }
+.row-title:hover { color: var(--accent); }
+.row-item.is-done .row-title { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); }
+.row-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; margin-top: 3px; font-size: 12px; }
+.row-actions { display: flex; gap: 4px; opacity: .55; transition: opacity .15s; }
+.row-item:hover .row-actions, .row-actions:focus-within { opacity: 1; }
+
+.tick { width: 20px; height: 20px; border-radius: 50%; border: 1.6px solid var(--line-strong); display: grid; place-items: center; color: transparent; flex-shrink: 0; margin-top: 1px; background: var(--surface); transition: background .12s, border-color .12s; }
+.tick.tick-ms { border-radius: 4px; transform: rotate(45deg) scale(.85); }
+.tick.tick-ms .icon { transform: rotate(-45deg); }
+.tick:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.tick.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tick:disabled { opacity: 1; border-style: dashed; cursor: not-allowed; }
+
+.today-grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(280px, 1fr); gap: 20px; align-items: start; }
+.today-main .panel + .panel { margin-top: 16px; }
+.today-side { display: grid; gap: 16px; }
+.today-side .panel + .panel { margin-top: 0; }
+.resume { border-left: 3px solid var(--job); padding: 2px 0 2px 12px; margin-top: 12px; }
+.resume:first-of-type { margin-top: 0; }
+.resume-text { margin-top: 6px; border-color: transparent; background: var(--surface-2); resize: none; overflow: hidden; }
+.milestones { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.milestones li { display: flex; gap: 12px; align-items: flex-start; }
+.milestones .diamond { width: 11px; height: 11px; background: var(--job); transform: rotate(45deg); margin-top: 5px; border-radius: 2px; flex-shrink: 0; }
+.milestones li > div { flex: 1; }
+.milestones .muted { font-size: 12px; }
+
+.meter-track { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
+.meter-track span { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .25s; }
+.meter.over .meter-track span { background: var(--danger); }
+.meter-label { margin-top: 8px; font-size: 13px; color: var(--ink-2); }
+.meter-label strong { font-size: 15px; color: var(--ink); }
+
+/* ── Welcome ────────────────────────────────────────────── */
+.welcome { display: grid; place-items: center; min-height: 70vh; }
+.welcome-card { max-width: 720px; text-align: left; }
+.welcome h1 { font: 600 38px/1.15 var(--font-display); letter-spacing: -1px; margin: 4px 0 14px; }
+.welcome .lead { font-size: 16px; color: var(--ink-2); max-width: 60ch; }
+.welcome-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 26px 0 34px; }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.steps li { display: flex; gap: 12px; }
+.steps p { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.step-n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-soft); color: var(--accent-strong); display: grid; place-items: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.fine { color: var(--muted); font-size: 12px; margin-top: 30px; }
+
+/* ── Week ───────────────────────────────────────────────── */
+.week-summary { display: grid; grid-template-columns: auto minmax(220px, 1fr) auto; gap: 10px 24px; align-items: center; margin-bottom: 18px; }
+.cap { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--ink-2); }
+.cap-input { width: 90px; font-weight: 600; text-align: center; }
+.cap-meter .meter-label { margin-top: 6px; }
+.cap-facts { font-size: 13px; }
+.week-notes { grid-column: 1 / -1; resize: none; overflow: hidden; background: var(--surface-2); border-color: transparent; }
+.week-body { display: grid; grid-template-columns: minmax(0, 1fr) 264px; gap: 14px; align-items: start; }
+.days { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)) repeat(2, minmax(0, .72fr)); gap: 6px; }
+.day { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); min-height: 340px; display: flex; flex-direction: column; transition: background .12s, border-color .12s; }
+.day.weekend { background: color-mix(in srgb, var(--surface-2) 70%, var(--bg)); }
+.day.is-today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.day.is-past header { opacity: .6; }
+.day header { display: flex; align-items: baseline; gap: 5px; padding: 10px 8px 6px; white-space: nowrap; overflow: hidden; }
+.day-name { font-weight: 700; font-size: 13px; }
+.day.is-today .day-name { color: var(--accent); }
+.day-date { font-size: 12px; color: var(--muted); }
+.day-total { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.day-cards, .tray-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 4px 5px 10px; align-content: start; flex: 1; }
+.day-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 18px 4px; border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); opacity: .7; }
+.drop-over { background: var(--accent-soft) !important; border-color: var(--accent) !important; }
+.wcard { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 7px; align-items: start; padding: 8px 8px 8px 7px; background: var(--surface); border: 1px solid var(--line); border-left: 3px solid var(--job); border-radius: var(--radius-sm); box-shadow: var(--shadow-1); cursor: grab; position: relative; }
+.wcard:hover { border-color: var(--line-strong); border-left-color: var(--job); }
+.wcard.dragging, .bcard.dragging { opacity: .4; }
+.wcard .tick { width: 17px; height: 17px; }
+.wcard-body { flex: 1; min-width: 0; }
+.wcard-title { font-size: 13px; font-weight: 500; text-align: left; line-height: 1.3; overflow-wrap: anywhere; }
+.wcard-title:hover { color: var(--accent); }
+.wcard.is-done .wcard-title { text-decoration: line-through; color: var(--muted); }
+.wcard-meta { display: flex; flex-wrap: wrap; gap: 4px 8px; margin-top: 4px; align-items: center; }
+.wcard-meta .chip { font-size: 11px; }
+.wcard-menu { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; opacity: 0; background: var(--surface); }
+.wcard-meta .chip { max-width: 100%; }
+.wcard:hover .wcard-menu, .wcard-menu:focus-visible { opacity: 1; }
+.tray { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 8px 4px; position: sticky; top: 0; max-height: calc(100vh - 140px); overflow: auto; }
+.tray header { display: flex; align-items: baseline; gap: 8px; padding: 0 6px; }
+.tray h2 { font-size: 14px; }
+.tray .hint { padding: 4px 6px 4px; font-size: 12px; }
+
+/* ── Plan (Gantt) ───────────────────────────────────────── */
+.plan-toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.plan-scroll { overflow: auto; max-height: calc(100vh - 210px); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-1); position: relative; }
+.plan-grid { position: relative; min-width: 100%; }
+.ph, .prow { display: grid; grid-template-columns: var(--lw) 1fr; }
+.pl { position: sticky; left: 0; z-index: 2; background: var(--surface); border-right: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding: 0 12px; min-width: 0; }
+.pt { position: relative; }
+.ph { position: sticky; top: 0; z-index: 4; height: 52px; border-bottom: 1px solid var(--line-strong); }
+.ph .pl { z-index: 5; font-size: 11px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); background: var(--surface-2); align-items: flex-end; padding-bottom: 8px; }
+.ph .pl span:first-of-type { margin-left: auto; width: 104px; }
+.ph .pl span:last-of-type { width: 52px; text-align: right; }
+.ph-time { background: var(--surface-2); overflow: hidden; }
+.ph-months, .ph-weeks { position: relative; height: 26px; }
+.ph-month { position: absolute; top: 0; height: 26px; padding: 6px 8px 0; font-size: 12px; font-weight: 600; border-left: 1px solid var(--line-strong); white-space: nowrap; overflow: hidden; }
+.ph-week { position: absolute; top: 0; height: 26px; padding: 5px 0 0 5px; font-size: 11px; color: var(--muted); border-left: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.prow { border-bottom: 1px solid color-mix(in srgb, var(--line) 60%, transparent); }
+.prow .pt {
+  background-image:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to right, transparent calc(var(--px) * 5), color-mix(in srgb, var(--surface-2) 70%, transparent) calc(var(--px) * 5));
+  background-size: calc(var(--px) * 7) 100%, calc(var(--px) * 7) 100%;
+}
+.prow-job .pl { font-weight: 600; background: color-mix(in srgb, var(--job) 7%, var(--surface)); }
+.prow-job .pt { background-color: color-mix(in srgb, var(--job) 4%, transparent); }
+.job-bar { width: 4px; height: 22px; border-radius: 2px; background: var(--job); flex-shrink: 0; }
+.job-title { font: 600 15px/1.2 var(--font-display); text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.job-title:hover { color: var(--accent); }
+.job-facts { margin-left: auto; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.prow-phase .pl { padding-left: 26px; }
+.phase-title { font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--ink-2); }
+.phase-title:hover { color: var(--accent); }
+.prow-item .pl { padding-left: 24px; }
+.prow-item:hover .pl, .prow-item:hover .pt { background-color: color-mix(in srgb, var(--accent-soft) 35%, transparent); }
+.prow-item:hover .pl { background-color: color-mix(in srgb, var(--accent-soft) 35%, var(--surface)); }
+.prow-item .tick { width: 17px; height: 17px; margin: 0; }
+.item-title { flex: 1; min-width: 0; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.item-title:hover { color: var(--accent); }
+.ms-mark { color: var(--accent); font-size: 11px; }
+.blocked-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); flex-shrink: 0; }
+.item-dates { width: 104px; font-size: 12px; color: var(--ink-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.item-effort { width: 52px; text-align: right; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.prow-item.is-done .item-title { color: var(--muted); text-decoration: line-through; }
+.is-archived { opacity: .55; }
+.prow-add .pl { padding-left: 50px; }
+.add-inline { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); padding: 3px 6px; border-radius: 5px; }
+.add-inline:hover { color: var(--accent); background: var(--accent-soft); }
+.prow-add .add-inline { opacity: 0; }
+.prow-add:hover .add-inline, .add-inline:focus-visible { opacity: 1; }
+.add-input { padding: 4px 8px; font-size: 13px; }
+.track.unscheduled { cursor: copy; }
+.track.unscheduled:hover::after { content: 'Click a day to schedule'; position: absolute; left: 8px; top: 9px; font-size: 11px; color: var(--muted); pointer-events: none; }
+
+.bar { position: absolute; top: 9px; height: 18px; border-radius: 5px; background: color-mix(in srgb, var(--accent) 70%, var(--surface)); border: 1px solid var(--accent); cursor: grab; touch-action: none; min-width: 6px; }
+.bar.doing { background: var(--accent); }
+.bar.done { background: var(--surface-3); border-color: var(--line-strong); }
+.bar.late { background: color-mix(in srgb, var(--danger) 55%, var(--surface)); border-color: var(--danger); }
+.bar.blocked { background-image: repeating-linear-gradient(135deg, transparent 0 5px, rgb(255 255 255 / .35) 5px 9px); }
+.bar.dragging, .gms.dragging { cursor: grabbing; box-shadow: var(--shadow-2); z-index: 3; }
+.bar:focus-visible, .gms:focus-visible { outline-offset: 1px; }
+.grip { position: absolute; right: -1px; top: -1px; bottom: -1px; width: 9px; cursor: ew-resize; border-radius: 0 5px 5px 0; }
+.bar:hover .grip { background: rgb(0 0 0 / .18); }
+.base { position: absolute; top: 29px; height: 3px; border-radius: 2px; background: var(--muted); opacity: .55; pointer-events: none; }
+.gms { position: absolute; top: 10px; width: 15px; height: 15px; margin-left: -7.5px; background: var(--ink); border: 0; transform: rotate(45deg); border-radius: 2px; cursor: grab; touch-action: none; }
+.gms.done { background: var(--muted); } .gms.late { background: var(--danger); }
+.slip { position: absolute; top: 10px; font-size: 11px; font-weight: 700; white-space: nowrap; pointer-events: none; }
+.slip.good { color: var(--good); }
+.plan-overlay { position: absolute; top: 0; pointer-events: none; z-index: 1; overflow: visible; }
+.today-line { stroke: var(--danger); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.dep { fill: none; stroke: var(--muted); stroke-width: 1.2; opacity: .75; }
+.dep.bad { stroke: var(--danger); opacity: 1; stroke-dasharray: 4 2; }
+.arrow-head { fill: var(--muted); } .arrow-head.bad { fill: var(--danger); }
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; font-size: 12px; color: var(--ink-2); }
+.legend > span[class^=lg] { display: inline-block; margin-right: -8px; }
+.lg-bar { width: 22px; height: 10px; border-radius: 3px; background: color-mix(in srgb, var(--accent) 70%, var(--surface)); border: 1px solid var(--accent); }
+.lg-base { width: 22px; height: 3px; background: var(--muted); opacity: .6; }
+.lg-ms { width: 9px; height: 9px; background: var(--ink); transform: rotate(45deg); }
+.lg-late { width: 22px; height: 10px; border-radius: 3px; background: color-mix(in srgb, var(--danger) 55%, var(--surface)); border: 1px solid var(--danger); }
+.lg-dep { width: 22px; height: 0; border-top: 1.5px solid var(--muted); }
+
+/* ── Board ──────────────────────────────────────────────── */
+.cols { display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: 14px; overflow-x: auto; align-items: start; }
+.col { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 8px; min-height: 60vh; transition: background .12s; }
+.col header { display: flex; align-items: center; gap: 8px; padding: 2px 6px 10px; }
+.col h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--ink-2); }
+.col-blocked h2 { color: var(--warn); }
+.col-done h2 { color: var(--muted); }
+.count { font-size: 12px; color: var(--muted); background: var(--surface); border-radius: 99px; padding: 0 8px; }
+.col-cards { display: grid; gap: 8px; }
+.col-empty { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+.bcard { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--job); border-radius: var(--radius-sm); padding: 10px 12px; box-shadow: var(--shadow-1); cursor: grab; }
+.bcard:hover { box-shadow: var(--shadow-2); }
+.bcard-title { font-weight: 600; text-align: left; line-height: 1.35; overflow-wrap: anywhere; }
+.bcard-title:hover { color: var(--accent); }
+.bcard-meta { display: flex; gap: 8px; align-items: center; margin-top: 6px; font-size: 12px; flex-wrap: wrap; }
+.bcard-why { margin-top: 8px; font-size: 12px; color: var(--warn); background: var(--warn-soft); padding: 5px 8px; border-radius: 5px; }
+.bcard-after { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.bcard-foot { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.bcard-foot:empty { display: none; }
+.col-done .bcard { opacity: .75; }
+
+/* ── Notes ──────────────────────────────────────────────── */
+.notes-layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
+.notes-layout > * { min-width: 0; }
+.notes-jobs { display: grid; gap: 2px; position: sticky; top: 0; }
+.notes-job { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: var(--radius-sm); text-align: left; color: var(--ink-2); }
+.notes-job span:nth-child(2) { flex: 1; }
+.notes-job:hover { background: var(--surface-2); }
+.notes-job.on { background: var(--surface); box-shadow: var(--shadow-1); color: var(--ink); font-weight: 600; }
+.notes-job .muted { font-size: 11px; font-weight: 400; }
+.paper { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-1); min-height: 60vh; display: flex; flex-direction: column; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); padding: 6px 10px 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.tabs button { padding: 9px 12px; border-bottom: 2px solid transparent; color: var(--muted); font-weight: 500; white-space: nowrap; display: flex; align-items: center; gap: 6px; margin-bottom: -1px; }
+.tabs button:hover { color: var(--ink); }
+.tabs button.on { color: var(--ink); border-bottom-color: var(--accent); }
+.tab-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.paper-tools { padding: 10px 24px 0; }
+.note-text { border: 0; border-radius: 0; padding: 20px 28px 40px; font-size: 15px; line-height: 1.75; min-height: 50vh; resize: none; background: transparent; box-shadow: none !important; overflow: hidden; }
+
+/* ── Drawer ─────────────────────────────────────────────── */
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: var(--drawer); max-width: 100vw; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow-2); z-index: 20; overflow-y: auto; padding: 14px 22px 40px; display: flex; flex-direction: column; gap: 14px; animation: slide-in .18s ease; outline: none; }
+@keyframes slide-in { from { transform: translateX(24px); opacity: 0; } }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -8px; }
+.drawer-crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 600; min-width: 0; padding-left: 8px; }
+.drawer-head-actions { display: flex; gap: 2px; }
+.drawer-title { font: 600 21px/1.3 var(--font-display); border-color: transparent; padding: 4px 8px; margin: 0 -8px; width: calc(100% + 16px); background: transparent; letter-spacing: -.3px; }
+.drawer-title:hover { border-color: var(--line); }
+.drawer-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.fields.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 5px; }
+.field-hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.field-hint.danger { color: var(--danger); }
+.notice { display: flex; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); font-size: 13px; }
+.notice .icon { margin-top: 2px; }
+.notice ul { margin: 2px 0 0; padding-left: 16px; }
+.notice.warn { background: var(--warn-soft); color: var(--warn); }
+.notice.danger { background: var(--danger-soft); color: var(--danger); }
+.deps { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; }
+.deps li { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 8px; background: var(--surface-2); border-radius: 6px; font-size: 13px; }
+.deps li .link { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.deps li.is-done .link { color: var(--muted); text-decoration: line-through; }
+.tick-mini { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: grid; place-items: center; flex-shrink: 0; }
+.tick-mini.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+.swatch { width: 26px; height: 26px; border-radius: 7px; background: var(--sw); border: 2px solid transparent; box-shadow: inset 0 0 0 2px var(--surface); }
+.swatch.on { border-color: var(--sw); }
+.phase-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; counter-reset: ph; }
+.phase-list li { display: flex; align-items: center; gap: 4px; counter-increment: ph; }
+.phase-list li::before { content: counter(ph); width: 18px; font-size: 12px; color: var(--muted); text-align: right; margin-right: 4px; }
+.phase-list input { padding: 4px 8px; }
+.phase-list .muted { width: 22px; text-align: center; font-size: 12px; }
+.phase-list .up .icon { transform: rotate(90deg); } .phase-list .down .icon { transform: rotate(90deg); }
+
+/* ── Overlays ───────────────────────────────────────────── */
+.menu { position: fixed; z-index: 50; min-width: 230px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); padding: 5px; display: grid; }
+.menu-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 6px; text-align: left; }
+.menu-item span:not(.icon-gap) { flex: 1; }
+.menu-item:hover:not(:disabled), .menu-item:focus-visible { background: var(--surface-2); outline: none; }
+.menu-item.danger { color: var(--danger); }
+.icon-gap { width: 16px; }
+.menu-sep { height: 1px; background: var(--line); margin: 4px 2px; }
+.menu-heading { font-size: 11px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); padding: 6px 10px 2px; }
+.toasts { position: fixed; bottom: 18px; left: 16px; right: 16px; z-index: 60; display: grid; gap: 8px; justify-items: center; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 10px; background: var(--ink); color: var(--bg); padding: 9px 10px 9px 14px; border-radius: 9px; box-shadow: var(--shadow-2); max-width: min(620px, calc(100vw - 32px)); font-size: 13px; animation: toast-in .18s ease; }
+@keyframes toast-in { from { transform: translateY(8px); opacity: 0; } }
+.toast.error .icon:first-child { color: light-dark(#ff9b85, var(--danger)); } .toast.warn .icon:first-child { color: light-dark(#f2c66d, var(--warn)); }
+.toast-action { color: light-dark(var(--accent-soft), var(--accent-strong)); font-weight: 700; padding: 2px 6px; border-radius: 5px; }
+.toast-action:hover { background: rgb(255 255 255 / .12); }
+.toast-close { opacity: .6; padding: 2px; } .toast-close:hover { opacity: 1; }
+.modal { border: 1px solid var(--line); border-radius: 14px; padding: 0; background: var(--surface); color: var(--ink); box-shadow: var(--shadow-2); width: min(560px, calc(100vw - 32px)); max-height: 86vh; }
+.modal.wide { width: min(920px, calc(100vw - 32px)); }
+.modal::backdrop { background: rgb(10 20 15 / .4); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--line); }
+.modal-head h2 { font-size: 17px; }
+.modal-body { padding: 18px 22px 24px; overflow: auto; }
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.help-grid h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin: 18px 0 8px; }
+.help-grid h3:first-child { margin-top: 0; }
+.help-grid p { margin-bottom: 8px; color: var(--ink-2); }
+.keys { border-collapse: collapse; width: 100%; font-size: 13px; }
+.keys td { padding: 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+.keys td:first-child { white-space: nowrap; padding-right: 14px; width: 1%; }
+.keys kbd { margin-right: 4px; }
+
+/* ── Fluent component styling ───────────────────────────── */
+:root[data-style="fluent"] {
+  /* Suite header: the brand block and the top bar share one blue band. */
+  & .sidebar { padding: 0 0 12px; background: var(--surface-2); border-right-color: var(--line); gap: 2px; }
+  & .brand { height: 48px; padding: 0 16px; margin-bottom: 10px; background: var(--header); color: var(--on-header); gap: 10px; }
+  & .brand-mark { width: auto; height: auto; background: none; color: var(--on-header); border-radius: 0; }
+  & .brand strong { font: 600 16px/1 var(--font); letter-spacing: 0; }
+  & .book-name { color: rgb(255 255 255 / .8); font-size: 11px; }
+  & .book-name:hover { color: #fff; }
+  & .topbar { height: 48px; padding: 0 20px; background: var(--header); border-bottom: 0; color: var(--on-header); }
+  & #quick-add { height: 32px; padding: 0 40px 0 36px; background: rgb(255 255 255 / .9); color: #323130; border: 1px solid transparent; border-radius: 2px; }
+  & #quick-add::placeholder { color: #605e5c; }
+  & #quick-add:focus { background: #fff; border-color: #fff; box-shadow: none; }
+  & .quick-icon { color: #0078d4; }
+  & .quick-kbd { background: transparent; border-color: #c8c6c4; color: #605e5c; }
+  & .topbar .status, & .topbar .icon-btn { color: var(--on-header); }
+  & .topbar .status:hover, & .topbar .icon-btn:hover { background: rgb(255 255 255 / .15); color: #fff; }
+  & .topbar .status-dot { box-shadow: 0 0 0 1.5px rgb(255 255 255 / .8); }
+  & .topbar .status.warn, & .topbar .status.danger { color: #fff; }
+  & .topbar .btn { background: #fff; border-color: #fff; color: #0078d4; }
+  & .topbar .btn:hover:not(:disabled) { background: #f3f2f1; border-color: #f3f2f1; }
+  & .topbar .btn.primary { background: #fff; color: #005a9e; font-weight: 600; }
+
+  /* Left navigation: flat rows, blue indicator bar on the current view. */
+  & .nav { padding: 0 8px; gap: 0; }
+  & .nav-item { border-radius: 2px; padding: 9px 12px; font-weight: 400; color: var(--ink); position: relative; }
+  & .nav-item:hover { background: var(--surface-3); }
+  & .nav-item.on { background: var(--surface); box-shadow: none; font-weight: 600; }
+  & .nav-item.on::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; background: var(--accent); border-radius: 2px; }
+  & .jobs-head { padding: 12px 20px 4px; font-size: 12px; letter-spacing: 0; text-transform: none; font-weight: 600; color: var(--ink); }
+  & .jobs { padding: 0 8px; }
+  & .job-link { border-radius: 2px; }
+  & .job-link.on { background: var(--surface); box-shadow: inset 3px 0 0 var(--job); }
+  & .side-foot { padding: 12px 8px 0; }
+
+  /* Page headers: plain semibold titles, no decorative eyebrows. */
+  & .main { padding: 24px 32px 64px; }
+  & .page-head h1 { font: 600 24px/32px var(--font); letter-spacing: 0; }
+  & .eyebrow { text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 400; color: var(--muted); }
+  & .welcome h1 { font: 600 32px/40px var(--font); letter-spacing: 0; }
+
+  /* Surfaces: borderless cards on depth shadows. */
+  & .panel, & .plan-scroll, & .tray, & .paper { border: 0; box-shadow: var(--shadow-1); }
+  & .panel-head h2, & .tray h2 { font-size: 16px; font-weight: 600; }
+  & .day, & .col { border: 0; background: var(--surface-2); }
+  & .day.weekend { background: color-mix(in srgb, var(--surface-2) 55%, var(--bg)); }
+  & .day.is-today { box-shadow: inset 0 3px 0 var(--accent); border: 0; }
+  & .wcard, & .bcard { border: 0; box-shadow: var(--shadow-1); }
+  & .wcard { border-left: 3px solid var(--job); }
+  & .bcard { border-top: 0; border-left: 3px solid var(--job); }
+  & .bcard:hover, & .wcard:hover { box-shadow: var(--shadow-2); }
+  & .col h2 { text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--ink); }
+  & .col-blocked h2 { color: var(--danger); }
+  & .count { background: transparent; padding: 0; }
+
+  /* Controls: 32px, 2px corners, 600-weight buttons, Fluent focus borders. */
+  & .btn { min-height: 32px; padding: 0 16px; border-color: var(--muted); font-weight: 600; }
+  & .btn.sm { min-height: 24px; padding: 0 8px; font-weight: 400; }
+  & .btn.lg { min-height: 40px; padding: 0 20px; font-size: 14px; }
+  & .btn.ghost { font-weight: 400; color: var(--accent); border-color: transparent; }
+  & .btn.ghost:hover:not(:disabled) { color: var(--accent-strong); }
+  & .btn.primary { border-color: var(--accent); }
+  & input, & select, & textarea { border-color: var(--muted); border-radius: 2px; padding: 5px 8px; }
+  & input:hover, & select:hover, & textarea:hover { border-color: var(--ink); }
+  & input:focus, & select:focus, & textarea:focus { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  /* In-place fields (titles, notes) stay borderless until hovered or focused. */
+  & .drawer-title, & .resume-text, & .week-notes { border-color: transparent; }
+  & .drawer-title:hover, & .resume-text:hover, & .week-notes:hover { border-color: var(--line-strong); }
+  & .drawer-title:focus, & .resume-text:focus, & .week-notes:focus { border-color: var(--accent); }
+  & .note-text, & .note-text:hover, & .note-text:focus { border-color: transparent; box-shadow: none; }
+  & .icon-btn { border-radius: 2px; }
+  & .chip { border-radius: 2px; }
+  & kbd { border-radius: 2px; border-bottom-width: 1px; }
+  & .toggle input { width: 16px; height: 16px; }
+
+  /* Segmented controls become Fluent pivots: text tabs with an underline. */
+  & .segmented { background: transparent; border: 0; padding: 0; gap: 4px; }
+  & .segmented button { border-radius: 0; padding: 6px 8px; font-size: 14px; color: var(--ink); position: relative; }
+  & .segmented button:hover { background: var(--surface-2); }
+  & .segmented button.on { background: transparent; box-shadow: none; }
+  & .segmented button.on::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px; background: var(--accent); }
+  & .drawer .segmented { border-bottom: 1px solid var(--line); }
+
+  & .tabs button.on { border-bottom-width: 2px; font-weight: 600; }
+  & .tick { border-color: var(--muted); }
+  & .meter-track { height: 4px; border-radius: 0; background: var(--surface-3); }
+  & .meter-track span { border-radius: 0; }
+
+  /* Panels and dialogs */
+  & .drawer { border-left: 0; box-shadow: var(--shadow-2); padding: 12px 24px 40px; }
+  & .drawer-title { font: 600 20px/28px var(--font); letter-spacing: 0; }
+  & .modal { border: 0; border-radius: 2px; }
+  & .menu { border: 0; border-radius: 2px; padding: 4px 0; }
+  & .menu-item { border-radius: 0; padding: 7px 12px; }
+  & .toast { border-radius: 2px; }
+  & .banner { background: var(--warn-soft); }
+
+  /* Programme */
+  & .ph .pl, & .ph-time { background: var(--surface); }
+  & .ph .pl { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--muted); }
+  & .prow-job .pl { background: var(--surface-2); }
+  & .phase-title { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; }
+  & .job-title { font: 600 14px/1.2 var(--font); }
+  & .bar { border-radius: 2px; }
+  & .grip { border-radius: 0 2px 2px 0; }
+}
+
+@media (max-width: 760px) {
+  :root[data-style="fluent"] {
+    & .sidebar { padding: 0; background: var(--header); }
+    & .brand { margin: 0; height: 44px; }
+    & .nav { padding: 0; }
+    & .nav-item { color: var(--on-header); }
+    & .nav-item.on { background: rgb(255 255 255 / .15); color: #fff; }
+    & .nav-item.on::before { display: none; }
+    & .nav-item.on .icon { color: #fff; }
+    & .topbar { height: auto; padding: 8px 12px; }
+    & .main { padding: 16px 12px 80px; }
+  }
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 1600px) {
+  .week-body { grid-template-columns: 1fr; }
+  .tray-cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+}
+@media (max-width: 1180px) {
+  .tray { position: static; max-height: none; }
+  .today-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .days { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+  .day { min-height: 0; }
+  .help-grid, .steps { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; min-height: 100vh; }
+  .sidebar { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 8px 12px; gap: 4px; border-right: 0; border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 8; }
+  .brand { padding: 0 6px 0 0; } .brand-mark { width: 28px; height: 28px; } .book-name, .jobs-head, .jobs, .jobs-empty, .side-foot, .nav-item kbd { display: none; }
+  .nav { display: flex; margin: 0; gap: 0; flex: 1; justify-content: space-between; }
+  .nav-item { flex-direction: column; gap: 2px; padding: 4px 8px; font-size: 11px; }
+  .workspace { height: auto; }
+  .main { padding: 18px 16px 80px; overflow: visible; }
+  .topbar { padding: 8px 16px; gap: 8px; }
+  .quick-kbd, .status-text { display: none; }
+  .page-head h1 { font-size: 23px; }
+  .week-summary { grid-template-columns: 1fr; }
+  .cols { grid-template-columns: repeat(4, 82vw); scroll-snap-type: x mandatory; }
+  .col { scroll-snap-align: start; }
+  .notes-layout { grid-template-columns: 1fr; }
+  .notes-jobs { display: flex; overflow-x: auto; position: static; }
+  .note-text { padding: 16px; }
+  .fields.two { grid-template-columns: 1fr; }
+  .drawer { width: 100vw; }
+  .plan-scroll { max-height: calc(100vh - 230px); }
+  .item-dates, .ph .pl span:first-of-type { display: none; }
+  .banner { padding: 10px 16px; flex-wrap: wrap; }
+  .welcome h1 { font-size: 29px; }
+}
+
+/* ── Print ──────────────────────────────────────────────── */
+@media print {
+  :root, :root[data-scheme] { color-scheme: light; --shadow-1: none; --shadow-2: none; }
+  body { background: #fff; font-size: 11px; }
+  .app { display: block; height: auto; }
+  .sidebar, .topbar, #banner, .drawer, .toasts, .tray, .row-actions, .wcard-menu, .prow-add, .plan-toolbar, .page-actions, .paper-tools, .notes-jobs, .tabs, .legend .muted { display: none !important; }
+  .workspace, .main { height: auto; overflow: visible; padding: 0; margin: 0 !important; }
+  .plan-scroll { max-height: none; overflow: visible; border: 0; }
+  .pl, .ph { position: static; }
+  .panel, .day, .col, .paper { break-inside: avoid; box-shadow: none; }
+  .week-body, .today-grid, .notes-layout { display: block; }
+  .days { grid-template-columns: repeat(7, 1fr); }
+  .day { min-height: 0; }
+  textarea { border: 0 !important; background: none !important; overflow: visible; }
+}
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+</style>
+</head>
+<body>
+<!--
+MIT License
+
+Copyright (c) 2026 Selami Pazarbasi
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+-->
+<div class="app">
+  <aside id="sidebar" class="sidebar"></aside>
+  <div class="workspace">
+    <header class="topbar">
+      <div class="quick">
+        <svg class="icon quick-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        <input id="quick-add" type="text" autocomplete="off" spellcheck="false" aria-label="Quick add a task" placeholder="Add a task…   #job  2h  @tue  !fri">
+        <kbd class="quick-kbd">N</kbd>
+        <div id="quick-preview" class="quick-preview" hidden></div>
+      </div>
+      <div id="file-status" class="file-status"></div>
+    </header>
+    <div id="banner"></div>
+    <main id="main" class="main" tabindex="-1"></main>
+  </div>
+  <div id="drawer-host"></div>
+</div>
+<noscript><p style="padding:2rem">Tas-Time needs JavaScript. Open this file in Microsoft Edge or Google Chrome.</p></noscript>
+<script>
+(() => {
+'use strict';
+// ── core/dates.js ──
+// Calendar-day arithmetic on ISO dates (YYYY-MM-DD). All math is done in UTC
+// day numbers so daylight-saving changes never shift a date.
+
+const DAY_MS = 86400000;
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+const WEEKDAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+const FULL_WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function isIsoDate(value) {
+  if (typeof value !== 'string' || !ISO_RE.test(value)) return false;
+  const [y, m, d] = value.split('-').map(Number);
+  if (y < 1900 || y > 2200) return false;
+  return new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10) === value;
+}
+
+function todayIso(now = new Date()) {
+  const p = n => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
+function dayNum(iso) {
+  if (!isIsoDate(iso)) throw new Error(`Not a valid date: ${iso}`);
+  const [y, m, d] = iso.split('-').map(Number);
+  return Date.UTC(y, m - 1, d) / DAY_MS;
+}
+
+function fromDayNum(n) { return new Date(n * DAY_MS).toISOString().slice(0, 10); }
+function addDays(iso, n) { return fromDayNum(dayNum(iso) + n); }
+function diffDays(a, b) { return dayNum(b) - dayNum(a); }
+function weekday(iso) { return new Date(dayNum(iso) * DAY_MS).getUTCDay(); }
+function mondayOf(iso) { return addDays(iso, -((weekday(iso) + 6) % 7)); }
+
+function weekDays(monday) { return Array.from({ length: 7 }, (_, i) => addDays(monday, i)); }
+
+/** "Mon 20 Oct" — or "Mon 20 Oct 2027" outside the current year. */
+function fmtDate(iso, today = todayIso()) {
+  if (!iso) return '';
+  const n = new Date(dayNum(iso) * DAY_MS);
+  const base = `${DAY_NAMES[n.getUTCDay()]} ${n.getUTCDate()} ${MONTHS[n.getUTCMonth()]}`;
+  return iso.slice(0, 4) === today.slice(0, 4) ? base : `${base} ${iso.slice(0, 4)}`;
+}
+
+/** "Saturday 17 October". */
+function fmtLong(iso) {
+  const n = new Date(dayNum(iso) * DAY_MS);
+  const month = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'][n.getUTCMonth()];
+  return `${FULL_WEEKDAYS[n.getUTCDay()][0].toUpperCase()}${FULL_WEEKDAYS[n.getUTCDay()].slice(1)} ${n.getUTCDate()} ${month}`;
+}
+
+function fmtShort(iso) {
+  if (!iso) return '';
+  const n = new Date(dayNum(iso) * DAY_MS);
+  return `${n.getUTCDate()} ${MONTHS[n.getUTCMonth()]}`;
+}
+
+/** Human distance from today: "today", "tomorrow", "in 3 days", "2 days ago". */
+function relDay(iso, today = todayIso()) {
+  const d = diffDays(today, iso);
+  if (d === 0) return 'today';
+  if (d === 1) return 'tomorrow';
+  if (d === -1) return 'yesterday';
+  return d > 0 ? `in ${d} days` : `${-d} days ago`;
+}
+
+/** Parses "today", "tomorrow", weekday names (next occurrence, today included) and ISO dates. */
+function parseDayWord(word, today = todayIso()) {
+  const w = word.toLowerCase();
+  if (w === 'today' || w === 'tod') return today;
+  if (w === 'tomorrow' || w === 'tmr' || w === 'tom') return addDays(today, 1);
+  const idx = WEEKDAYS.findIndex(d => w === d || w === FULL_WEEKDAYS[WEEKDAYS.indexOf(d)]);
+  if (idx >= 0) return addDays(today, (idx - weekday(today) + 7) % 7);
+  if (isIsoDate(word)) return word;
+  return null;
+}
+
+const MONTH_NAMES = MONTHS;
+
+// ── core/model.js ──
+// Planning-book schema: factories, validation and migration from older files.
+
+const FORMAT = 'tas-time-planning-book';
+const VERSION = 3;
+const MAX_FILE_BYTES = 15_000_000;
+
+const STATUS = { todo: 'To do', doing: 'Doing', done: 'Done' };
+const JOB_STATUS = { active: 'Active', hold: 'On hold', done: 'Complete' };
+const NOTE_PAGES = [
+  ['restart', 'Resume here'],
+  ['scope', 'Scope & outcome'],
+  ['decisions', 'Decisions'],
+  ['working', 'Working notes'],
+  ['references', 'References'],
+];
+const COLORS = {
+  forest: { label: 'Forest', hex: '#2f6b4f' },
+  blue: { label: 'Blue', hex: '#2f62a3' },
+  plum: { label: 'Plum', hex: '#7d4f8a' },
+  amber: { label: 'Amber', hex: '#a66a12' },
+  teal: { label: 'Teal', hex: '#1f7a80' },
+  rose: { label: 'Rose', hex: '#a8455f' },
+  slate: { label: 'Slate', hex: '#56657a' },
+  olive: { label: 'Olive', hex: '#6b7a2a' },
+};
+const DEFAULT_CAPACITY = 10 * 60;
+
+function uid() {
+  return globalThis.crypto?.randomUUID?.() || `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function newBook(name = 'My planning book') {
+  return { format: FORMAT, version: VERSION, id: uid(), name, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
+}
+
+function newJob(fields = {}) {
+  return {
+    id: uid(), title: '', code: '', outcome: '', color: 'forest', status: 'active', archived: false,
+    notes: Object.fromEntries(NOTE_PAGES.map(([k]) => [k, ''])), ...fields,
+  };
+}
+
+function newPhase(jobId, title, order) { return { id: uid(), jobId, title, order }; }
+
+function newItem(fields = {}) {
+  return {
+    id: uid(), jobId: '', phaseId: '', title: '', kind: 'task', status: 'todo',
+    start: '', finish: '', effort: 0, plannedDay: '', owner: '', blocker: '', deps: [],
+    baseline: null, doneOn: '', notes: '', archived: false, ...fields,
+  };
+}
+
+/** Picks the first unused colour so new jobs are distinguishable by default. */
+function nextColor(book) {
+  const used = new Set(book.jobs.filter(j => !j.archived).map(j => j.color));
+  return Object.keys(COLORS).find(c => !used.has(c)) || 'forest';
+}
+
+function fail(message) { throw new Error(message); }
+function text(v, label, max = 100000) { if (typeof v !== 'string' || v.length > max) fail(`${label} must be text (max ${max.toLocaleString()} characters).`); }
+function date(v, label) { if (v !== '' && !isIsoDate(v)) fail(`${label} must be a real date.`); }
+function whole(v, label, max) { if (!Number.isInteger(v) || v < 0 || v > max) fail(`${label} must be a whole number from 0 to ${max.toLocaleString()}.`); }
+
+/** Throws a readable error for the first problem found; returns the book otherwise. */
+function validate(book) {
+  if (!book || book.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
+  if (book.version !== VERSION) fail(`Unsupported planning-book version ${book.version}.`);
+  text(book.name, 'Book name', 200);
+  for (const k of ['jobs', 'phases', 'items']) if (!Array.isArray(book[k]) || book[k].length > 20000) fail(`The ${k} list is invalid.`);
+  const ids = new Set();
+  for (const row of [...book.jobs, ...book.phases, ...book.items]) {
+    if (!row || typeof row !== 'object') fail('A record is malformed.');
+    text(row.id, 'Identifier', 200);
+    if (!row.id || ids.has(row.id)) fail('Record identifiers must be unique.');
+    ids.add(row.id);
+    text(row.title, 'Title', 500);
+  }
+  const jobs = new Map(book.jobs.map(j => [j.id, j]));
+  const phases = new Map(book.phases.map(p => [p.id, p]));
+  const items = new Map(book.items.map(t => [t.id, t]));
+  for (const j of book.jobs) {
+    text(j.code, 'Job code', 40); text(j.outcome, 'Outcome');
+    if (!JOB_STATUS[j.status]) fail('Invalid job status.');
+    if (!COLORS[j.color]) fail('Invalid job colour.');
+    if (typeof j.archived !== 'boolean') fail('Invalid job archive flag.');
+    if (!j.notes || typeof j.notes !== 'object') fail('Invalid job notebook.');
+    for (const [k] of NOTE_PAGES) text(j.notes[k], 'Notebook page');
+  }
+  for (const p of book.phases) {
+    if (!jobs.has(p.jobId)) fail('A phase belongs to a missing job.');
+    whole(p.order, 'Phase order', 1e6);
+  }
+  for (const t of book.items) {
+    if (!jobs.has(t.jobId)) fail(`"${t.title}" belongs to a missing job.`);
+    if (t.phaseId && phases.get(t.phaseId)?.jobId !== t.jobId) fail(`"${t.title}" refers to a phase from another job.`);
+    if (!['task', 'milestone'].includes(t.kind)) fail('Invalid item kind.');
+    if (!STATUS[t.status]) fail('Invalid item status.');
+    if (typeof t.archived !== 'boolean') fail('Invalid item archive flag.');
+    for (const k of ['owner', 'blocker', 'notes']) text(t[k], k);
+    date(t.start, 'Start'); date(t.finish, 'Finish'); date(t.plannedDay, 'Planned day'); date(t.doneOn, 'Done date');
+    if (t.start && t.finish && t.finish < t.start) fail(`"${t.title}" finishes before it starts.`);
+    if (t.kind === 'milestone' && t.start !== t.finish) fail(`Milestone "${t.title}" needs a single date.`);
+    whole(t.effort, 'Effort (minutes)', 1e6);
+    if (t.baseline !== null) {
+      if (typeof t.baseline !== 'object') fail('Invalid baseline.');
+      date(t.baseline.start, 'Baseline start'); date(t.baseline.finish, 'Baseline finish');
+    }
+    if (!Array.isArray(t.deps) || new Set(t.deps).size !== t.deps.length) fail('Invalid dependency list.');
+    for (const d of t.deps) if (!items.has(d) || d === t.id) fail(`"${t.title}" depends on a missing item.`);
+  }
+  if (findCycle(book.items)) fail('These dependencies form a loop. Remove one of the links.');
+  if (!book.weeks || typeof book.weeks !== 'object' || Array.isArray(book.weeks)) fail('Invalid weekly plans.');
+  for (const [key, w] of Object.entries(book.weeks)) {
+    if (!isIsoDate(key) || mondayOf(key) !== key) fail('Weekly plans must start on a Monday.');
+    whole(w.capacity, 'Weekly capacity', 7 * 24 * 60); text(w.notes, 'Week notes');
+  }
+  date(book.baselineDate, 'Baseline date');
+  return book;
+}
+
+/** Iterative topological check (Kahn) so large imports cannot overflow the stack. */
+function findCycle(items) {
+  const incoming = new Map(items.map(t => [t.id, t.deps.length]));
+  const children = new Map(items.map(t => [t.id, []]));
+  for (const t of items) for (const d of t.deps) children.get(d)?.push(t.id);
+  const queue = items.filter(t => !t.deps.length).map(t => t.id);
+  let seen = 0;
+  while (queue.length) {
+    const id = queue.pop(); seen++;
+    for (const c of children.get(id)) { incoming.set(c, incoming.get(c) - 1); if (!incoming.get(c)) queue.push(c); }
+  }
+  return seen !== items.length;
+}
+
+const V2_STATUS = { 'Not started': 'todo', 'In progress': 'doing', Done: 'done' };
+const V2_JOB_STATUS = { Active: 'active', 'On hold': 'hold', Complete: 'done' };
+
+/** Upgrades version 1 and 2 books to the current schema without dropping data. */
+function migrate(raw) {
+  if (!raw || raw.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
+  if (raw.version === VERSION) return raw;
+  if (raw.version !== 1 && raw.version !== 2) fail(`Unsupported planning-book version ${raw.version}.`);
+  const book = newBook(String(raw.name || 'Imported planning book'));
+  book.baselineDate = raw.baselineDate || '';
+  book.weeks = structuredClone(raw.weeks || {});
+  for (const j of raw.jobs || []) {
+    const notes = { ...newJob().notes, ...(j.notes || {}) };
+    const color = COLORS[j.color] ? j.color : 'forest';
+    book.jobs.push({ id: j.id, title: j.title, code: String(j.code || '').slice(0, 40), outcome: j.outcome || '', color,
+      status: V2_JOB_STATUS[j.status] || 'active', archived: !!j.archived, notes });
+  }
+  book.phases = (raw.phases || []).map(p => ({ id: p.id, jobId: p.jobId, title: p.title, order: p.order }));
+  for (const t of raw.items || []) {
+    const hasBaseline = t.baselineStart || t.baselineFinish;
+    book.items.push(newItem({
+      id: t.id, jobId: t.jobId, phaseId: t.phaseId || '', title: t.title, kind: t.kind === 'Milestone' ? 'milestone' : 'task',
+      status: V2_STATUS[t.status] || 'todo', start: t.start || '', finish: t.finish || '', effort: t.remaining || 0,
+      plannedDay: t.plannedDay || '', owner: t.owner || '', blocker: t.blocker || '', deps: [...(t.predecessors || [])],
+      baseline: hasBaseline ? { start: t.baselineStart || '', finish: t.baselineFinish || '' } : null,
+      doneOn: t.acceptedOn || '', notes: t.notes || '', archived: !!t.archived,
+    }));
+  }
+  return book;
+}
+
+/** Parses file text into a validated current-version book. */
+function decodeBook(textValue) {
+  if (textValue.length > MAX_FILE_BYTES) fail('This file is larger than the 15 MB limit.');
+  let raw;
+  try { raw = JSON.parse(textValue); } catch { fail('This file is not valid JSON.'); }
+  const upgraded = raw?.version !== VERSION;
+  return { book: validate(migrate(raw)), upgradedFrom: upgraded ? raw.version : null };
+}
+
+function encodeBook(book) { return JSON.stringify(validate(book), null, 2); }
+
+// ── core/store.js ──
+// Book state with undo/redo. Every change goes through commit(), which clones,
+// applies the mutation, validates, and only then publishes the new book.
+
+const HISTORY_LIMIT = 200;
+const COALESCE_MS = 1500;
+
+function createStore(initial) {
+  let book = validate(initial);
+  let past = [];
+  let future = [];
+  let revision = 0;
+  let savedRevision = 0;
+  let lastKey = '';
+  let lastAt = 0;
+  const listeners = new Set();
+
+  const emit = reason => { for (const fn of listeners) fn(reason); };
+
+  return {
+    get book() { return book; },
+    get revision() { return revision; },
+    get dirty() { return revision !== savedRevision; },
+    get canUndo() { return past.length > 0; },
+    get canRedo() { return future.length > 0; },
+    subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+
+    /**
+     * Applies fn to a draft. Typing into one field produces one undo step:
+     * commits with the same key within COALESCE_MS replace the last snapshot.
+     * Returns fn's result. Throws (leaving state untouched) when the change is invalid.
+     */
+    commit(label, fn, { key = '', quiet = false } = {}) {
+      const draft = structuredClone(book);
+      const result = fn(draft);
+      validate(draft);
+      const now = Date.now();
+      const coalesce = key && key === lastKey && now - lastAt < COALESCE_MS;
+      if (!coalesce) {
+        past.push({ book, label });
+        if (past.length > HISTORY_LIMIT) past.shift();
+      }
+      future = [];
+      lastKey = key; lastAt = now;
+      book = draft; revision++;
+      emit(quiet ? 'quiet' : 'change');
+      return result;
+    },
+
+    undo() {
+      const step = past.pop();
+      if (!step) return '';
+      future.push({ book, label: step.label });
+      book = step.book; revision++; lastKey = '';
+      emit('change');
+      return step.label;
+    },
+
+    redo() {
+      const step = future.pop();
+      if (!step) return '';
+      past.push({ book, label: step.label });
+      book = step.book; revision++; lastKey = '';
+      emit('change');
+      return step.label;
+    },
+
+    /** Replaces the whole book (open, new, example). Clears history. */
+    replace(next, { dirty = false } = {}) {
+      book = validate(next); past = []; future = []; lastKey = '';
+      revision++; savedRevision = dirty ? -1 : revision;
+      emit('replace');
+    },
+
+    markSaved(atRevision) { savedRevision = atRevision; emit('saved'); },
+  };
+}
+
+// ── ui/state.js ──
+// Shared UI state. The book itself lives in the store; this is view state only.
+
+const VIEWS = [
+  { id: 'today', label: 'Today', key: '1', icon: 'today' },
+  { id: 'week', label: 'Week', key: '2', icon: 'week' },
+  { id: 'plan', label: 'Plan', key: '3', icon: 'plan' },
+  { id: 'board', label: 'Board', key: '4', icon: 'board' },
+  { id: 'notes', label: 'Notes', key: '5', icon: 'notes' },
+];
+
+const store = createStore(newBook());
+
+const ui = {
+  view: 'today',
+  focus: '',            // job id the views are narrowed to
+  week: mondayOf(todayIso()),
+  drawer: null,         // { type: 'item' | 'job', id }
+  notesJob: '',
+  notesPage: 'restart',
+  planRange: '6w',      // '6w' | '3m' | 'all'
+  planShowDone: true,
+  planShowArchived: false,
+  boardAllDone: false,
+  addingIn: '',         // phase key with an open inline-add row in Plan
+};
+
+function today() { return todayIso(); }
+
+/** Commits a change and turns validation errors into a toast instead of an exception. */
+function act(label, fn, options) {
+  try { return store.commit(label, fn, options); } catch (error) { notify(error.message, { kind: 'error' }); return undefined; }
+}
+
+const notifiers = [];
+function onNotify(fn) { notifiers.push(fn); }
+function notify(message, options = {}) { for (const fn of notifiers) fn(message, options); }
+
+const renderers = [];
+function onRender(fn) { renderers.push(fn); }
+function rerender() { for (const fn of renderers) fn(); }
+
+function setView(view) {
+  ui.view = view;
+  rerender();
+  document.getElementById('main')?.focus({ preventScroll: true });
+}
+
+function setFocus(jobId) {
+  ui.focus = ui.focus === jobId ? '' : jobId;
+  if (ui.focus) ui.notesJob = ui.focus;
+  rerender();
+}
+
+function openDrawer(type, id, focusField = '') {
+  ui.drawer = { type, id, focusField };
+  rerender();
+}
+
+function closeDrawer() {
+  if (!ui.drawer) return;
+  ui.drawer = null;
+  rerender();
+}
+
+/** Replaced with package.json's version by the build. */
+const APP_VERSION = '3.0.0';
+
+// ── ui/dom.js ──
+// Tiny DOM builder. User text only ever becomes text nodes or attribute values,
+// never markup, so the app has no HTML-injection surface.
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const SVG_TAGS = new Set(['svg', 'path', 'line', 'polyline', 'rect', 'circle', 'g', 'polygon', 'defs', 'marker']);
+
+function h(tag, props, ...children) {
+  const el = SVG_TAGS.has(tag) ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
+  if (props) {
+    for (const [key, value] of Object.entries(props)) {
+      if (value === null || value === undefined || value === false) continue;
+      if (key === 'class') el.setAttribute('class', Array.isArray(value) ? value.filter(Boolean).join(' ') : value);
+      else if (key === 'style' && typeof value === 'object') {
+        // setProperty is required for custom properties (--job); plain assignment drops them silently.
+        for (const [prop, v] of Object.entries(value)) {
+          if (v === null || v === undefined) continue;
+          if (prop.startsWith('--')) el.style.setProperty(prop, v); else el.style[prop] = v;
+        }
+      }
+      else if (key.startsWith('on') && typeof value === 'function') el.addEventListener(key.slice(2).toLowerCase(), value);
+      else if (key === 'value' && 'value' in el && !SVG_TAGS.has(tag)) el.value = value;
+      else if (key === 'checked' || key === 'selected' || key === 'indeterminate') el[key] = !!value;
+      else el.setAttribute(key, value === true ? '' : String(value));
+    }
+  }
+  append(el, children);
+  return el;
+}
+
+function append(el, children) {
+  for (const child of children) {
+    if (child === null || child === undefined || child === false || child === '') continue;
+    if (Array.isArray(child)) append(el, child);
+    else el.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+}
+
+/** Replaces el's children, skipping null/false and flattening arrays (unlike replaceChildren). */
+function fill(el, ...children) {
+  el.replaceChildren();
+  append(el, children);
+  return el;
+}
+
+const ICONS = {
+  today: 'M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8',
+  week: 'M4 5h16v15H4zM4 9h16M9 3v4M15 3v4M8 13h2M11 13h2M14 13h2M8 16h2M11 16h2',
+  plan: 'M4 6h7M7 11h9M10 16h10M4 3v18',
+  board: 'M4 4h4v16H4zM10 4h4v10h-4zM16 4h4v13h-4z',
+  notes: 'M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7',
+  plus: 'M12 5v14M5 12h14',
+  x: 'M6 6l12 12M18 6L6 18',
+  check: 'M5 12.5l4.5 4.5L19 7.5',
+  left: 'M15 5l-7 7 7 7',
+  right: 'M9 5l7 7-7 7',
+  more: 'M5 12h.01M12 12h.01M19 12h.01',
+  undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
+  save: 'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-7h8v7',
+  open: 'M3 7h6l2 2h10v10H3zM3 7V5h6',
+  archive: 'M3 4h18v4H3zM5 8v12h14V8M10 12h4',
+  trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+  copy: 'M8 8h12v12H8zM4 16V4h12',
+  alert: 'M12 3l10 18H2zM12 10v5M12 18h.01',
+  clock: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M12 7v5l3 2',
+  link: 'M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1',
+  print: 'M7 9V3h10v6M7 17H4v-7h16v7h-3M7 14h10v7H7z',
+  keyboard: 'M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M7 14h10',
+  focus: 'M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6',
+  grip: 'M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01',
+  diamond: 'M12 3l9 9-9 9-9-9z',
+  flag: 'M5 21V4h11l-2 4 2 4H5',
+  arrowRight: 'M5 12h14M13 6l6 6-6 6',
+  book: 'M4 4h7a3 3 0 0 1 3 3v13a2 2 0 0 0-2-2H4zM20 4h-6a3 3 0 0 0-3 3',
+  palette: 'M12 3a9 9 0 1 0 0 18c1.1 0 1.6-.8 1.3-1.7-.3-.9.3-1.8 1.3-1.8H17a4 4 0 0 0 4-4c0-5-4-8.5-9-8.5M7.5 11h.01M10 7.5h.01M14.5 7.5h.01M17 11h.01',
+  help:'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7v.5M12 17h.01',
+};
+
+function icon(name, size = 18) {
+  return h('svg', { class: 'icon', width: size, height: size, viewBox: '0 0 24 24', 'aria-hidden': 'true', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+    h('path', { d: ICONS[name] }));
+}
+
+const NATIVE_AUTOSIZE = typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content');
+
+/** Grows a textarea to fit its content (only where CSS field-sizing is unavailable). */
+function autosize(el) {
+  if (NATIVE_AUTOSIZE) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight + 2}px`;
+}
+
+function debounce(fn, ms) {
+  let t;
+  const wrapped = (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+  wrapped.flush = (...args) => { clearTimeout(t); fn(...args); };
+  wrapped.cancel = () => clearTimeout(t);
+  return wrapped;
+}
+
+// ── core/parse.js ──
+// Human input: effort durations and the one-line quick-add syntax.
+
+/** "1h30", "1h 30m", "90m", "1.5h", "1.5" (hours), "45" (minutes if ≥ 10). Returns minutes or null. */
+function parseEffort(input) {
+  const s = String(input).trim().toLowerCase().replace(/\s+/g, '');
+  if (s === '') return 0;
+  let m = s.match(/^(\d+(?:\.\d+)?)h(?:(\d+)m?)?$/);
+  if (m) return Math.round(Number(m[1]) * 60 + Number(m[2] || 0));
+  m = s.match(/^(\d+)(?:m|min|mins)$/);
+  if (m) return Number(m[1]);
+  m = s.match(/^(\d+(?:\.\d+)?)d$/);
+  if (m) return Math.round(Number(m[1]) * 8 * 60);
+  m = s.match(/^(\d+(?:\.\d+)?)$/);
+  if (m) {
+    const n = Number(m[1]);
+    // Bare small numbers read as hours ("2" = 2h); larger whole numbers as minutes ("45").
+    return n < 10 ? Math.round(n * 60) : Math.round(n);
+  }
+  return null;
+}
+
+/** 0 → "", 45 → "45m", 90 → "1h 30m", 120 → "2h". */
+function fmtEffort(min) {
+  if (!min) return '';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
+
+/** Hours with one decimal, for totals: 135 → "2.3h". */
+function fmtHours(min) {
+  const h = min / 60;
+  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`;
+}
+
+const EFFORT_TOKEN = /^\d+(?:\.\d+)?h(?:\d+m?)?$|^\d+(?:m|min|mins|d)$/i;
+
+/**
+ * Quick add: "Draft literature review #phd 2h @tue !fri"
+ *   #code   job (matches code or title start)   2h / 30m / 1h30   effort
+ *   @day    plan to work on it that day          !day              due (finish) date
+ *   *       leading star marks a milestone
+ */
+function parseQuickAdd(input, jobs, today = todayIso()) {
+  const tokens = input.trim().split(/\s+/).filter(Boolean);
+  const out = { title: '', jobId: '', jobHint: '', effort: null, plannedDay: '', finish: '', kind: 'task', errors: [] };
+  const words = [];
+  for (const tok of tokens) {
+    if (tok.length > 1 && tok[0] === '#') {
+      out.jobHint = tok.slice(1);
+      const job = matchJob(jobs, out.jobHint);
+      if (job) out.jobId = job.id; else out.errors.push(`No job matches “${tok}”`);
+    } else if (tok.length > 1 && (tok[0] === '@' || tok[0] === '!')) {
+      const day = parseDayWord(tok.slice(1), today);
+      if (!day) { out.errors.push(`Unrecognised day “${tok}”`); continue; }
+      if (tok[0] === '@') out.plannedDay = day; else out.finish = day;
+    } else if (EFFORT_TOKEN.test(tok)) {
+      out.effort = parseEffort(tok);
+    } else words.push(tok);
+  }
+  if (words[0] === '*') { out.kind = 'milestone'; words.shift(); } else if (words[0]?.startsWith('*')) { out.kind = 'milestone'; words[0] = words[0].slice(1); }
+  out.title = words.join(' ');
+  return out;
+}
+
+function matchJob(jobs, hint) {
+  const h = hint.toLowerCase();
+  const live = jobs.filter(j => !j.archived);
+  return live.find(j => j.code.toLowerCase() === h)
+    || live.find(j => j.code.toLowerCase().startsWith(h))
+    || live.find(j => j.title.toLowerCase().startsWith(h))
+    || live.find(j => j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
+}
+
+// ── core/query.js ──
+// Read-only derivations used by the views. None of these mutate the book.
+
+function jobOf(book, id) { return book.jobs.find(j => j.id === id); }
+function itemOf(book, id) { return book.items.find(t => t.id === id); }
+function liveJobs(book) { return book.jobs.filter(j => !j.archived); }
+function isHidden(book, t) { return t.archived || !!jobOf(book, t.jobId)?.archived; }
+function liveItems(book) { return book.items.filter(t => !isHidden(book, t)); }
+
+function phasesOf(book, jobId) {
+  return book.phases.filter(p => p.jobId === jobId).sort((a, b) => a.order - b.order);
+}
+
+function phaseTitle(book, id) { return book.phases.find(p => p.id === id)?.title || ''; }
+
+/** Reasons an item cannot progress: a recorded constraint or unfinished prerequisites. */
+function blockers(book, t) {
+  if (t.status === 'done') return [];
+  const out = [];
+  if (t.blocker.trim()) out.push(t.blocker.trim());
+  for (const id of t.deps) {
+    const d = itemOf(book, id);
+    if (d && d.status !== 'done') out.push(`Waiting for “${d.title}”`);
+  }
+  return out;
+}
+
+/** Prerequisites that are not finished yet. */
+function waitingOn(book, t) {
+  return t.status === 'done' ? [] : t.deps.map(id => itemOf(book, id)).filter(d => d && d.status !== 'done');
+}
+
+/**
+ * Blocked means "should be moving but can't": a written constraint, or unfinished
+ * prerequisites once the task is due to start, planned for today or earlier, or in progress.
+ * A future task whose prerequisite is still open is just waiting its turn.
+ */
+function isBlocked(book, t, today) {
+  if (t.status === 'done') return false;
+  if (t.blocker.trim()) return true;
+  if (!waitingOn(book, t).length) return false;
+  return t.status === 'doing' || (!!t.start && t.start <= today) || (!!t.plannedDay && t.plannedDay <= today);
+}
+function isLate(t, today) { return t.status !== 'done' && !!t.finish && t.finish < today; }
+
+/** Days the forecast finish has moved since the baseline (positive = later). */
+function slip(t) {
+  return t.baseline?.finish && t.finish ? diffDays(t.baseline.finish, t.finish) : null;
+}
+
+/** Prerequisites forecast to finish after this item is forecast to start. */
+function dateConflicts(book, t) {
+  if (!t.start || t.status === 'done') return [];
+  return t.deps.map(id => itemOf(book, id)).filter(d => d?.finish && d.finish > t.start);
+}
+
+function boardColumn(book, t, today) {
+  if (t.status === 'done') return 'done';
+  return isBlocked(book, t, today) ? 'blocked' : t.status;
+}
+
+function matchesFocus(t, focus) { return !focus || t.jobId === focus; }
+
+function openEffort(list) { return list.reduce((n, t) => n + (t.status === 'done' ? 0 : t.effort), 0); }
+
+function weekLoad(book, monday, focus = '') {
+  const days = weekDays(monday);
+  const end = days[6];
+  const items = liveItems(book).filter(t => t.plannedDay >= monday && t.plannedDay <= end);
+  const byDay = Object.fromEntries(days.map(d => [d, []]));
+  for (const t of items) byDay[t.plannedDay].push(t);
+  const shown = items.filter(t => matchesFocus(t, focus));
+  return {
+    days, byDay, items,
+    shown,
+    planned: openEffort(items),
+    done: items.filter(t => t.status === 'done').length,
+    unestimated: items.filter(t => t.status !== 'done' && t.kind === 'task' && !t.effort).length,
+  };
+}
+
+/** Open, unblocked work that has no planned day yet (or was planned before this week and not finished). */
+function readyToPlan(book, monday, focus = '') {
+  return liveItems(book)
+    .filter(t => t.status !== 'done' && t.kind === 'task' && matchesFocus(t, focus))
+    .filter(t => !t.plannedDay || t.plannedDay < monday)
+    .sort(byUrgency);
+}
+
+function byUrgency(a, b) {
+  return (a.finish || '9999').localeCompare(b.finish || '9999') || (a.start || '9999').localeCompare(b.start || '9999') || a.title.localeCompare(b.title);
+}
+
+function todayList(book, today, focus = '') {
+  const live = liveItems(book).filter(t => matchesFocus(t, focus));
+  const planned = live.filter(t => t.plannedDay === today);
+  const carried = live.filter(t => t.status !== 'done' && t.plannedDay && t.plannedDay < today).sort(byUrgency);
+  const overdue = live.filter(t => isLate(t, today) && t.plannedDay !== today && !carried.includes(t)).sort(byUrgency);
+  return { planned, carried, overdue };
+}
+
+function upcomingMilestones(book, today, days = 21, focus = '') {
+  const end = addDays(today, days);
+  return liveItems(book)
+    .filter(t => t.kind === 'milestone' && t.status !== 'done' && t.finish && t.finish <= end && matchesFocus(t, focus))
+    .sort(byUrgency);
+}
+
+function jobSummary(book, job, today) {
+  const items = book.items.filter(t => t.jobId === job.id && !t.archived);
+  const open = items.filter(t => t.status !== 'done');
+  const phases = phasesOf(book, job.id);
+  const current = phases.find(p => open.some(t => t.phaseId === p.id));
+  const nextMilestone = open.filter(t => t.kind === 'milestone').sort(byUrgency)[0];
+  const finish = items.map(t => t.finish).filter(Boolean).sort().at(-1) || '';
+  return {
+    total: items.length, done: items.length - open.length, open: open.length, effort: openEffort(items),
+    late: open.filter(t => isLate(t, today)).length, blocked: open.filter(t => isBlocked(book, t, today)).length,
+    currentPhase: current?.title || '', nextMilestone, finish,
+  };
+}
+
+/** Rows for the Plan view: job headers, phase headers and items in programme order. */
+function planRows(book, { focus = '', showDone = true, showArchived = false } = {}) {
+  const rows = [];
+  const jobs = book.jobs.filter(j => (showArchived || !j.archived) && (!focus || j.id === focus));
+  for (const job of jobs) {
+    rows.push({ type: 'job', job });
+    const items = book.items.filter(t => t.jobId === job.id && (showArchived || !t.archived) && (showDone || t.status !== 'done'));
+    const groups = [...phasesOf(book, job.id).map(p => [p, items.filter(t => t.phaseId === p.id)]), [null, items.filter(t => !t.phaseId)]];
+    for (const [phase, list] of groups) {
+      if (!phase && !list.length) continue;
+      rows.push({ type: 'phase', phase, job });
+      for (const item of [...list].sort(bySchedule)) rows.push({ type: 'item', item, job });
+    }
+  }
+  return rows;
+}
+
+function bySchedule(a, b) {
+  return (a.start || a.finish || '9999').localeCompare(b.start || b.finish || '9999') || (a.finish || '9999').localeCompare(b.finish || '9999') || a.title.localeCompare(b.title);
+}
+
+/** Every item that (transitively) depends on id, used to refuse dependency loops in pickers. */
+function dependents(book, id) {
+  const out = new Set();
+  const stack = [id];
+  while (stack.length) {
+    const cur = stack.pop();
+    for (const t of book.items) if (t.deps.includes(cur) && !out.has(t.id)) { out.add(t.id); stack.push(t.id); }
+  }
+  return out;
+}
+
+// ── core/ops.js ──
+// Mutations. Each takes a draft book (already cloned by the store) and edits it in place.
+
+function addJob(book, fields = {}, phaseTitles = []) {
+  const job = newJob({ color: nextColor(book), ...fields });
+  book.jobs.push(job);
+  phaseTitles.forEach((title, order) => book.phases.push(newPhase(job.id, title, order)));
+  return job;
+}
+
+function addItem(book, fields) {
+  const item = newItem(fields);
+  if (item.kind === 'milestone') item.start = item.finish;
+  book.items.push(item);
+  return item;
+}
+
+function patchItem(book, id, patch, today) {
+  const t = itemOf(book, id);
+  if (!t) throw new Error('That item no longer exists.');
+  const next = { ...t, ...patch };
+  if (patch.jobId && patch.jobId !== t.jobId && !('phaseId' in patch)) next.phaseId = '';
+  if (next.kind === 'milestone') {
+    next.finish = next.finish || next.start;
+    next.start = next.finish;
+  }
+  if ('start' in patch && next.kind === 'task' && next.start && next.finish && next.finish < next.start) {
+    // Moving the start past the finish keeps the duration rather than failing.
+    next.finish = t.start && t.finish ? addDays(next.start, diffDays(t.start, t.finish)) : next.start;
+  }
+  if ('status' in patch) applyStatus(book, next, t.status, today);
+  Object.assign(t, next);
+  return t;
+}
+
+function applyStatus(book, next, previous, today) {
+  if (next.status === previous) return;
+  if (next.status === 'done') {
+    const reasons = blockers(book, { ...next, status: 'todo' });
+    if (reasons.length) throw new Error(`Can’t complete yet: ${reasons.join('; ')}.`);
+    next.doneOn = today;
+  } else next.doneOn = '';
+}
+
+function setStatus(book, id, status, today) { return patchItem(book, id, { status }, today); }
+
+/** Moves a bar on the programme, keeping its duration. */
+function shiftItem(book, id, days) {
+  const t = itemOf(book, id);
+  if (!days) return;
+  if (t.start) t.start = addDays(t.start, days);
+  if (t.finish) t.finish = addDays(t.finish, days);
+}
+
+function deleteItem(book, id) {
+  book.items = book.items.filter(t => t.id !== id);
+  for (const t of book.items) t.deps = t.deps.filter(d => d !== id);
+}
+
+function duplicateItem(book, id) {
+  const t = itemOf(book, id);
+  const copy = { ...structuredClone(t), id: uid(), title: `${t.title} (copy)`, status: 'todo', doneOn: '', baseline: null };
+  book.items.splice(book.items.indexOf(t) + 1, 0, copy);
+  return copy;
+}
+
+function patchJob(book, id, patch) {
+  const j = jobOf(book, id);
+  if (!j) throw new Error('That job no longer exists.');
+  Object.assign(j, patch);
+  return j;
+}
+
+function setNote(book, jobId, page, value) { jobOf(book, jobId).notes[page] = value; }
+
+function addPhase(book, jobId, title) {
+  const order = phasesOf(book, jobId).reduce((n, p) => Math.max(n, p.order + 1), 0);
+  const p = newPhase(jobId, title, order);
+  book.phases.push(p);
+  return p;
+}
+
+function renamePhase(book, id, title) { book.phases.find(p => p.id === id).title = title; }
+
+function movePhase(book, id, delta) {
+  const p = book.phases.find(x => x.id === id);
+  const list = phasesOf(book, p.jobId);
+  const i = list.indexOf(p);
+  const j = i + delta;
+  if (j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  list.forEach((x, order) => { x.order = order; });
+}
+
+/** Removes a phase; its items stay in the job, unphased. */
+function deletePhase(book, id) {
+  for (const t of book.items) if (t.phaseId === id) t.phaseId = '';
+  book.phases = book.phases.filter(p => p.id !== id);
+}
+
+/** Completely removes a job with its phases and items (undoable from the store). */
+function deleteJob(book, id) {
+  const gone = new Set(book.items.filter(t => t.jobId === id).map(t => t.id));
+  book.items = book.items.filter(t => !gone.has(t.id));
+  for (const t of book.items) t.deps = t.deps.filter(d => !gone.has(d));
+  book.phases = book.phases.filter(p => p.jobId !== id);
+  book.jobs = book.jobs.filter(j => j.id !== id);
+}
+
+function captureBaseline(book, today) {
+  book.baselineDate = today;
+  for (const t of book.items) if (!t.archived) t.baseline = t.start || t.finish ? { start: t.start, finish: t.finish } : null;
+}
+
+function setCapacity(book, monday, minutes) {
+  book.weeks[monday] = { notes: '', ...book.weeks[monday], capacity: minutes };
+}
+
+function setWeekNotes(book, monday, notes, defaultCapacity) {
+  book.weeks[monday] = { capacity: defaultCapacity, ...book.weeks[monday], notes };
+}
+
+function addDep(book, id, depId) {
+  const t = itemOf(book, id);
+  if (!t.deps.includes(depId)) t.deps.push(depId);
+}
+
+function removeDep(book, id, depId) {
+  const t = itemOf(book, id);
+  t.deps = t.deps.filter(d => d !== depId);
+}
+
+// ── ui/components.js ──
+// Small building blocks shared by several views.
+
+function jobColor(job) { return COLORS[job?.color]?.hex || COLORS.forest.hex; }
+
+function jobTag(job, { full = false } = {}) {
+  if (!job) return null;
+  return h('span', { class: 'job-tag', style: { '--job': jobColor(job) }, title: job.title },
+    h('span', { class: 'dot' }), full || !job.code ? job.title : job.code);
+}
+
+function chip(text, kind = '', title = '') { return h('span', { class: ['chip', kind], title: title || null }, text); }
+
+/** Due-date chip that turns red once late and amber within two days. */
+function dueChip(t) {
+  if (!t.finish || t.status === 'done') return null;
+  const late = isLate(t, today());
+  const soon = !late && t.finish <= addDays(today(), 2);
+  const label = t.kind === 'milestone' ? `◆ ${fmtDate(t.finish)}` : `Due ${relDay(t.finish)}`;
+  return chip(label, late ? 'danger' : soon ? 'warn' : '', fmtDate(t.finish));
+}
+
+/** "Blocked: reason" when stuck now; a quiet "After X" when merely waiting on a prerequisite. */
+function readiness(t) {
+  const book = store.book;
+  if (t.status === 'done') return null;
+  if (isBlocked(book, t, today())) {
+    const reasons = blockers(book, t);
+    return chip(`Blocked · ${reasons[0]}`, 'warn', reasons.join('\n'));
+  }
+  const waiting = waitingOn(book, t);
+  return waiting.length ? chip(`After “${waiting[0].title}”${waiting.length > 1 ? ` +${waiting.length - 1}` : ''}`, 'muted', waiting.map(w => w.title).join('\n')) : null;
+}
+
+/** Round completion checkbox. Disabled with an explanation while blocked. */
+function doneToggle(t) {
+  const book = store.book;
+  const reasons = t.status === 'done' ? [] : blockers(book, t);
+  const done = t.status === 'done';
+  return h('button', {
+    class: ['tick', done && 'on', t.kind === 'milestone' && 'tick-ms'],
+    'aria-pressed': String(done),
+    'aria-label': `${done ? 'Mark not done' : 'Mark done'}: ${t.title}`,
+    title: reasons.length ? `Blocked: ${reasons.join('; ')}` : done ? 'Mark as not done' : 'Mark done',
+    disabled: reasons.length ? true : null,
+    onclick: event => {
+      event.stopPropagation();
+      act(done ? 'Reopen' : 'Complete', d => setStatus(d, t.id, done ? 'todo' : 'done', today()));
+    },
+  }, icon('check', 14));
+}
+
+/** A list row for an item: toggle, title, metadata, optional trailing actions. */
+function itemRow(t, { actions = null, showJob = true, showPhase = false, dense = false } = {}) {
+  const book = store.book;
+  const job = jobOf(book, t.jobId);
+  const phase = showPhase ? phaseTitle(book, t.phaseId) : '';
+  return h('div', { class: ['row-item', t.status === 'done' && 'is-done', dense && 'dense'], 'data-item': t.id, style: { '--job': jobColor(job) } },
+    doneToggle(t),
+    h('div', { class: 'row-main' },
+      h('button', { class: 'row-title', onclick: () => openDrawer('item', t.id) }, t.title),
+      h('div', { class: 'row-meta' },
+        showJob ? jobTag(job) : null,
+        phase ? h('span', { class: 'muted' }, phase) : null,
+        t.status === 'doing' ? chip('Doing', 'accent') : null,
+        dueChip(t),
+        readiness(t),
+        t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null,
+      )),
+    actions ? h('div', { class: 'row-actions' }, actions) : null);
+}
+
+function segmented(options, value, onChange, label) {
+  return h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': label },
+    options.map(([key, text]) => h('button', {
+      role: 'radio', 'aria-checked': String(key === value), class: key === value ? 'on' : null,
+      onclick: () => onChange(key),
+    }, text)));
+}
+
+/** Planned vs capacity bar. */
+function meter(used, capacity, { label = true } = {}) {
+  const pct = capacity ? Math.min(100, (used / capacity) * 100) : used ? 100 : 0;
+  const over = used > capacity;
+  return h('div', { class: ['meter', over && 'over'] },
+    h('div', { class: 'meter-track' }, h('span', { style: { width: `${pct}%` } })),
+    label ? h('div', { class: 'meter-label' },
+      h('strong', null, fmtHours(used)), ` planned of ${fmtHours(capacity)}`,
+      h('span', { class: over ? 'danger' : 'muted' }, over ? ` · ${fmtHours(used - capacity)} over` : ` · ${fmtHours(capacity - used)} free`)) : null);
+}
+
+function emptyState(title, body, ...actions) {
+  return h('div', { class: 'empty' }, h('h3', null, title), body ? h('p', null, body) : null, actions.length ? h('div', { class: 'empty-actions' }, actions) : null);
+}
+
+function btn(label, onclick, { kind = '', iconName = '', title = '', disabled = false, attrs = {} } = {}) {
+  return h('button', { class: ['btn', kind], onclick, title: title || null, disabled: disabled || null, ...attrs }, iconName ? icon(iconName, 16) : null, label ? h('span', null, label) : null);
+}
+
+function iconBtn(name, label, onclick, attrs = {}) {
+  return h('button', { class: 'icon-btn', 'aria-label': label, title: label, onclick, ...attrs }, icon(name, 18));
+}
+
+// ── ui/commands.js ──
+// User commands shared by menus, buttons and keyboard shortcuts.
+
+const STANDARD_PHASES = ['Scope', 'Plan', 'Execute', 'Review & accept'];
+
+function createJob(title = '') {
+  const job = act('New job', d => addJob(d, { title: title || 'Untitled job' }));
+  if (job) { ui.focus = ''; openDrawer('job', job.id, 'title'); }
+  return job;
+}
+
+function undo() {
+  const label = store.undo();
+  if (label) notify(`Undid: ${label}`, { action: { label: 'Redo', run: redo } });
+}
+
+function redo() {
+  const label = store.redo();
+  if (label) notify(`Redid: ${label}`);
+}
+
+/** Creates an item from quick-add text. Falls back to the focused job, then the first job. */
+function quickAdd(text, defaults = {}) {
+  const book = store.book;
+  const q = parseQuickAdd(text, book.jobs, today());
+  // Refuse rather than guess: a mistyped #job or !date would otherwise land silently in the wrong place.
+  if (q.errors.length) { notify(`Not added — ${q.errors.join('; ')}. Fix it and press Enter again.`, { kind: 'warn' }); return null; }
+  if (!q.title) { notify('Type a title for the task.', { kind: 'warn' }); return null; }
+  let jobId = q.jobId || defaults.jobId || ui.focus || liveJobs(book)[0]?.id;
+  if (!jobId) jobId = act('New job', d => addJob(d, { title: 'Inbox', code: 'INBOX' }))?.id;
+  const finish = q.finish || (q.kind === 'milestone' ? q.plannedDay || today() : '');
+  const item = act('Add task', d => addItem(d, {
+    jobId, phaseId: defaults.phaseId && !q.jobId ? defaults.phaseId : '', title: q.title, kind: q.kind,
+    effort: q.effort ?? 0, plannedDay: q.kind === 'milestone' ? '' : q.plannedDay || defaults.plannedDay || '', finish,
+    start: defaults.start || '',
+  }));
+  if (item) {
+    const job = jobOf(store.book, item.jobId);
+    notify(`Added “${item.title}” to ${job.code || job.title}`, { action: { label: 'Open', run: () => openDrawer('item', item.id) } });
+  }
+  return item;
+}
+
+function removeItem(id) {
+  const t = itemOf(store.book, id);
+  if (!t) return;
+  act('Delete', d => deleteItem(d, id));
+  if (itemOf(store.book, id)) return;
+  if (ui.drawer?.id === id) ui.drawer = null;
+  rerender();
+  notify(`Deleted “${t.title}”`, { action: { label: 'Undo', run: undo } });
+}
+
+function removeJob(id) {
+  const j = jobOf(store.book, id);
+  const count = store.book.items.filter(t => t.jobId === id).length;
+  if (!confirm(`Delete “${j.title}” and its ${count} item${count === 1 ? '' : 's'}? You can undo this until you close the app. Archive keeps it instead.`)) return;
+  act('Delete job', d => deleteJob(d, id));
+  if (ui.focus === id) ui.focus = '';
+  ui.drawer = null;
+  rerender();
+  notify(`Deleted job “${j.title}”`, { action: { label: 'Undo', run: undo } });
+}
+
+// ── core/example.js ──
+// Synthetic example book, dated relative to today so it always looks current.
+
+function exampleBook(today) {
+  const book = newBook('Example planning book');
+  const d = n => addDays(today, n);
+  const phd = addJob(book, { title: 'Methodology chapter', code: 'PHD', outcome: 'A justified method choice and a supervisor-reviewed draft.', color: 'forest' },
+    ['Evidence review', 'Method selection', 'Draft & review']);
+  const home = addJob(book, { title: 'Kitchen refit', code: 'HOME', outcome: 'Agreed scope, three comparable quotes, contractor booked.', color: 'blue' },
+    ['Scope', 'Quotes', 'Works']);
+  const [p1, p2, p3] = book.phases.filter(p => p.jobId === phd.id);
+  const [h1, h2, h3] = book.phases.filter(p => p.jobId === home.id);
+  phd.notes.restart = 'Comparing assumptions behind methods A and B.\nNext: write up the limitations table before drafting.';
+  phd.notes.scope = 'Chapter 3 only. Out of scope: pilot study results.';
+  phd.notes.decisions = `${d(-6)} — Dropped method C: needs data we cannot collect in time.`;
+  home.notes.restart = 'Waiting on the second quote. Chase on Monday if nothing arrives.';
+
+  const read = addItem(book, { jobId: phd.id, phaseId: p1.id, title: 'Read core method papers', start: d(-10), finish: d(-3), effort: 0, status: 'done', doneOn: d(-3) });
+  const compare = addItem(book, { jobId: phd.id, phaseId: p1.id, title: 'Compare methods A and B', start: d(-2), finish: d(3), effort: 150, status: 'doing', plannedDay: today, deps: [read.id] });
+  const justify = addItem(book, { jobId: phd.id, phaseId: p2.id, title: 'Write method justification', start: d(4), finish: d(11), effort: 240, deps: [compare.id] });
+  const limits = addItem(book, { jobId: phd.id, phaseId: p2.id, title: 'Limitations table', start: d(4), finish: d(7), effort: 90, plannedDay: d(1), deps: [compare.id] });
+  const draft = addItem(book, { jobId: phd.id, phaseId: p3.id, title: 'Full chapter draft', start: d(12), finish: d(24), effort: 600, deps: [justify.id, limits.id] });
+  addItem(book, { jobId: phd.id, phaseId: p3.id, title: 'Supervisor accepts draft', kind: 'milestone', finish: d(31), deps: [draft.id], notes: 'Acceptance: supervisor confirms the method and its limitations are addressed.' });
+
+  addItem(book, { jobId: home.id, phaseId: h1.id, title: 'Measure and photograph kitchen', start: d(-4), finish: d(-1), effort: 60, plannedDay: d(-1) });
+  const brief = addItem(book, { jobId: home.id, phaseId: h1.id, title: 'Write scope brief', start: d(0), finish: d(2), effort: 45, plannedDay: today, deps: [] });
+  const quotes = addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Get three quotes', start: d(3), finish: d(17), effort: 120, deps: [brief.id], blocker: '' });
+  addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Second contractor site visit', start: d(5), finish: d(5), effort: 60, blocker: 'Contractor to confirm a date' });
+  const choose = addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Contractor chosen', kind: 'milestone', finish: d(20), deps: [quotes.id] });
+  addItem(book, { jobId: home.id, phaseId: h3.id, title: 'Works on site', start: d(35), finish: d(48), effort: 120, deps: [choose.id] });
+
+  captureBaseline(book, d(-7));
+  // Show some slippage against the baseline.
+  justify.baseline = { start: d(2), finish: d(9) };
+  book.weeks[mondayOf(today)] = { capacity: 8 * 60, notes: 'Finish the comparison. Keep Friday evening free.' };
+  return book;
+}
+
+// ── ui/files.js ──
+// Saving and opening planning books.
+//
+// Three layers, strongest first:
+//  1. A linked file (File System Access API, Edge/Chrome): explicit save, then autosave.
+//  2. A recovery copy in this browser's local storage, restored on next launch.
+//  3. Download fallback where neither is available (cannot confirm the write).
+
+const RECOVERY_KEY = 'tas-time:recovery:v3';
+const PREF_KEY = 'tas-time:prefs';
+const IDB_NAME = 'tas-time';
+const PICKER_TYPES = [{ description: 'Tas-Time planning book', accept: { 'application/json': ['.json'] } }];
+
+const file = {
+  handle: null,
+  name: '',
+  state: 'none',        // none | linked | saving | error | reconnect
+  savedAt: null,
+  lastError: '',
+  restoredAt: null,     // set when unsaved work was restored on launch
+};
+
+const canLinkFiles = typeof window !== 'undefined' && typeof window.showSaveFilePicker === 'function';
+
+function prefs() {
+  try { return { recovery: true, ...JSON.parse(localStorage.getItem(PREF_KEY) || '{}') }; } catch { return { recovery: true }; }
+}
+
+function setPref(key, value) {
+  try { localStorage.setItem(PREF_KEY, JSON.stringify({ ...prefs(), [key]: value })); } catch { /* storage unavailable */ }
+  if (key === 'recovery' && !value) clearRecovery();
+}
+
+function suggestedName() {
+  return `${store.book.name.replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '') || 'planning-book'}.json`;
+}
+
+let writing = Promise.resolve();
+
+// Incremented whenever a different book replaces the open one. A save started in an
+// earlier session writes only its own snapshot and never touches the current session's state.
+let session = 0;
+function beginSession() { session++; autosave.cancel(); }
+
+/** What a save writes, fixed at the moment the save starts. */
+function snapshot() { return { raw: encodeBook(store.book), rev: store.revision, session }; }
+
+class StaleSave extends Error {
+  constructor() { super('A different book was opened before this save finished. Nothing was written.'); this.name = 'StaleSave'; }
+}
+
+/** Saves to the linked file, asking for a location the first time (or always with saveAs). */
+async function save({ saveAs = false } = {}) {
+  if (!canLinkFiles) return download();
+  const snap = snapshot();
+  try {
+    let handle = !saveAs && file.handle;
+    if (!handle) handle = await window.showSaveFilePicker({ suggestedName: file.name || suggestedName(), types: PICKER_TYPES });
+    if (!(await ensurePermission(handle, true))) throw new Error('Permission to write the file was not granted.');
+    if (snap.session !== session) throw new StaleSave();
+    await queueWrite(handle, snap);
+    if (snap.session !== session) return true; // written, but the user has moved on to another book
+    link(handle);
+    notify(`Saved to ${handle.name}`);
+    return true;
+  } catch (error) {
+    if (error.name === 'AbortError') return false;
+    if (error.name === 'StaleSave') { notify(error.message, { kind: 'warn' }); return false; }
+    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender(); }
+    notify(`Save failed: ${error.message}`, { kind: 'error' });
+    return false;
+  }
+}
+
+/** Writes are serialised; each writes its own snapshot and only updates state for its own session. */
+function queueWrite(handle, snap) {
+  if (snap.session === session) { file.state = 'saving'; rerender(); }
+  writing = writing.catch(() => {}).then(async () => {
+    const writer = await handle.createWritable();
+    await writer.write(snap.raw);
+    await writer.close();
+    if (snap.session !== session) return;
+    store.markSaved(snap.rev);
+    file.savedAt = new Date(); file.state = 'linked'; file.lastError = '';
+    writeRecovery.flush();
+  });
+  return writing;
+}
+
+function link(handle) {
+  file.handle = handle; file.name = handle.name; file.state = 'linked';
+  idbSet('lastFile', handle);
+  rerender();
+}
+
+async function ensurePermission(handle, request) {
+  if (!handle.queryPermission) return true;
+  const opts = { mode: 'readwrite' };
+  if ((await handle.queryPermission(opts)) === 'granted') return true;
+  return request && (await handle.requestPermission(opts)) === 'granted';
+}
+
+/** Autosave after edits once a file is linked. Never prompts. */
+const autosave = debounce(() => { flushToFile(); }, 1200);
+
+/** Writes pending changes to the linked file now. Resolves true when the file holds them. */
+async function flushToFile() {
+  autosave.cancel();
+  const handle = file.handle;
+  if (!handle || file.state === 'reconnect') return false;
+  if (!store.dirty) { await writing.catch(() => {}); return file.state === 'linked'; }
+  const snap = snapshot();
+  try {
+    if (!(await ensurePermission(handle, false))) {
+      if (snap.session === session) { file.state = 'reconnect'; rerender(); }
+      return false;
+    }
+    if (snap.session !== session) return false;
+    await queueWrite(handle, snap);
+    if (snap.session === session) rerender();
+    return true;
+  } catch (error) {
+    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender(); }
+    return false;
+  }
+}
+
+/** Re-grants write access after a relaunch (needs a click, so it is a button). */
+async function reconnect() {
+  if (!file.handle) return save();
+  const mine = session;
+  try {
+    if (!(await ensurePermission(file.handle, true)) || mine !== session) return false;
+    file.state = 'linked';
+    if (store.dirty) await queueWrite(file.handle, snapshot());
+    rerender();
+    return true;
+  } catch (error) { notify(error.message, { kind: 'error' }); return false; }
+}
+
+function download() {
+  const url = URL.createObjectURL(new Blob([encodeBook(store.book)], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: file.name || suggestedName() });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  notify('Download started. This browser cannot confirm the file was saved — check your Downloads folder.', { kind: 'warn', timeout: 9000 });
+  return true;
+}
+
+/**
+ * Before another book replaces this one: finish writing pending changes to the linked file,
+ * or ask before discarding them. Never drops edits silently.
+ */
+async function settleBeforeReplace() {
+  if (!store.dirty) { await writing.catch(() => {}); return true; }
+  if (file.handle && (file.state === 'linked' || file.state === 'saving') && await flushToFile() && !store.dirty) return true;
+  return confirm(file.handle
+    ? `Changes to this book could not be saved to ${file.name}. Discard them and continue?`
+    : 'This book has changes that are not saved to a file. Discard them and continue?');
+}
+
+async function openFile() {
+  if (!(await settleBeforeReplace())) return;
+  if (typeof window.showOpenFilePicker === 'function') {
+    try {
+      const [handle] = await window.showOpenFilePicker({ types: PICKER_TYPES, multiple: false });
+      const f = await handle.getFile();
+      await loadText(await f.text(), f.name, handle);
+    } catch (error) {
+      if (error.name !== 'AbortError') notify(`Could not open: ${error.message}`, { kind: 'error' });
+    }
+    return;
+  }
+  const input = Object.assign(document.createElement('input'), { type: 'file', accept: '.json,application/json' });
+  input.addEventListener('change', async () => {
+    const f = input.files[0];
+    if (f) { try { await loadText(await f.text(), f.name, null); } catch (error) { notify(`Could not open: ${error.message}`, { kind: 'error' }); } }
+  });
+  input.click();
+}
+
+async function loadText(text, name, handle) {
+  const { book, upgradedFrom } = decodeBook(text);
+  beginSession();
+  store.replace(book, { dirty: !!upgradedFrom });
+  resetView();
+  file.handle = null; file.name = name; file.state = 'none'; file.restoredAt = null;
+  if (handle) {
+    if (upgradedFrom) {
+      // Never overwrite an older-format original silently.
+      file.name = '';
+      notify(`Upgraded from version ${upgradedFrom}. Use Save to choose where to keep the new version — the original file is untouched.`, { kind: 'warn', timeout: 12000 });
+    } else link(handle);
+  }
+  writeRecovery.flush();
+  rerender();
+  if (!upgradedFrom) notify(`Opened ${name}`);
+}
+
+async function newBlankBook() {
+  if (!(await settleBeforeReplace())) return;
+  beginSession();
+  store.replace(newBook());
+  unlink(); resetView(); rerender();
+}
+
+async function loadExample(today) {
+  if (!(await settleBeforeReplace())) return;
+  beginSession();
+  store.replace(exampleBook(today), { dirty: true });
+  unlink(); resetView(); rerender();
+  notify('Example loaded. It is synthetic — start your own with New book when ready.');
+}
+
+function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; }
+
+function resetView() {
+  ui.focus = ''; ui.drawer = null; ui.notesJob = ''; ui.week = mondayOf(todayIso());
+}
+
+// ── Recovery copy ──
+
+const writeRecovery = debounce(() => {
+  if (!prefs().recovery) return;
+  try {
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book }));
+  } catch { /* quota or storage blocked: the file remains the source of truth */ }
+}, 400);
+
+function clearRecovery() { try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ } }
+
+/** On launch: restore the last session (and its file link, pending permission). */
+async function restoreSession() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(RECOVERY_KEY) || 'null'); } catch { saved = null; }
+  if (!saved?.book) return false;
+  let book;
+  try { book = decodeBook(JSON.stringify(saved.book)).book; } catch { return false; }
+  store.replace(book, { dirty: !!saved.dirty });
+  file.name = saved.fileName || '';
+  if (saved.dirty) file.restoredAt = new Date(saved.at);
+  const handle = await idbGet('lastFile');
+  if (handle && handle.name === saved.fileName) {
+    file.handle = handle;
+    file.state = (await ensurePermission(handle, false).catch(() => false)) ? 'linked' : 'reconnect';
+  }
+  return true;
+}
+
+// ── IndexedDB holds the file handle (handles cannot go in localStorage) ──
+
+function idb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('kv');
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbSet(key, value) {
+  try {
+    const db = await idb();
+    db.transaction('kv', 'readwrite').objectStore('kv').put(value, key);
+  } catch { /* storage blocked: linking still works for this session */ }
+}
+
+async function idbGet(key) {
+  try {
+    const db = await idb();
+    return await new Promise(resolve => {
+      const req = db.transaction('kv').objectStore('kv').get(key);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch { return null; }
+}
+
+// ── ui/overlay.js ──
+// Toasts, popover menus and the small modal used for help.
+
+// ── Toasts ──
+
+function initToasts() {
+  const host = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' });
+  document.body.append(host);
+  onNotify((message, { kind = '', action = null, timeout = kind === 'error' ? 8000 : 4500 } = {}) => {
+    const el = h('div', { class: ['toast', kind] },
+      kind === 'error' || kind === 'warn' ? icon('alert', 16) : icon('check', 16),
+      h('span', null, message),
+      action ? h('button', { class: 'toast-action', onclick: () => { action.run(); el.remove(); } }, action.label) : null,
+      h('button', { class: 'toast-close', 'aria-label': 'Dismiss', onclick: () => el.remove() }, icon('x', 14)));
+    host.append(el);
+    while (host.children.length > 3) host.firstChild.remove();
+    setTimeout(() => el.remove(), timeout);
+  });
+}
+
+// ── Popover menu ──
+
+let openMenu = null;
+
+function closeMenu() {
+  if (!openMenu) return;
+  openMenu.el.remove();
+  openMenu.anchor.setAttribute('aria-expanded', 'false');
+  openMenu.anchor.focus({ preventScroll: true });
+  openMenu = null;
+}
+
+/** items: [{ label, icon?, hint?, run, danger?, disabled? } | 'separator' | { heading }] */
+function showMenu(anchor, items, { align = 'end' } = {}) {
+  if (openMenu?.anchor === anchor) { closeMenu(); return; }
+  closeMenu();
+  const el = h('div', { class: 'menu', role: 'menu' }, items.map(it => {
+    if (it === 'separator') return h('div', { class: 'menu-sep', role: 'separator' });
+    if (it.heading) return h('div', { class: 'menu-heading' }, it.heading);
+    return h('button', {
+      role: 'menuitem', class: ['menu-item', it.danger && 'danger'], disabled: it.disabled || null,
+      onclick: () => { closeMenu(); it.run(); },
+    }, it.icon ? icon(it.icon, 16) : h('span', { class: 'icon-gap' }), h('span', null, it.label), it.hint ? h('kbd', null, it.hint) : null);
+  }));
+  document.body.append(el);
+  const r = anchor.getBoundingClientRect();
+  const w = el.offsetWidth;
+  const left = align === 'end' ? r.right - w : r.left;
+  el.style.left = `${Math.max(8, Math.min(left, innerWidth - w - 8))}px`;
+  const below = r.bottom + 6;
+  el.style.top = `${below + el.offsetHeight > innerHeight - 8 ? Math.max(8, r.top - el.offsetHeight - 6) : below}px`;
+  anchor.setAttribute('aria-expanded', 'true');
+  openMenu = { el, anchor };
+  el.querySelector('button:not([disabled])')?.focus();
+  el.addEventListener('keydown', event => {
+    const buttons = [...el.querySelectorAll('button:not([disabled])')];
+    const i = buttons.indexOf(document.activeElement);
+    if (event.key === 'ArrowDown') { event.preventDefault(); buttons[(i + 1) % buttons.length].focus(); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); buttons[(i - 1 + buttons.length) % buttons.length].focus(); }
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); }
+    if (event.key === 'Tab') closeMenu();
+  });
+}
+
+document.addEventListener('pointerdown', event => {
+  if (openMenu && !openMenu.el.contains(event.target) && !openMenu.anchor.contains(event.target)) closeMenu();
+});
+
+// ── Modal ──
+
+function showModal(title, body, { wide = false } = {}) {
+  const dialog = h('dialog', { class: ['modal', wide && 'wide'], 'aria-label': title },
+    h('div', { class: 'modal-head' }, h('h2', null, title),
+      h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: () => dialog.close() }, icon('x', 18))),
+    h('div', { class: 'modal-body' }, body));
+  dialog.addEventListener('close', () => dialog.remove());
+  document.body.append(dialog);
+  dialog.showModal();
+  return dialog;
+}
+
+// ── ui/appearance.js ──
+// Visual style and light/dark choice. Stored per browser, like a window preference;
+// it is not part of the planning book.
+
+const STYLES = [['fluent', 'Fluent (Microsoft 365)'], ['notebook', 'Notebook']];
+const SCHEMES = [['system', 'Match Windows'], ['light', 'Light'], ['dark', 'Dark']];
+
+function applyAppearance() {
+  const p = prefs();
+  const root = document.documentElement;
+  root.dataset.style = STYLES.some(([k]) => k === p.style) ? p.style : 'fluent';
+  if (p.scheme === 'light' || p.scheme === 'dark') root.dataset.scheme = p.scheme;
+  else delete root.dataset.scheme;
+}
+
+function appearanceMenu(anchor) {
+  const p = prefs();
+  const style = document.documentElement.dataset.style;
+  const scheme = p.scheme || 'system';
+  const pick = (key, value) => { setPref(key, value); applyAppearance(); };
+  showMenu(anchor, [
+    { heading: 'Style' },
+    ...STYLES.map(([k, label]) => ({ label, icon: k === style ? 'check' : '', run: () => pick('style', k) })),
+    'separator',
+    { heading: 'Theme' },
+    ...SCHEMES.map(([k, label]) => ({ label, icon: k === scheme ? 'check' : '', run: () => pick('scheme', k) })),
+  ], { align: 'start' });
+}
+
+// ── ui/drawer.js ──
+// Side panel editor for items and jobs. Every field saves as you go — there is no
+// "Keep changes" step; undo (Ctrl+Z outside a text field) reverts mistakes.
+
+let typedSinceRender = false;
+
+function field(label, control, { hint = '', id = '' } = {}) {
+  return h('div', { class: 'field' }, h('label', { for: id || null }, label), control, hint ? h('p', { class: 'field-hint' }, hint) : null);
+}
+
+/** Text input that saves on every keystroke (coalesced into one undo step). */
+function liveText(id, value, onValue, attrs = {}) {
+  const tag = attrs.multiline ? 'textarea' : 'input';
+  const el = h(tag, {
+    id, ...attrs, multiline: null,
+    oninput: e => { typedSinceRender = true; if (tag === 'textarea') autosize(e.target); onValue(e.target.value); },
+  });
+  el.value = value;
+  if (tag === 'textarea') requestAnimationFrame(() => autosize(el));
+  return el;
+}
+
+function renderDrawer() {
+  const d = ui.drawer;
+  if (!d) return null;
+  const record = d.type === 'item' ? itemOf(store.book, d.id) : jobOf(store.book, d.id);
+  if (!record) { ui.drawer = null; return null; }
+  const panel = h('aside', { class: 'drawer', id: 'drawer', 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
+    d.type === 'item' ? itemEditor(record) : jobEditor(record));
+  // Text edits commit quietly (without rebuilding the page); refresh once focus leaves the field.
+  panel.addEventListener('focusout', () => { if (typedSinceRender) { typedSinceRender = false; setTimeout(rerender, 0); } });
+  if (d.focusField) {
+    const target = d.focusField;
+    d.focusField = '';
+    requestAnimationFrame(() => {
+      const el = document.getElementById(`d-${target}`);
+      el?.focus();
+      if (target === 'title') el?.select();
+      el?.scrollIntoView({ block: 'center' });
+    });
+  }
+  return panel;
+}
+
+function itemEditor(t) {
+  const book = store.book;
+  const job = jobOf(book, t.jobId);
+  const set = (label, patch) => act(label, dd => patchItem(dd, t.id, patch, today()));
+  const typed = (key, label) => value => act(label, dd => patchItem(dd, t.id, { [key]: value }, today()), { key: `${key}:${t.id}`, quiet: true });
+  const reasons = blockers(book, t);
+  const conflicts = dateConflicts(book, t);
+  const s = slip(t);
+  const isMs = t.kind === 'milestone';
+
+  const effortInput = h('input', {
+    id: 'd-effort', value: fmtEffort(t.effort), placeholder: 'e.g. 2h, 45m, 1h30', autocomplete: 'off',
+    onchange: e => {
+      const min = parseEffort(e.target.value);
+      if (min === null) { e.target.setCustomValidity('Use hours and minutes, like 2h, 45m or 1h30.'); e.target.reportValidity(); return; }
+      e.target.setCustomValidity('');
+      set('Set effort', { effort: Math.min(min, 1e6) });
+    },
+  });
+
+  const dateInput = (key, value) => h('input', { id: `d-${key}`, type: 'date', value, min: '1900-01-01', max: '2200-12-31', onchange: e => set('Change date', { [key]: e.target.value }) });
+
+  const candidates = book.items.filter(x => x.id !== t.id && !t.deps.includes(x.id) && !x.archived);
+  const loops = dependents(book, t.id);
+  const depSelect = h('select', {
+    id: 'd-deps', 'aria-label': 'Add a prerequisite',
+    onchange: e => { if (e.target.value) act('Add prerequisite', dd => addDep(dd, t.id, e.target.value)); },
+  }, h('option', { value: '' }, 'Add a prerequisite…'),
+  liveJobs(book).map(j => {
+    const opts = candidates.filter(x => x.jobId === j.id);
+    return opts.length ? h('optgroup', { label: j.title }, opts.map(x => h('option', { value: x.id, disabled: loops.has(x.id) || null }, `${x.title}${loops.has(x.id) ? ' (would create a loop)' : ''}`))) : null;
+  }));
+  const neededBy = book.items.filter(x => x.deps.includes(t.id));
+
+  return [
+    h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
+      h('div', { class: 'drawer-crumbs' }, h('span', { class: 'dot' }), job.title, t.archived ? chip('Archived', 'muted') : null),
+      h('div', { class: 'drawer-head-actions' },
+        iconBtn('copy', 'Duplicate', () => { const c = act('Duplicate', dd => duplicateItem(dd, t.id)); if (c) openDrawer('item', c.id, 'title'); }),
+        iconBtn('archive', t.archived ? 'Restore from archive' : 'Archive', () => set(t.archived ? 'Restore' : 'Archive', { archived: !t.archived })),
+        iconBtn('trash', 'Delete', () => removeItem(t.id)),
+        iconBtn('x', 'Close (Esc)', closeDrawer))),
+    liveText('d-title', t.title, typed('title', 'Rename'), { class: 'drawer-title', 'aria-label': 'Title', maxlength: 500, placeholder: 'Task name' }),
+    h('div', { class: 'drawer-row' },
+      segmented([['task', 'Task'], ['milestone', '◆ Milestone']], t.kind, k => set('Change kind', { kind: k, finish: t.finish || t.start || today() }), 'Kind'),
+      segmented([['todo', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status, st => set(st === 'done' ? 'Complete' : 'Change status', { status: st }), 'Status')),
+    reasons.length ? h('div', { class: 'notice warn' }, icon('alert', 16), h('div', null, h('strong', null, 'Blocked'), h('ul', null, reasons.map(r => h('li', null, r))))) : null,
+    conflicts.length ? h('div', { class: 'notice danger' }, icon('alert', 16), h('div', null, `Starts before ${conflicts.map(c => `“${c.title}”`).join(', ')} is forecast to finish (${conflicts.map(c => fmtShort(c.finish)).join(', ')}).`)) : null,
+
+    h('div', { class: 'fields two' },
+      field('Job', h('select', { id: 'd-job', onchange: e => set('Move to job', { jobId: e.target.value, phaseId: '' }) },
+        liveJobs(book).map(j => h('option', { value: j.id, selected: j.id === t.jobId }, j.title))), { id: 'd-job' }),
+      field('Phase', h('select', { id: 'd-phase', onchange: e => set('Change phase', { phaseId: e.target.value }) },
+        h('option', { value: '' }, 'No phase'), phasesOf(book, t.jobId).map(p => h('option', { value: p.id, selected: p.id === t.phaseId }, p.title))), { id: 'd-phase' })),
+
+    h('div', { class: 'fields two' },
+      isMs ? null : field('Start', dateInput('start', t.start), { id: 'd-start' }),
+      field(isMs ? 'Date' : 'Finish', dateInput('finish', t.finish), { id: 'd-finish', hint: t.finish && t.status !== 'done' ? relDay(t.finish) : '' })),
+    t.baseline?.finish ? h('p', { class: ['field-hint', s > 0 ? 'danger' : ''] }, `Baseline ${fmtShort(t.baseline.start || t.baseline.finish)}${t.baseline.start && t.baseline.start !== t.baseline.finish ? ` – ${fmtShort(t.baseline.finish)}` : ''}${s ? ` · ${s > 0 ? `${s} days later` : `${-s} days earlier`}` : ' · on baseline'}`) : null,
+
+    h('div', { class: 'fields two' },
+      field('Effort left', effortInput, { id: 'd-effort', hint: 'Your own working time, not calendar time.' }),
+      field('Work on', h('input', { id: 'd-plannedDay', type: 'date', value: t.plannedDay, onchange: e => set('Plan day', { plannedDay: e.target.value }) }), { id: 'd-plannedDay', hint: t.plannedDay ? relDay(t.plannedDay) : 'Day you intend to do it' })),
+
+    field('Waiting on / constraint', liveText('d-blocker', t.blocker, typed('blocker', 'Edit constraint'), { multiline: true, rows: 1, placeholder: 'e.g. Supervisor feedback, access to the lab, a delivery…' }),
+      { id: 'd-blocker', hint: 'Anything written here marks the task as blocked until you clear it.' }),
+
+    h('div', { class: 'field' }, h('label', { for: 'd-deps' }, 'Prerequisites'),
+      t.deps.length ? h('ul', { class: 'deps' }, t.deps.map(id => {
+        const d = itemOf(book, id);
+        return h('li', { class: d.status === 'done' ? 'is-done' : null },
+          h('span', { class: ['tick-mini', d.status === 'done' && 'on'] }, d.status === 'done' ? icon('check', 12) : null),
+          h('button', { class: 'link', onclick: () => openDrawer('item', id) }, d.title),
+          h('span', { class: 'muted' }, d.finish ? fmtShort(d.finish) : ''),
+          iconBtn('x', `Remove prerequisite ${d.title}`, () => act('Remove prerequisite', dd => removeDep(dd, t.id, id)), { class: 'icon-btn sm' }));
+      })) : null,
+      depSelect,
+      neededBy.length ? h('p', { class: 'field-hint' }, 'Needed by: ', neededBy.map((x, i) => [i ? ', ' : '', h('button', { class: 'link', onclick: () => openDrawer('item', x.id) }, x.title)])) : null),
+
+    field('Owner / contact', liveText('d-owner', t.owner, typed('owner', 'Edit owner'), { maxlength: 200, placeholder: 'Optional' }), { id: 'd-owner' }),
+    field(isMs ? 'Acceptance criteria' : 'Notes', liveText('d-notes', t.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: isMs ? 'What must be true for this to be accepted?' : 'Details, links, acceptance criteria…' }), { id: 'd-notes' }),
+    t.doneOn ? h('p', { class: 'field-hint' }, `Completed ${fmtDate(t.doneOn)}.`) : null,
+  ];
+}
+
+function jobEditor(job) {
+  const book = store.book;
+  const set = (label, patch) => act(label, dd => patchJob(dd, job.id, patch));
+  const typed = (key, label) => value => act(label, dd => patchJob(dd, job.id, { [key]: value }), { key: `job-${key}:${job.id}`, quiet: true });
+  const phases = phasesOf(book, job.id);
+  const count = id => book.items.filter(t => t.phaseId === id && !t.archived).length;
+
+  const newPhase = h('input', {
+    id: 'd-phases', placeholder: 'Add a phase — Enter', autocomplete: 'off',
+    onkeydown: e => {
+      if (e.key !== 'Enter' || !e.target.value.trim()) return;
+      act('Add phase', dd => addPhase(dd, job.id, e.target.value.trim()));
+      ui.drawer.focusField = 'phases';
+    },
+  });
+
+  return [
+    h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
+      h('div', { class: 'drawer-crumbs' }, h('span', { class: 'dot' }), 'Job', job.archived ? chip('Archived', 'muted') : null),
+      h('div', { class: 'drawer-head-actions' },
+        iconBtn('notes', 'Open notebook', () => { ui.notesJob = job.id; ui.drawer = null; setView('notes'); }),
+        iconBtn('archive', job.archived ? 'Restore job' : 'Archive job', () => set(job.archived ? 'Restore job' : 'Archive job', { archived: !job.archived })),
+        iconBtn('trash', 'Delete job', () => removeJob(job.id)),
+        iconBtn('x', 'Close (Esc)', closeDrawer))),
+    liveText('d-title', job.title, typed('title', 'Rename job'), { class: 'drawer-title', 'aria-label': 'Job name', maxlength: 500, placeholder: 'Job name' }),
+    field('Outcome', liveText('d-outcome', job.outcome, typed('outcome', 'Edit outcome'), { multiline: true, rows: 2, placeholder: 'What will exist when this job is done?' }), { id: 'd-outcome' }),
+    h('div', { class: 'fields two' },
+      field('Short code', liveText('d-code', job.code, typed('code', 'Edit code'), { maxlength: 40, placeholder: 'e.g. PHD — used with # in quick add' }), { id: 'd-code' }),
+      field('Status', segmented(Object.entries(JOB_STATUS), job.status, st => set('Job status', { status: st }), 'Job status'))),
+    field('Colour', h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Job colour' }, Object.entries(COLORS).map(([key, c]) => h('button', {
+      role: 'radio', 'aria-checked': String(job.color === key), 'aria-label': c.label, title: c.label,
+      class: ['swatch', job.color === key && 'on'], style: { '--sw': c.hex }, onclick: () => set('Job colour', { color: key }),
+    })))),
+    h('div', { class: 'field' }, h('label', { for: 'd-phases' }, 'Phases'),
+      phases.length ? h('ol', { class: 'phase-list' }, phases.map((p, i) => h('li', null,
+        h('input', { id: `d-phase-${p.id}`, value: p.title, 'aria-label': `Phase ${i + 1} name`, onchange: e => act('Rename phase', dd => renamePhase(dd, p.id, e.target.value.trim() || p.title)) }),
+        h('span', { class: 'muted' }, String(count(p.id))),
+        iconBtn('left', 'Move earlier', () => act('Reorder phases', dd => movePhase(dd, p.id, -1)), { class: 'icon-btn sm up', disabled: i === 0 || null }),
+        iconBtn('right', 'Move later', () => act('Reorder phases', dd => movePhase(dd, p.id, 1)), { class: 'icon-btn sm down', disabled: i === phases.length - 1 || null }),
+        iconBtn('x', `Remove phase ${p.title}`, () => act('Remove phase', dd => deletePhase(dd, p.id)), { class: 'icon-btn sm', title: count(p.id) ? 'Remove phase (its tasks stay in the job, unphased)' : 'Remove phase' }))))
+        : btn(`Add standard phases: ${STANDARD_PHASES.join(' · ')}`, () => act('Add phases', dd => STANDARD_PHASES.forEach(p => addPhase(dd, job.id, p))), { kind: 'sm ghost', iconName: 'plus' }),
+      newPhase),
+    h('p', { class: 'field-hint' }, `${NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length} of ${NOTE_PAGES.length} notebook pages written.`),
+  ];
+}
+
+// ── ui/views/welcome.js ──
+// First-run screen, shown whenever the open book has no jobs.
+
+function welcome() {
+  const step = (n, title, body) => h('li', null, h('span', { class: 'step-n' }, n), h('div', null, h('strong', null, title), h('p', null, body)));
+  return h('div', { class: 'view welcome' },
+    h('div', { class: 'welcome-card' },
+      h('p', { class: 'eyebrow' }, 'Tas-Time'),
+      h('h1', null, 'From the long view to today’s next step.'),
+      h('p', { class: 'lead' }, 'Plan jobs in phases like a construction programme, then commit to a realistic week and a focused day. Everything stays in one file that you control.'),
+      h('div', { class: 'welcome-actions' },
+        btn('Create your first job', () => createJob(), { kind: 'primary lg', iconName: 'plus' }),
+        btn('Open a planning book', openFile, { kind: 'lg', iconName: 'open' }),
+        btn('Explore an example', () => loadExample(today()), { kind: 'ghost lg' })),
+      h('ol', { class: 'steps' },
+        step('1', 'Jobs and phases', 'A job is an outcome — a chapter, a refit, a project. Phases give it shape.'),
+        step('2', 'Plan', 'Give tasks dates and prerequisites. Drag bars on the programme to re-forecast.'),
+        step('3', 'Week & Today', 'Set the hours you really have, then pick what fits. Leave a resume note when you stop.')),
+      h('p', { class: 'fine' }, 'Nothing leaves this computer. No account, server or internet connection is used.')));
+}
+
+// ── ui/views/today.js ──
+// Today: what to do now, what slipped, and where each job left off.
+
+function planFor(id, day, label) {
+  return act(label, d => patchItem(d, id, { plannedDay: day }, today()));
+}
+
+function renderToday() {
+  const book = store.book;
+  if (!liveJobs(book).length) return welcome();
+  const day = today();
+  const { planned, carried, overdue } = todayList(book, day, ui.focus);
+  const open = planned.filter(t => t.status !== 'done');
+  const load = weekLoad(book, mondayOf(day));
+  const capacity = book.weeks[mondayOf(day)]?.capacity ?? DEFAULT_CAPACITY;
+
+  const sub = open.length
+    ? `${open.length} to do · ${fmtHours(openEffort(open))} of work${planned.length - open.length ? ` · ${planned.length - open.length} done` : ''}`
+    : planned.length ? 'Everything planned for today is done.' : 'Nothing planned yet.';
+
+  const later = t => [
+    btn('', () => planFor(t.id, addDays(day, 1), 'Move to tomorrow'), { iconName: 'arrowRight', title: 'Move to tomorrow', kind: 'ghost sm' }),
+  ];
+  const bringIn = t => [btn('Today', () => planFor(t.id, day, 'Plan for today'), { kind: 'sm', iconName: 'plus', title: 'Plan for today' })];
+
+  const main = h('div', { class: 'today-main' },
+    h('section', { class: 'panel' },
+      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today')),
+      planned.length
+        ? h('div', { class: 'list' }, [...open, ...planned.filter(t => t.status === 'done')].map(t => itemRow(t, { actions: t.status === 'done' ? null : later(t), showPhase: true })))
+        : suggestions(book, day)),
+    carried.length ? h('section', { class: 'panel' },
+      h('div', { class: 'panel-head' },
+        h('h2', null, 'Carried over'),
+        h('span', { class: 'muted' }, 'Planned for an earlier day, not finished'),
+        btn('Move all to today', () => act('Carry over', d => { for (const t of carried) patchItem(d, t.id, { plannedDay: day }, day); }), { kind: 'sm' })),
+      h('div', { class: 'list' }, carried.map(t => itemRow(t, { actions: bringIn(t), showPhase: true })))) : null,
+    overdue.length ? h('section', { class: 'panel' },
+      h('div', { class: 'panel-head' }, h('h2', null, 'Past due'), h('span', { class: 'muted' }, 'Forecast finish has passed — finish, re-plan, or move the date')),
+      h('div', { class: 'list' }, overdue.map(t => itemRow(t, { actions: bringIn(t), showPhase: true })))) : null);
+
+  const side = h('aside', { class: 'today-side' },
+    h('section', { class: 'panel' },
+      h('div', { class: 'panel-head' }, h('h2', null, 'This week'), btn('Open week', () => setView('week'), { kind: 'ghost sm' })),
+      meter(load.planned, capacity)),
+    resumeNotes(book, planned, day),
+    milestones(book, day));
+
+  return h('div', { class: 'view today' },
+    h('header', { class: 'page-head' },
+      h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub))),
+    h('div', { class: 'today-grid' }, main, side));
+}
+
+function suggestions(book, day) {
+  const ready = readyToPlan(book, mondayOf(day), ui.focus).filter(t => !t.blocker && t.deps.every(id => book.items.find(x => x.id === id)?.status === 'done')).slice(0, 5);
+  if (!ready.length) return emptyState('Nothing planned for today', 'Add a task above, or plan work from the Week view.');
+  return h('div', null,
+    h('p', { class: 'hint' }, 'Nothing planned for today. Ready to start, most urgent first:'),
+    h('div', { class: 'list' }, ready.map(t => itemRow(t, { showPhase: true, actions: [btn('Today', () => planFor(t.id, day, 'Plan for today'), { kind: 'sm', iconName: 'plus' })] }))));
+}
+
+/** Restart notes for the jobs you are touching today (or the focused job). */
+function resumeNotes(book, planned, day) {
+  const ids = ui.focus ? [ui.focus] : [...new Set(planned.map(t => t.jobId))];
+  const jobs = ids.map(id => jobOf(book, id)).filter(Boolean);
+  if (!jobs.length) return null;
+  return h('section', { class: 'panel' },
+    h('div', { class: 'panel-head' }, h('h2', null, 'Resume where you left off')),
+    jobs.map(job => {
+      const area = h('textarea', {
+        class: 'resume-text', rows: 2, 'aria-label': `Resume note for ${job.title}`, id: `resume-${job.id}`,
+        placeholder: 'Where you stopped, what is unresolved, the next concrete step…',
+        oninput: e => { autosize(e.target); act('Edit resume note', d => setNote(d, job.id, 'restart', e.target.value), { key: `restart:${job.id}`, quiet: true }); },
+      });
+      area.value = job.notes.restart;
+      requestAnimationFrame(() => autosize(area));
+      return h('div', { class: 'resume', style: { '--job': jobColor(job) } }, jobTag(job, { full: true }), area);
+    }));
+}
+
+function milestones(book, day) {
+  const list = upcomingMilestones(book, day, 28, ui.focus);
+  if (!list.length) return null;
+  return h('section', { class: 'panel' },
+    h('div', { class: 'panel-head' }, h('h2', null, 'Milestones ahead')),
+    h('ul', { class: 'milestones' }, list.map(t => h('li', null,
+      h('span', { class: 'diamond', style: { '--job': jobColor(jobOf(book, t.jobId)) } }),
+      h('div', null, h('strong', null, t.title), h('div', { class: 'muted' }, `${fmtDate(t.finish)} · ${relDay(t.finish, day)}`)),
+      t.effort ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null))));
+}
+
+// ── ui/dnd.js ──
+// HTML5 drag and drop for item cards. Every drop target also has a keyboard/menu alternative.
+const MIME = 'application/x-tas-time-item';
+
+function makeDraggable(el, id) {
+  el.draggable = true;
+  el.addEventListener('dragstart', event => {
+    event.dataTransfer.setData(MIME, id);
+    event.dataTransfer.effectAllowed = 'move';
+    requestAnimationFrame(() => el.classList.add('dragging'));
+  });
+  el.addEventListener('dragend', () => el.classList.remove('dragging'));
+  return el;
+}
+
+function makeDropZone(el, onDrop) {
+  el.addEventListener('dragover', event => {
+    if (!event.dataTransfer.types.includes(MIME)) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    el.classList.add('drop-over');
+  });
+  el.addEventListener('dragleave', event => { if (!el.contains(event.relatedTarget)) el.classList.remove('drop-over'); });
+  el.addEventListener('drop', event => {
+    el.classList.remove('drop-over');
+    const id = event.dataTransfer.getData(MIME);
+    if (!id) return;
+    event.preventDefault();
+    onDrop(id);
+  });
+  return el;
+}
+
+// ── ui/views/week.js ──
+// Week: set real capacity, then place work on days. Planning a day never moves programme dates.
+
+const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function planOn(id, day) {
+  act(day ? 'Plan day' : 'Unplan', d => patchItem(d, id, { plannedDay: day }, today()));
+}
+
+function dayMenu(anchor, t, days) {
+  showMenu(anchor, [
+    { heading: 'Plan for' },
+    ...days.map((d, i) => ({ label: `${DAY_LABELS[i]} ${fmtShort(d)}${d === today() ? ' · today' : ''}`, run: () => planOn(t.id, d) })),
+    'separator',
+    { label: 'Next week', icon: 'arrowRight', run: () => planOn(t.id, addDays(days[0], 7)) },
+    t.plannedDay ? { label: 'Remove from week', icon: 'x', run: () => planOn(t.id, '') } : null,
+  ].filter(Boolean));
+}
+
+function weekCard(t, days) {
+  const book = store.book;
+  const job = jobOf(book, t.jobId);
+  const el = h('div', { class: ['wcard', t.status === 'done' && 'is-done'], style: { '--job': jobColor(job) }, 'data-item': t.id },
+    doneToggle(t),
+    h('div', { class: 'wcard-body' },
+      h('button', { class: 'wcard-title', onclick: () => openDrawer('item', t.id) }, t.title),
+      h('div', { class: 'wcard-meta' }, jobTag(job), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, dueChip(t), readiness(t))),
+    iconBtn('more', `Plan “${t.title}” for another day`, e => dayMenu(e.currentTarget, t, days), { class: 'icon-btn wcard-menu' }));
+  return makeDraggable(el, t.id);
+}
+
+function renderWeek() {
+  const book = store.book;
+  if (!liveJobs(book).length) return welcome();
+  const monday = ui.week;
+  const load = weekLoad(book, monday, ui.focus);
+  const plan = book.weeks[monday] || { capacity: DEFAULT_CAPACITY, notes: '' };
+  const isCurrent = monday === mondayOf(today());
+  const ready = readyToPlan(book, monday, ui.focus);
+
+  const capInput = h('input', {
+    id: 'week-capacity', class: 'cap-input', value: fmtEffort(plan.capacity) || '0h', 'aria-label': 'Hours available this week',
+    title: 'Hours you can realistically give this week, across all jobs. E.g. 8h, 6h30, 90m',
+    onchange: e => {
+      const min = parseEffort(e.target.value);
+      if (min === null) { notify('Enter hours like 8h, 6h30 or 90m.', { kind: 'warn' }); e.target.value = fmtEffort(plan.capacity); return; }
+      act('Set capacity', d => setCapacity(d, monday, Math.min(min, 7 * 24 * 60)));
+    },
+  });
+
+  const notes = h('textarea', {
+    id: 'week-notes', class: 'week-notes', rows: 1, placeholder: 'Intent for the week: what will you produce, and what will deliberately wait?',
+    'aria-label': 'Week intent',
+    oninput: e => { autosize(e.target); act('Edit week intent', d => setWeekNotes(d, monday, e.target.value, DEFAULT_CAPACITY), { key: `week:${monday}`, quiet: true }); },
+  });
+  notes.value = plan.notes;
+  requestAnimationFrame(() => autosize(notes));
+
+  const columns = load.days.map((day, i) => {
+    const list = load.byDay[day].filter(t => !ui.focus || t.jobId === ui.focus);
+    const total = openEffort(load.byDay[day]);
+    const col = h('section', { class: ['day', day === today() && 'is-today', i >= 5 && 'weekend', day < today() && 'is-past'], 'aria-label': `${DAY_LABELS[i]} ${fmtShort(day)}` },
+      h('header', null, h('span', { class: 'day-name' }, DAY_LABELS[i]), h('span', { class: 'day-date' }, fmtShort(day)), total ? h('span', { class: 'day-total' }, fmtHours(total)) : null),
+      h('div', { class: 'day-cards' }, list.length ? list.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'Drop work here')));
+    return makeDropZone(col, id => planOn(id, day));
+  });
+
+  const tray = makeDropZone(h('aside', { class: 'tray', 'aria-label': 'Unplanned work' },
+    h('header', null, h('h2', null, 'Unplanned'), h('span', { class: 'muted' }, `${ready.length}`)),
+    h('p', { class: 'hint' }, 'Open tasks with no day this week, most urgent first. Drag onto a day, or use ⋯.'),
+    h('div', { class: 'tray-cards' }, ready.length ? ready.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'Everything open is planned.'))), id => planOn(id, ''));
+
+  const range = `${fmtShort(monday)} – ${fmtShort(addDays(monday, 6))} ${addDays(monday, 6).slice(0, 4)}`;
+  return h('div', { class: 'view week' },
+    h('header', { class: 'page-head' },
+      h('div', null, h('p', { class: 'eyebrow' }, isCurrent ? 'This week' : weekOffsetLabel(monday)), h('h1', null, range)),
+      h('div', { class: 'page-actions' },
+        iconBtn('left', 'Previous week', () => { ui.week = addDays(monday, -7); rerender(); }),
+        btn('This week', () => { ui.week = mondayOf(today()); rerender(); }, { disabled: isCurrent, kind: 'sm' }),
+        iconBtn('right', 'Next week', () => { ui.week = addDays(monday, 7); rerender(); }))),
+    h('div', { class: 'week-summary panel' },
+      h('label', { class: 'cap', for: 'week-capacity' }, icon('clock', 16), 'Available', capInput),
+      h('div', { class: 'cap-meter' }, meter(load.planned, plan.capacity)),
+      h('div', { class: 'cap-facts muted' },
+        load.unestimated ? h('span', { class: 'warn-text' }, `${load.unestimated} without an estimate · `) : null,
+        `${load.done} done`, ui.focus ? ' · totals include all jobs' : ''),
+      notes),
+    h('div', { class: 'week-body' }, h('div', { class: 'days' }, columns), tray));
+}
+
+function weekOffsetLabel(monday) {
+  const weeks = Math.round((Date.parse(monday) - Date.parse(mondayOf(today()))) / (7 * 86400000));
+  return weeks > 0 ? `${weeks} week${weeks > 1 ? 's' : ''} ahead` : `${-weeks} week${weeks < -1 ? 's' : ''} ago`;
+}
+
+// ── ui/views/plan.js ──
+// Plan: the programme. A frozen table on the left, a calendar-day Gantt on the right,
+// both in one scroll container so rows can never drift out of alignment.
+
+const ROW = { job: 46, phase: 32, item: 36, add: 34 };
+const HEADER = 52;
+
+const planScroll = { toToday: true };
+
+function timeRange(rows) {
+  const t = today();
+  const base = addDays(mondayOf(t), -7);
+  if (ui.planRange === '6w') return { start: base, days: 56, px: 26 };
+  if (ui.planRange === '3m') return { start: base, days: 7 * 15, px: 12 };
+  const dates = rows.filter(r => r.type === 'item').flatMap(r => [r.item.start, r.item.finish, r.item.baseline?.start, r.item.baseline?.finish]).filter(Boolean);
+  if (!dates.length) return { start: base, days: 56, px: 26 };
+  dates.push(t);
+  dates.sort();
+  const start = addDays(mondayOf(dates[0]), -7);
+  const days = Math.ceil((diffDays(start, dates.at(-1)) + 14) / 7) * 7;
+  const avail = (document.getElementById('main')?.clientWidth || 1200) - labelWidth() - 48;
+  return { start, days, px: Math.max(4, Math.min(26, Math.floor(avail / days))) };
+}
+
+function labelWidth() { return innerWidth < 760 ? 220 : 420; }
+
+function renderPlan() {
+  const book = store.book;
+  if (!liveJobs(book).length && !ui.planShowArchived) return welcome();
+  const rows = planRows(book, { focus: ui.focus, showDone: ui.planShowDone, showArchived: ui.planShowArchived });
+  const range = timeRange(rows);
+  const toolbar = h('div', { class: 'plan-toolbar' },
+    segmented([['6w', '6 weeks'], ['3m', '3 months'], ['all', 'Whole job']], ui.planRange, v => { ui.planRange = v; planScroll.toToday = true; rerender(); }, 'Timeline range'),
+    h('label', { class: 'toggle' }, h('input', { type: 'checkbox', checked: ui.planShowDone, onchange: e => { ui.planShowDone = e.target.checked; rerender(); } }), 'Done'),
+    h('label', { class: 'toggle' }, h('input', { type: 'checkbox', checked: ui.planShowArchived, onchange: e => { ui.planShowArchived = e.target.checked; rerender(); } }), 'Archived'),
+    h('span', { class: 'spacer' }),
+    btn('Today', () => { planScroll.toToday = true; rerender(); }, { kind: 'sm ghost', iconName: 'today' }),
+    btn(book.baselineDate ? `Baseline ${fmtShort(book.baselineDate)}` : 'Set baseline', baselineCommand, {
+      kind: 'sm', iconName: 'flag', title: 'A baseline freezes current dates so you can see slippage later.',
+    }),
+    btn('Job', () => createJob(), { kind: 'sm', iconName: 'plus' }));
+
+  const lw = labelWidth();
+  const width = lw + range.days * range.px;
+  const grid = h('div', { class: 'plan-grid', style: { width: `${width}px`, '--lw': `${lw}px`, '--px': `${range.px}px`, '--offset': `${(7 - ((dayNum(range.start) + 3) % 7)) % 7}` } });
+  grid.append(header(range));
+
+  const positions = new Map();
+  let y = HEADER;
+  const push = (el, height) => { grid.append(el); y += height; };
+  // An inline "add" row closes each phase group (and each job that has no groups yet).
+  let group = null; let job = null; let jobHasGroup = false;
+  const closeGroup = () => { if (group && !group.job.archived) push(addRow(group.job, group.phase), ROW.add); group = null; };
+  const closeJob = () => { closeGroup(); if (job && !jobHasGroup && !job.archived) push(addRow(job, null), ROW.add); };
+  for (const row of rows) {
+    if (row.type === 'job') { closeJob(); job = row.job; jobHasGroup = false; push(jobRow(row.job), ROW.job); }
+    else if (row.type === 'phase') { closeGroup(); group = row; jobHasGroup = true; push(phaseRow(row), ROW.phase); }
+    else { positions.set(row.item.id, y + ROW.item / 2); push(itemRowPlan(row.item, range), ROW.item); }
+  }
+  closeJob();
+  grid.append(overlay(rows, positions, range, y));
+
+  const scroller = h('div', { class: 'plan-scroll', id: 'plan-scroll' }, grid);
+  if (planScroll.toToday) {
+    planScroll.toToday = false;
+    requestAnimationFrame(() => { scroller.scrollLeft = Math.max(0, diffDays(range.start, today()) * range.px - 7 * range.px); });
+  }
+
+  return h('div', { class: 'view plan' },
+    h('header', { class: 'page-head' }, h('div', null, h('p', { class: 'eyebrow' }, 'Programme'), h('h1', null, 'Plan')), toolbar),
+    rows.length ? scroller : h('p', { class: 'muted' }, 'No jobs match.'),
+    h('p', { class: 'legend' },
+      h('span', { class: 'lg-bar' }), 'Forecast', h('span', { class: 'lg-base' }), 'Baseline', h('span', { class: 'lg-ms' }), 'Milestone',
+      h('span', { class: 'lg-late' }), 'Late', h('span', { class: 'lg-dep' }), 'Prerequisite',
+      h('span', { class: 'muted' }, ' · Drag a bar to move it, its right edge to change the finish. Arrow keys on a focused bar: move; Shift+arrows: resize.')));
+}
+
+function baselineCommand() {
+  const book = store.book;
+  if (book.baselineDate && !confirm(`Replace the baseline from ${book.baselineDate} with today’s forecast dates?`)) return;
+  act('Set baseline', d => captureBaseline(d, today()));
+  notify('Baseline set. Slippage is now measured from today’s forecast.');
+}
+
+function header(range) {
+  const months = [];
+  for (let i = 0; i < range.days;) {
+    const iso = addDays(range.start, i);
+    const [y, m] = iso.split('-').map(Number);
+    const nextMonth = `${m === 12 ? y + 1 : y}-${String(m === 12 ? 1 : m + 1).padStart(2, '0')}-01`;
+    const span = Math.min(range.days - i, diffDays(iso, nextMonth));
+    months.push(h('div', { class: 'ph-month', style: { left: `${i * range.px}px`, width: `${span * range.px}px` } }, span * range.px > 40 ? `${MONTH_NAMES[m - 1]} ${y}` : ''));
+    i += span;
+  }
+  const weeks = [];
+  for (let i = (7 - ((dayNum(range.start) + 3) % 7)) % 7; i < range.days; i += 7) {
+    const iso = addDays(range.start, i);
+    weeks.push(h('div', { class: 'ph-week', style: { left: `${i * range.px}px`, width: `${7 * range.px}px` } }, range.px * 7 >= 30 ? String(Number(iso.slice(8))) : ''));
+  }
+  return h('div', { class: 'ph' },
+    h('div', { class: 'pl ph-label' }, 'Task', h('span', null, 'Dates'), h('span', null, 'Effort')),
+    h('div', { class: 'pt ph-time' }, h('div', { class: 'ph-months' }, months), h('div', { class: 'ph-weeks' }, weeks)));
+}
+
+function jobRow(job) {
+  const s = jobSummary(store.book, job, today());
+  return h('div', { class: ['prow', 'prow-job', job.archived && 'is-archived'], style: { '--job': jobColor(job), height: `${ROW.job}px` } },
+    h('div', { class: 'pl' },
+      h('span', { class: 'job-bar' }),
+      h('button', { class: 'job-title', onclick: () => openDrawer('job', job.id) }, job.title || 'Untitled job'),
+      job.code ? chip(job.code) : null,
+      job.archived ? chip('Archived', 'muted') : null,
+      h('span', { class: 'job-facts muted' }, `${s.done}/${s.total}`, s.late ? h('span', { class: 'danger' }, ` · ${s.late} late`) : null),
+      iconBtn('focus', ui.focus === job.id ? 'Show all jobs' : `Focus on ${job.title}`, () => setFocus(job.id), { class: ['icon-btn', 'sm', ui.focus === job.id && 'on'] })),
+    h('div', { class: 'pt' }));
+}
+
+function phaseRow({ phase, job }) {
+  return h('div', { class: 'prow prow-phase', style: { height: `${ROW.phase}px` } },
+    h('div', { class: 'pl' }, h('button', { class: 'phase-title', title: 'Edit phases', onclick: () => openDrawer('job', job.id, 'phases') }, phase ? phase.title : 'No phase')),
+    h('div', { class: 'pt' }));
+}
+
+function addKey(job, phase) { return `${job.id}/${phase?.id || ''}`; }
+
+function addRow(job, phase) {
+  const key = addKey(job, phase);
+  if (ui.addingIn !== key) {
+    return h('div', { class: 'prow prow-add', style: { height: `${ROW.add}px` } },
+      h('div', { class: 'pl' }, h('button', { class: 'add-inline', onclick: () => { ui.addingIn = key; rerender(); } }, icon('plus', 14), phase ? `Add to ${phase.title}` : 'Add task')),
+      h('div', { class: 'pt' }));
+  }
+  const input = h('input', {
+    id: `add-${key}`, class: 'add-input', placeholder: 'Task name   2h   !fri   — Enter to add, Esc to close', autocomplete: 'off',
+    onkeydown: e => {
+      if (e.key === 'Escape') { e.stopPropagation(); ui.addingIn = ''; rerender(); }
+      if (e.key === 'Enter' && e.target.value.trim()) {
+        const created = quickAdd(e.target.value, { jobId: job.id, phaseId: phase?.id || '' });
+        if (created) { e.target.value = ''; }
+      }
+    },
+    onblur: e => { if (!e.target.value.trim()) setTimeout(() => { if (ui.addingIn === key && document.activeElement?.id !== `add-${key}`) { ui.addingIn = ''; rerender(); } }, 150); },
+  });
+  requestAnimationFrame(() => document.getElementById(`add-${key}`)?.focus());
+  return h('div', { class: 'prow prow-add is-open', style: { height: `${ROW.add}px` } }, h('div', { class: 'pl' }, input), h('div', { class: 'pt' }));
+}
+
+function itemRowPlan(t, range) {
+  const book = store.book;
+  const late = isLate(t, today());
+  const blocked = isBlocked(book, t, today());
+  const reasons = blocked ? blockers(book, t) : [];
+  const s = slip(t);
+  const dates = t.kind === 'milestone' ? fmtShort(t.finish) : t.start || t.finish ? `${fmtShort(t.start) || '?'} – ${fmtShort(t.finish) || '?'}` : '';
+  return h('div', { class: ['prow', 'prow-item', t.status === 'done' && 'is-done', (t.archived) && 'is-archived'], style: { height: `${ROW.item}px` }, 'data-item': t.id },
+    h('div', { class: 'pl' },
+      doneToggle(t),
+      h('button', { class: 'item-title', onclick: () => openDrawer('item', t.id), title: reasons.length ? `Blocked: ${reasons.join('; ')}` : t.title },
+        t.kind === 'milestone' ? h('span', { class: 'ms-mark', 'aria-label': 'Milestone' }, '◆') : null, t.title,
+        reasons.length ? h('span', { class: 'blocked-dot', 'aria-label': 'Blocked' }) : null),
+      h('span', { class: ['item-dates', late && 'danger', !dates && 'muted'] }, dates || 'No dates'),
+      h('span', { class: 'item-effort' }, t.status === 'done' ? '' : fmtEffort(t.effort))),
+    track(t, range, { late, blocked, slip: s }));
+}
+
+function x(range, iso) { return diffDays(range.start, iso) * range.px; }
+
+function track(t, range, { late, blocked, slip: s }) {
+  const tr = h('div', { class: 'pt track' });
+  if (t.baseline?.finish) {
+    const bs = t.baseline.start || t.baseline.finish;
+    tr.append(h('span', { class: 'base', style: { left: `${x(range, bs)}px`, width: `${(diffDays(bs, t.baseline.finish) + 1) * range.px}px` }, title: `Baseline ${fmtShort(bs)} – ${fmtShort(t.baseline.finish)}` }));
+  }
+  if (!t.start && !t.finish) {
+    tr.classList.add('unscheduled');
+    tr.title = 'Click a day to schedule';
+    tr.addEventListener('click', e => {
+      const day = addDays(range.start, Math.floor((e.clientX - tr.getBoundingClientRect().left) / range.px));
+      act('Schedule', d => patchItem(d, t.id, t.kind === 'milestone' ? { finish: day } : { start: day, finish: day }, today()));
+    });
+    return tr;
+  }
+  const start = t.start || t.finish;
+  const finish = t.finish || t.start;
+  const label = `${t.title}: ${fmtShort(start)}${start !== finish ? ` to ${fmtShort(finish)}` : ''}`;
+  if (t.kind === 'milestone') {
+    const ms = h('button', { class: ['gms', t.status === 'done' && 'done', late && 'late'], style: { left: `${x(range, finish) + range.px / 2}px` }, 'aria-label': label, title: label });
+    bindDrag(ms, t, range, false);
+    tr.append(ms);
+  } else {
+    const bar = h('button', {
+      class: ['bar', t.status, late && 'late', blocked && 'blocked'],
+      style: { left: `${x(range, start)}px`, width: `${(diffDays(start, finish) + 1) * range.px}px` },
+      'aria-label': label, title: label,
+    }, h('span', { class: 'grip', 'data-resize': '1' }));
+    bindDrag(bar, t, range, true);
+    tr.append(bar);
+  }
+  if (s) tr.append(h('span', { class: ['slip', s > 0 ? 'danger' : 'good'], style: { left: `${x(range, finish) + range.px + 6}px` }, title: 'Change since baseline' }, `${s > 0 ? '+' : ''}${s}d`));
+  return tr;
+}
+
+/** Pointer drag to move (or resize from the grip) with day snapping; arrow keys for the same. */
+function bindDrag(el, t, range, resizable) {
+  let startX = 0; let mode = ''; let moved = 0; let origLeft = 0; let origWidth = 0;
+  el.addEventListener('pointerdown', e => {
+    if (e.button !== 0) return;
+    mode = resizable && e.target.dataset.resize ? 'resize' : 'move';
+    startX = e.clientX; moved = 0;
+    origLeft = parseFloat(el.style.left); origWidth = parseFloat(el.style.width) || 0;
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+  });
+  el.addEventListener('pointermove', e => {
+    if (!mode) return;
+    moved = Math.round((e.clientX - startX) / range.px);
+    if (mode === 'move') el.style.left = `${origLeft + moved * range.px}px`;
+    else el.style.width = `${Math.max(range.px, origWidth + moved * range.px)}px`;
+  });
+  const end = () => {
+    if (!mode) return;
+    const m = mode; mode = '';
+    el.classList.remove('dragging');
+    if (Math.abs(moved) > 0) commitDrag(t, m, moved);
+    else if (Math.abs(parseFloat(el.style.left) - origLeft) < 1) openDrawer('item', t.id);
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', () => { mode = ''; el.classList.remove('dragging'); rerender(); });
+  el.addEventListener('click', e => { if (e.detail === 0) openDrawer('item', t.id); });
+  el.addEventListener('keydown', e => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const delta = e.key === 'ArrowLeft' ? -1 : 1;
+    commitDrag(t, resizable && e.shiftKey ? 'resize' : 'move', delta);
+    requestAnimationFrame(() => document.querySelector(`[data-item="${t.id}"] .bar, [data-item="${t.id}"] .gms`)?.focus());
+  });
+}
+
+function commitDrag(t, mode, days) {
+  if (mode === 'move') { act('Move', d => shiftItem(d, t.id, days)); return; }
+  const cur = itemOf(store.book, t.id);
+  const start = cur.start || cur.finish;
+  const finish = addDays(cur.finish || cur.start, days);
+  act('Change finish', d => patchItem(d, t.id, { start, finish: finish < start ? start : finish }, today()));
+}
+
+/** Today line plus prerequisite connectors, drawn in one SVG over the timeline. */
+function overlay(rows, positions, range, height) {
+  const lw = labelWidth();
+  const w = range.days * range.px;
+  const svg = h('svg', { class: 'plan-overlay', width: w, height, style: { left: `${lw}px` }, 'aria-hidden': 'true' },
+    h('defs', null, h('marker', { id: 'arrow', viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 7, markerHeight: 7, orient: 'auto' }, h('path', { d: 'M0 0L8 4L0 8z', class: 'arrow-head' })),
+      h('marker', { id: 'arrow-bad', viewBox: '0 0 8 8', refX: 7, refY: 4, markerWidth: 7, markerHeight: 7, orient: 'auto' }, h('path', { d: 'M0 0L8 4L0 8z', class: 'arrow-head bad' }))));
+  const tx = x(range, today()) + range.px / 2;
+  if (tx >= 0 && tx <= w) svg.append(h('line', { class: 'today-line', x1: tx, x2: tx, y1: HEADER - 6, y2: height }));
+  const book = store.book;
+  for (const row of rows) {
+    if (row.type !== 'item') continue;
+    const t = row.item;
+    const y2 = positions.get(t.id);
+    if (!t.start && !t.finish) continue;
+    const conflicts = new Set(dateConflicts(book, t).map(d => d.id));
+    for (const depId of t.deps) {
+      const d = itemOf(book, depId);
+      const y1 = positions.get(depId);
+      if (!d || y1 === undefined || !(d.finish || d.start)) continue;
+      const x1 = x(range, d.finish || d.start) + (d.kind === 'milestone' ? range.px / 2 + 6 : range.px);
+      const x2 = x(range, t.start || t.finish) + (t.kind === 'milestone' ? range.px / 2 - 7 : 0);
+      const bad = conflicts.has(depId);
+      const mid = Math.max(x1 + 6, Math.min(x2 - 8, x1 + 10));
+      const path = x2 - 8 >= x1 + 6
+        ? `M${x1} ${y1} H${mid} V${y2} H${x2 - 1}`
+        : `M${x1} ${y1} h6 V${(y1 + y2) / 2} H${x2 - 12} V${y2} H${x2 - 1}`;
+      svg.append(h('path', { d: path, class: ['dep', bad && 'bad'], 'marker-end': `url(#${bad ? 'arrow-bad' : 'arrow'})` }));
+    }
+  }
+  return svg;
+}
+
+// ── ui/views/board.js ──
+// Board: status at a glance. "Blocked" is derived from constraints and prerequisites,
+// so dropping a card there asks for the reason instead of setting a status.
+
+const COLUMNS = [['todo', 'To do'], ['doing', 'Doing'], ['blocked', 'Blocked'], ['done', 'Done']];
+const DONE_WINDOW = 14;
+
+function moveTo(id, column) {
+  const t = store.book.items.find(x => x.id === id);
+  if (!t || boardColumn(store.book, t, today()) === column) return;
+  if (column === 'blocked') { openDrawer('item', id, 'blocker'); notify('Record what this is waiting for.'); return; }
+  const reasons = blockers(store.book, t);
+  if (reasons.length && column !== 'todo') {
+    notify(`Still blocked: ${reasons.join('; ')}. Clear it in the task first.`, { kind: 'warn', action: { label: 'Open', run: () => openDrawer('item', id, 'blocker') } });
+    return;
+  }
+  act(`Move to ${STATUS[column]}`, d => patchItem(d, id, { status: column }, today()));
+}
+
+function renderBoard() {
+  const book = store.book;
+  if (!liveJobs(book).length) return welcome();
+  const items = liveItems(book).filter(t => !ui.focus || t.jobId === ui.focus);
+  const cutoff = addDays(today(), -DONE_WINDOW);
+  const cols = COLUMNS.map(([key, label]) => {
+    let list = items.filter(t => boardColumn(book, t, today()) === key).sort(byUrgency);
+    let hidden = 0;
+    if (key === 'done' && !ui.boardAllDone) {
+      const recent = list.filter(t => !t.doneOn || t.doneOn >= cutoff);
+      hidden = list.length - recent.length; list = recent;
+    }
+    const col = h('section', { class: ['col', `col-${key}`], 'aria-label': label },
+      h('header', null, h('h2', null, label), h('span', { class: 'count' }, String(list.length + hidden))),
+      h('div', { class: 'col-cards' }, list.length ? list.map(boardCard) : h('p', { class: 'col-empty' }, key === 'blocked' ? 'Nothing is blocked.' : 'No cards')),
+      hidden ? btn(`Show ${hidden} older`, () => { ui.boardAllDone = true; rerender(); }, { kind: 'ghost sm' }) : null);
+    return makeDropZone(col, id => moveTo(id, key));
+  });
+  return h('div', { class: 'view board' },
+    h('header', { class: 'page-head' }, h('div', null, h('p', { class: 'eyebrow' }, 'Status'), h('h1', null, 'Board'),
+      h('p', { class: 'sub' }, 'Drag cards between columns. A task is Blocked when it has a written constraint, or its prerequisites are unfinished once it is due to start.'))),
+    h('div', { class: 'cols' }, cols));
+}
+
+function boardCard(t) {
+  const book = store.book;
+  const job = jobOf(book, t.jobId);
+  const blocked = isBlocked(book, t, today());
+  const waiting = blocked ? [] : waitingOn(book, t);
+  const el = h('article', { class: ['bcard', t.kind === 'milestone' && 'is-ms'], style: { '--job': jobColor(job) }, 'data-item': t.id },
+    h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
+    h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
+    blocked ? h('p', { class: 'bcard-why' }, blockers(book, t).join(' · ')) : null,
+    waiting.length ? h('p', { class: 'bcard-after' }, `After ${waiting.map(w => `“${w.title}”`).join(', ')}`) : null,
+    h('div', { class: 'bcard-foot' }, dueChip(t), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, t.owner ? h('span', { class: 'muted' }, t.owner) : null));
+  return makeDraggable(el, t.id);
+}
+
+// ── ui/views/notes.js ──
+// Notes: one notebook per job, in a few fixed pages. Plain text, saved as you type.
+
+const HINTS = {
+  restart: 'Where you stopped.\nWhat is unresolved.\nThe next concrete step.',
+  scope: 'What is in and out of scope, acceptance criteria, assumptions…',
+  decisions: 'Date — decision — reason — evidence — who agreed',
+  working: 'Observations, comparisons, open questions, draft reasoning…',
+  references: 'Zotero links, citation keys, document references (kept as plain text)…',
+};
+
+function renderNotes() {
+  const book = store.book;
+  const jobs = liveJobs(book);
+  if (!jobs.length) return welcome();
+  const job = jobs.find(j => j.id === ui.focus) || jobs.find(j => j.id === ui.notesJob) || jobs[0];
+  const page = ui.notesPage;
+
+  const area = h('textarea', {
+    id: 'note-text', class: 'note-text', placeholder: HINTS[page], 'aria-label': `${job.title}: ${NOTE_PAGES.find(p => p[0] === page)[1]}`,
+    oninput: e => { autosize(e.target); act('Edit note', d => setNote(d, job.id, page, e.target.value), { key: `note:${job.id}:${page}`, quiet: true }); },
+  });
+  area.value = job.notes[page];
+  requestAnimationFrame(() => autosize(area));
+
+  const insertDate = () => {
+    const prefix = `${today()} — `;
+    const v = area.value;
+    const at = area.selectionStart ?? v.length;
+    const lineStart = at === 0 || v[at - 1] === '\n';
+    area.setRangeText(`${lineStart ? '' : '\n'}${prefix}`, at, at, 'end');
+    area.dispatchEvent(new Event('input'));
+    area.focus();
+  };
+
+  return h('div', { class: 'view notes' },
+    h('header', { class: 'page-head' }, h('div', null, h('p', { class: 'eyebrow' }, 'Notebook'), h('h1', null, job.title || 'Untitled job'),
+      job.outcome ? h('p', { class: 'sub' }, job.outcome) : null)),
+    h('div', { class: 'notes-layout' },
+      h('nav', { class: 'notes-jobs', 'aria-label': 'Jobs' }, jobs.map(j => h('button', {
+        class: ['notes-job', j.id === job.id && 'on'], style: { '--job': jobColor(j) }, 'aria-current': j.id === job.id ? 'true' : null,
+        onclick: () => { ui.notesJob = j.id; if (ui.focus) ui.focus = j.id; rerender(); },
+      }, h('span', { class: 'dot' }), h('span', null, j.title), filled(j) ? h('span', { class: 'muted' }, `${filled(j)}/${NOTE_PAGES.length}`) : null))),
+      h('div', { class: 'paper' },
+        h('div', { class: 'tabs', role: 'tablist' }, NOTE_PAGES.map(([key, label]) => h('button', {
+          role: 'tab', 'aria-selected': String(key === page), class: key === page ? 'on' : null,
+          onclick: () => { ui.notesPage = key; rerender(); },
+        }, label, job.notes[key].trim() ? h('span', { class: 'tab-dot', 'aria-label': 'has notes' }) : null))),
+        page === 'decisions' ? h('div', { class: 'paper-tools' }, btn('Insert today’s date', insertDate, { kind: 'sm ghost', iconName: 'clock' })) : null,
+        area)));
+}
+
+function filled(job) { return NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length; }
+
+// ── ui/shell.js ──
+// App frame: sidebar, top bar (quick add + file status), main view and drawer.
+
+const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes };
+
+function renderShell() {
+  const active = document.activeElement;
+  const focusId = active?.id && active !== document.body ? active.id : '';
+  const selection = focusId && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
+  const keep = ['plan-scroll'].map(id => [id, document.getElementById(id)]).filter(([, el]) => el).map(([id, el]) => [id, el.scrollLeft, el.scrollTop]);
+  const pageY = document.getElementById('main')?.scrollTop || 0;
+
+  fill(document.getElementById('sidebar'), sidebar());
+  renderStatus();
+  const main = document.getElementById('main');
+  fill(main, RENDER[ui.view]());
+  main.scrollTop = pageY;
+  const drawer = renderDrawer();
+  fill(document.getElementById('drawer-host'), drawer);
+  document.body.classList.toggle('has-drawer', !!drawer);
+
+  for (const [id, left, top] of keep) {
+    const el = document.getElementById(id);
+    if (el) { el.scrollLeft = left; el.scrollTop = top; }
+  }
+  if (focusId && focusId !== 'quick-add') {
+    const el = document.getElementById(focusId);
+    if (el && el !== document.activeElement) {
+      el.focus({ preventScroll: true });
+      if (selection && 'setSelectionRange' in el) { try { el.setSelectionRange(...selection); } catch { /* not a text field */ } }
+    }
+  }
+  document.title = `${store.dirty ? '• ' : ''}${store.book.name} — Tas-Time`;
+}
+
+function sidebar() {
+  const book = store.book;
+  const jobs = liveJobs(book);
+  return [
+    h('div', { class: 'brand' }, h('span', { class: 'brand-mark' }, icon('book', 20)), h('div', null, h('strong', null, 'Tas-Time'),
+      h('button', { class: 'book-name', title: 'Rename this planning book', onclick: renameBook }, book.name))),
+    h('nav', { class: 'nav', 'aria-label': 'Views' }, VIEWS.map(v => h('button', {
+      class: ['nav-item', ui.view === v.id && 'on'], 'aria-current': ui.view === v.id ? 'page' : null, onclick: () => setView(v.id),
+    }, icon(v.icon, 18), h('span', null, v.label), h('kbd', null, v.key)))),
+    h('div', { class: 'jobs-head' }, h('span', null, 'Jobs'), iconBtn('plus', 'New job', () => createJob(), { class: 'icon-btn sm' })),
+    h('ul', { class: 'jobs' }, jobs.map(j => {
+      const s = jobSummary(book, j, today());
+      return h('li', null, h('button', {
+        class: ['job-link', ui.focus === j.id && 'on'], style: { '--job': jobColor(j) }, 'aria-pressed': String(ui.focus === j.id),
+        title: ui.focus === j.id ? 'Showing only this job — click to show all' : `Show only ${j.title}`,
+        onclick: () => setFocus(j.id),
+      }, h('span', { class: 'dot' }), h('span', { class: 'job-name' }, j.title || 'Untitled job'),
+      s.late ? h('span', { class: 'late-dot', title: `${s.late} late` }) : null,
+      h('span', { class: 'badge', title: `${s.open} open` }, String(s.open))));
+    })),
+    jobs.length ? null : h('p', { class: 'jobs-empty' }, 'No jobs yet.'),
+    h('div', { class: 'side-foot' },
+      h('button', { class: 'foot-link', id: 'appearance', 'aria-haspopup': 'menu', onclick: e => appearanceMenu(e.currentTarget) }, icon('palette', 16), 'Appearance'),
+      h('button', { class: 'foot-link', onclick: showHelp }, icon('keyboard', 16), 'Shortcuts & help')),
+  ];
+}
+
+function renameBook() {
+  const name = prompt('Name this planning book', store.book.name);
+  if (name && name.trim()) store.commit('Rename book', d => { d.name = name.trim().slice(0, 200); });
+}
+
+function renderStatus() {
+  const host = document.getElementById('file-status');
+  const dirty = store.dirty;
+  let label; let kind = ''; let title = ''; let onclick = () => save();
+  if (file.state === 'saving') { label = 'Saving…'; kind = 'busy'; }
+  else if (file.state === 'reconnect') { label = `Reconnect ${file.name}`; kind = 'warn'; title = 'The browser needs your permission again to keep saving to this file.'; onclick = reconnect; }
+  else if (file.state === 'error') { label = 'Save failed — retry'; kind = 'danger'; title = file.lastError; }
+  else if (file.handle && !dirty) { label = `Saved · ${file.name}`; kind = 'ok'; title = file.savedAt ? `Last saved ${file.savedAt.toLocaleTimeString()}` : 'Up to date'; }
+  else if (file.handle) { label = 'Saving soon…'; kind = 'busy'; }
+  else if (dirty) { label = canLinkFiles ? 'Not saved to a file' : 'Unsaved changes'; kind = 'warn'; title = 'Your work is kept in this browser as a recovery copy, but not in a file yet.'; }
+  else { label = file.name || 'New book'; title = 'No changes'; }
+  fill(host,
+    h('button', { class: ['status', kind], title, onclick }, h('span', { class: 'status-dot' }), h('span', { class: 'status-text' }, label)),
+    !file.handle ? btn('Save', () => save(), { kind: dirty ? 'primary sm' : 'sm', iconName: 'save', title: 'Save (Ctrl+S)' }) : null,
+    iconBtn('more', 'File menu', e => showMenu(e.currentTarget, fileMenu()), { id: 'file-menu', 'aria-haspopup': 'menu' }));
+  if (file.restoredAt) {
+    const banner = document.getElementById('banner');
+    banner.replaceChildren(h('div', { class: 'banner' }, icon('alert', 16),
+      h('span', null, `Restored unsaved changes from ${file.restoredAt.toLocaleString()}.`),
+      btn(file.handle ? `Save to ${file.name}` : 'Save to a file', async () => { if (await (file.handle ? reconnect() : save()) !== false) { file.restoredAt = null; rerender(); } }, { kind: 'sm primary' }),
+      iconBtn('x', 'Dismiss', () => { file.restoredAt = null; banner.replaceChildren(); })));
+  } else document.getElementById('banner').replaceChildren();
+}
+
+function fileMenu() {
+  const p = prefs();
+  return [
+    { label: 'Save', icon: 'save', hint: 'Ctrl+S', run: () => save() },
+    { label: 'Save as…', icon: 'copy', hint: 'Ctrl+Shift+S', run: () => save({ saveAs: true }) },
+    { label: 'Open…', icon: 'open', hint: 'Ctrl+O', run: openFile },
+    'separator',
+    { label: 'Undo', icon: 'undo', hint: 'Ctrl+Z', run: undo, disabled: !store.canUndo },
+    { label: 'Redo', icon: 'redo', hint: 'Ctrl+Y', run: redo, disabled: !store.canRedo },
+    'separator',
+    { label: 'New book', icon: 'plus', run: newBlankBook },
+    { label: 'Load example book', icon: 'book', run: () => loadExample(today()) },
+    { label: 'Rename book…', icon: 'notes', run: renameBook },
+    { label: 'Print this view', icon: 'print', hint: 'Ctrl+P', run: () => window.print() },
+    'separator',
+    { label: p.recovery ? 'Recovery copy: on' : 'Recovery copy: off', icon: p.recovery ? 'check' : 'x', run: () => setPref('recovery', !p.recovery) },
+  ];
+}
+
+// ── Quick add ──
+
+function initQuickAdd() {
+  const input = document.getElementById('quick-add');
+  const preview = document.getElementById('quick-preview');
+  const update = () => {
+    const v = input.value.trim();
+    if (!v) { preview.hidden = true; return; }
+    const q = parseQuickAdd(v, store.book.jobs, today());
+    const job = store.book.jobs.find(j => j.id === (q.jobId || ui.focus)) || liveJobs(store.book)[0];
+    fill(preview,
+      h('span', { class: 'qp-title' }, q.kind === 'milestone' ? '◆ ' : '', q.title || '…'),
+      job ? h('span', { class: 'job-tag', style: { '--job': jobColor(job) } }, h('span', { class: 'dot' }), job.title) : h('span', { class: 'chip' }, 'New “Inbox” job'),
+      q.effort ? h('span', { class: 'chip' }, fmtEffort(q.effort)) : null,
+      q.plannedDay ? h('span', { class: 'chip accent' }, `Work on ${fmtDate(q.plannedDay)}`) : null,
+      q.finish ? h('span', { class: 'chip' }, `${q.kind === 'milestone' ? 'On' : 'Due'} ${fmtDate(q.finish)}`) : null,
+      q.errors.map(e => h('span', { class: 'chip danger' }, e)),
+      h('span', { class: 'qp-help' }, h('kbd', null, 'Enter'), ' add'));
+    preview.hidden = false;
+  };
+  input.addEventListener('input', update);
+  input.addEventListener('focus', update);
+  input.addEventListener('blur', () => setTimeout(() => { preview.hidden = true; }, 120));
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { input.value = ''; preview.hidden = true; input.blur(); }
+    if (e.key === 'Enter' && input.value.trim()) {
+      const defaults = ui.view === 'today' ? { plannedDay: today() } : {};
+      if (quickAdd(input.value, defaults)) { input.value = ''; update(); }
+    }
+  });
+}
+
+// ── Keyboard ──
+
+function typing(el) { return el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable); }
+
+function initKeys() {
+  document.addEventListener('keydown', e => {
+    const mod = e.ctrlKey || e.metaKey;
+    const key = e.key.toLowerCase();
+    if (mod && key === 's') { e.preventDefault(); save({ saveAs: e.shiftKey }); return; }
+    if (mod && key === 'o') { e.preventDefault(); openFile(); return; }
+    if (document.querySelector('dialog[open]')) return;
+    if (mod && !typing(e.target) && (key === 'z' || key === 'y')) {
+      e.preventDefault();
+      if (key === 'y' || e.shiftKey) redo(); else undo();
+      return;
+    }
+    if (e.key === 'Escape' && ui.drawer && !e.defaultPrevented) { closeDrawer(); return; }
+    if (mod || e.altKey || typing(e.target)) return;
+    const view = VIEWS.find(v => v.key === e.key);
+    if (view) { e.preventDefault(); setView(view.id); return; }
+    if (key === 'n' || e.key === '/') { e.preventDefault(); document.getElementById('quick-add').focus(); return; }
+    if (e.key === '?') { e.preventDefault(); showHelp(); return; }
+    if (ui.view === 'week' && (e.key === '[' || e.key === ']')) {
+      e.preventDefault();
+      document.querySelector(`.week [aria-label="${e.key === '[' ? 'Previous week' : 'Next week'}"]`)?.click();
+    }
+  });
+}
+
+function showHelp() {
+  const row = (keys, what) => h('tr', null, h('td', null, keys.map(k => h('kbd', null, k))), h('td', null, what));
+  showModal('Shortcuts & help', [
+    h('div', { class: 'help-grid' },
+      h('section', null,
+        h('h3', null, 'Quick add'),
+        h('p', null, 'Type a task in the box at the top and press Enter. Add any of:'),
+        h('table', { class: 'keys' },
+          row(['#phd'], 'job, by code or name'), row(['2h', '45m', '1h30'], 'effort'),
+          row(['@tue', '@today'], 'day you’ll work on it'), row(['!fri', '!2026-12-01'], 'due date'), row(['*'], 'at the start: a milestone')),
+        h('h3', null, 'Keys'),
+        h('table', { class: 'keys' },
+          row(['N', '/'], 'Quick add'), row(['1–5'], 'Today, Week, Plan, Board, Notes'), row(['Ctrl+S'], 'Save'), row(['Ctrl+Shift+S'], 'Save as'),
+          row(['Ctrl+O'], 'Open'), row(['Ctrl+Z', 'Ctrl+Y'], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
+          row(['← →'], 'Move a focused bar on the Plan'), row(['Shift+← →'], 'Change its finish'))),
+      h('section', null,
+        h('h3', null, 'How it fits together'),
+        h('p', null, h('strong', null, 'Plan'), ' is the programme: jobs, phases and dated tasks with prerequisites. Dates are forecasts you control — nothing reschedules itself.'),
+        h('p', null, h('strong', null, 'Week'), ' compares the effort you plan with the hours you actually have. Placing a task on a day does not change its programme dates.'),
+        h('p', null, h('strong', null, 'Today'), ' shows today’s work, anything carried over, and the resume note for each job you touch.'),
+        h('p', null, h('strong', null, 'Blocked'), ' is never set by hand: a task is blocked while it has a written constraint or an unfinished prerequisite.'),
+        h('h3', null, 'Your data'),
+        h('p', null, 'Your book is a single .json file. After the first Save it is saved automatically to that file (Edge and Chrome). A recovery copy is also kept in this browser in case the window closes; turn that off in the ⋯ menu if this computer is shared.'),
+        h('p', null, 'Keep work and personal books in their own environments. Nothing is sent over the network.'))),
+    h('p', { class: 'fine' }, `Tas-Time ${APP_VERSION} · © 2026 Selami Pazarbasi · MIT License`),
+  ], { wide: true });
+}
+
+// ── ui/main.js ──
+// Entry point.
+
+async function start() {
+  applyAppearance();
+  initToasts();
+  initQuickAdd();
+  initKeys();
+  onRender(renderShell);
+  store.subscribe(reason => {
+    // Quiet commits come from text fields being typed in: refresh only the chrome so the caret stays put.
+    if (reason === 'quiet' || reason === 'saved') renderStatus(); else renderShell();
+    if (reason !== 'saved') { writeRecovery(); autosave(); }
+  });
+  await restoreSession();
+  renderShell();
+  document.documentElement.classList.add('ready');
+}
+
+window.addEventListener('beforeunload', event => {
+  writeRecovery.flush();
+  // Unsaved edits are safe only if the recovery copy holds them; an autosave may still be pending.
+  if (store.dirty && !prefs().recovery) { event.preventDefault(); event.returnValue = ''; }
+});
+
+start();
+
+})();
+</script>
+</body>
+</html>

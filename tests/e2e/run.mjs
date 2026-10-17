@@ -1,0 +1,364 @@
+// Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
+// End-to-end checks against the built dist/Tas-Time.html in headless Edge/Chrome.
+// Drives real input (keyboard, pointer, menus) and inspects the resulting book.
+// Screenshots of every view land in .e2e/ for visual review.
+import assert from 'node:assert/strict';
+import { mkdirSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { launch } from './cdp.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
+const app = pathToFileURL(join(root, 'dist', 'Tas-Time.html')).href;
+const shots = join(root, '.e2e');
+mkdirSync(shots, { recursive: true });
+
+const results = [];
+async function check(name, fn) {
+  try { await fn(); results.push([true, name]); } catch (error) { results.push([false, name, error.message.split('\n')[0]]); }
+}
+
+const page = await launch();
+const ev = expr => page.eval(expr);
+const text = sel => ev(`document.querySelector(${JSON.stringify(sel)})?.textContent ?? null`);
+const count = sel => ev(`document.querySelectorAll(${JSON.stringify(sel)}).length`);
+/** The book as the app would save it, captured through a stubbed file picker. */
+const STUB_FS = `(() => {
+  window.confirm = () => true; window.prompt = (m, d) => d;
+  window.__saved = [];
+  // Delays let tests switch books while a permission check or write is still in flight.
+  window.__permDelay = 0; window.__writeDelay = 0; window.__pickName = 'plan.json';
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const handle = name => ({ name,
+    queryPermission: async () => { await sleep(window.__permDelay); return 'granted'; },
+    requestPermission: async () => { await sleep(window.__permDelay); return 'granted'; },
+    createWritable: async () => { let buf = ''; return { write: async s => { buf += s; }, close: async () => { await sleep(window.__writeDelay); window.__saved.push({ name, raw: buf }); } }; } });
+  window.showSaveFilePicker = async () => handle(window.__pickName);
+  window.__openText = '';
+  window.showOpenFilePicker = async () => [{ ...handle('old-v2.json'), getFile: async () => ({ name: 'old-v2.json', text: async () => window.__openText }) }];
+  return true;
+})()`;
+const lastSaved = async (name = '') => JSON.parse(await ev(`window.__saved.filter(s => !${JSON.stringify(name)} || s.name === ${JSON.stringify(name)}).at(-1)?.raw || "null"`));
+const recoveryBook = () => ev(`JSON.parse(localStorage.getItem('tas-time:recovery:v3')).book`);
+const fileMenu = async label => { await ev('document.querySelector("#file-menu").click(); true'); await page.clickText('.menu-item', label); };
+const quickAdd = async line => {
+  await ev('document.activeElement?.blur(); true');
+  await page.key('n', { keyCode: 78 });
+  await page.type(line);
+  await page.key('Enter', { keyCode: 13 });
+};
+const nav = async n => { await page.click(`.nav-item:nth-child(${n})`); await page.wait(120); };
+const today = await ev('(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })()');
+const addDays = (iso, n) => { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+
+try {
+  await page.goto(app);
+  await ev('localStorage.clear(); indexedDB.deleteDatabase("tas-time"); true');
+  await page.reload();
+  await ev(STUB_FS);
+
+  await check('starts on the welcome screen with no errors', async () => {
+    assert.ok(await text('.welcome h1'));
+    assert.deepEqual(page.errors, []);
+  });
+  await page.screenshot(join(shots, '00-welcome.png'), { full: false });
+
+  await check('create first job opens the job panel with the name selected', async () => {
+    await page.clickText('.welcome .btn', 'Create your first job');
+    assert.equal(await ev('document.activeElement.id'), 'd-title');
+    await page.type('Garden shed');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(100);
+    assert.equal(await text('.job-link .job-name'), 'Garden shed');
+    await page.clickText('.drawer .btn', 'Add standard phases');
+    assert.equal(await count('.phase-list li'), 4);
+    await page.key('Escape', { keyCode: 27 });
+    assert.equal(await count('.drawer'), 0);
+  });
+
+  await page.clickText('.menu-item, button', '') .catch(() => {});
+  await ev('document.querySelector("#file-menu").click(); true');
+  await page.clickText('.menu-item', 'Load example book');
+  await check('example book loads into Today', async () => {
+    assert.equal(await text('.page-head .eyebrow'), 'Today');
+    assert.ok(await count('.today-main .row-item') >= 2);
+  });
+
+  for (const [i, v] of ['today', 'week', 'plan', 'board', 'notes'].entries()) {
+    await nav(i + 1);
+    await page.screenshot(join(shots, `0${i + 1}-${v}.png`));
+  }
+  await check('every view renders without page errors', async () => assert.deepEqual(page.errors, []));
+
+  await check('quick add parses job, effort, plan day and due date (keyboard only)', async () => {
+    await nav(1);
+    await page.key('n', { keyCode: 78 });
+    assert.equal(await ev('document.activeElement.id'), 'quick-add');
+    await page.type('Order timber samples #home 90m @tomorrow !fri');
+    await page.wait(100);
+    assert.match(await text('#quick-preview'), /Kitchen refit/);
+    await page.key('Enter', { keyCode: 13 });
+    await page.wait(600); // recovery copy is written after a short debounce
+    const t = await ev(`(() => { const b = JSON.parse(localStorage.getItem('tas-time:recovery:v3')).book; const t = b.items.find(i => i.title === 'Order timber samples'); return t && { job: b.jobs.find(j => j.id === t.jobId).code, effort: t.effort, plannedDay: t.plannedDay, finish: t.finish }; })()`);
+    assert.deepEqual({ job: t.job, effort: t.effort, plannedDay: t.plannedDay }, { job: 'HOME', effort: 90, plannedDay: addDays(today, 1) });
+    assert.ok(t.finish >= today);
+  });
+
+  await check('editing in the panel saves as you type; undo restores', async () => {
+    await page.clickText('.today-main .row-title', 'Write scope brief');
+    assert.equal(await count('.drawer'), 1);
+    await ev(`(() => { const el = document.getElementById('d-effort'); el.value = '3h'; el.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+    await page.wait(80);
+    assert.equal(await ev(`document.getElementById('d-effort').value`), '3h');
+    await page.click('#d-title');
+    await ev(`document.getElementById('d-title').select(); true`);
+    await page.type('Write the scope brief');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(100);
+    assert.ok(await ev(`[...document.querySelectorAll('.row-title')].some(b => b.textContent === 'Write the scope brief')`));
+    await page.key('Escape', { keyCode: 27 });
+    await page.key('z', { modifiers: 2, keyCode: 90 });
+    await page.wait(100);
+    assert.ok(await ev(`[...document.querySelectorAll('.row-title')].some(b => b.textContent === 'Write scope brief')`), 'title undo');
+  });
+
+  await check('a task with an open prerequisite cannot be ticked done', async () => {
+    await nav(3);
+    const disabled = await ev(`[...document.querySelectorAll('.prow-item')].find(r => r.textContent.includes('Full chapter draft')).querySelector('.tick').disabled`);
+    assert.equal(disabled, true);
+  });
+
+  await check('dragging a Gantt bar moves the task by whole days', async () => {
+    const before = await ev(`JSON.parse(localStorage.getItem('tas-time:recovery:v3')).book.items.find(i => i.title === 'Limitations table').start`);
+    const box = await page.box(`[data-item] .bar[aria-label^="Limitations table"]`);
+    const px = await ev(`parseFloat(getComputedStyle(document.querySelector('.plan-grid')).getPropertyValue('--px'))`);
+    const y = box.y + box.h / 2;
+    const x = box.x + 10;
+    await page.mouse('mousePressed', x, y);
+    await page.mouse('mouseMoved', x + px, y);
+    await page.mouse('mouseMoved', x + 2 * px + 2, y);
+    await page.mouse('mouseReleased', x + 2 * px + 2, y);
+    await page.wait(600);
+    const after = await ev(`JSON.parse(localStorage.getItem('tas-time:recovery:v3')).book.items.find(i => i.title === 'Limitations table').start`);
+    assert.equal(after, addDays(before, 2));
+  });
+
+  await check('arrow keys on a focused bar nudge it; Shift+arrow extends the finish', async () => {
+    const get = () => ev(`JSON.parse(localStorage.getItem('tas-time:recovery:v3')).book.items.find(i => i.title === 'Limitations table')`);
+    const before = await get();
+    await ev(`document.querySelector('.bar[aria-label^="Limitations table"]').focus(); true`);
+    await page.key('ArrowLeft', { keyCode: 37 });
+    await page.wait(500);
+    await page.key('ArrowRight', { keyCode: 39, modifiers: 8 });
+    await page.wait(500);
+    const after = await get();
+    assert.equal(after.start, addDays(before.start, -1));
+    assert.equal(after.finish, before.finish);
+  });
+
+  await check('week: plan an unplanned task onto a day from its menu', async () => {
+    await nav(2);
+    const title = await text('.tray .wcard-title');
+    await ev(`document.querySelector('.tray .wcard-menu').click(); true`);
+    await page.wait(80);
+    await ev(`document.querySelectorAll('.menu .menu-item')[0].click(); true`);
+    await page.wait(150);
+    assert.ok(await ev(`[...document.querySelectorAll('.day .wcard-title')].some(e => e.textContent === ${JSON.stringify(title)})`));
+  });
+
+  await check('week: capacity accepts hours and updates the meter', async () => {
+    await ev(`(() => { const el = document.getElementById('week-capacity'); el.value = '12h'; el.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`);
+    await page.wait(80);
+    assert.match(await text('.week-summary .meter-label'), /of 12h/);
+  });
+
+  await check('board: dropping a card on Doing changes its status; Blocked asks for a reason', async () => {
+    await nav(4);
+    const drop = (title, col) => ev(`(() => {
+      const card = [...document.querySelectorAll('.bcard')].find(c => c.textContent.includes(${JSON.stringify(title)}));
+      const dt = new DataTransfer(); dt.setData('application/x-tas-time-item', card.dataset.item);
+      document.querySelector('.col-${col}').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true, cancelable: true }));
+      return true; })()`);
+    await drop('Write the scope brief', 'doing').catch(() => drop('Write scope brief', 'doing'));
+    await page.wait(100);
+    assert.ok(await ev(`[...document.querySelectorAll('.col-doing .bcard')].some(c => c.textContent.includes('scope brief'))`));
+    await drop('Order timber samples', 'blocked');
+    await page.wait(150);
+    assert.equal(await ev('document.activeElement.id'), 'd-blocker');
+    await page.type('Supplier closed until Monday');
+    await page.key('Escape', { keyCode: 27 });
+    await page.wait(100);
+    assert.ok(await ev(`[...document.querySelectorAll('.col-blocked .bcard')].some(c => c.textContent.includes('Order timber samples'))`));
+  });
+
+  await check('notes save as you type', async () => {
+    await nav(5);
+    await page.clickText('.tabs button', 'Working notes');
+    await ev(`document.getElementById('note-text').focus(); true`); // element.click() does not focus a textarea
+    await page.type('Method B needs a larger sample.');
+    await page.wait(500);
+    const job = await text('.notes-job.on span:nth-child(2)');
+    const saved = await ev(`JSON.parse(localStorage.getItem('tas-time:recovery:v3')).book.jobs.find(j => j.title === ${JSON.stringify(job)}).notes.working`);
+    assert.equal(saved, 'Method B needs a larger sample.', `job ${job}`);
+  });
+
+  await check('hostile text is shown as text, never executed', async () => {
+    await ev('document.activeElement.blur(); true'); // N types a letter while a text field has focus
+    await page.key('n', { keyCode: 78 });
+    await page.type('<img src=x onerror="window.__pwned=1"> <b>bold</b>');
+    await page.key('Enter', { keyCode: 13 });
+    await nav(3);
+    await page.wait(200);
+    assert.equal(await ev('window.__pwned ?? 0'), 0);
+    assert.equal(await count('#main img, #main b'), 0);
+    assert.ok(await ev(`[...document.querySelectorAll('.item-title')].some(e => e.textContent.includes('<img src=x'))`));
+  });
+
+  await check('Save writes a valid book to the chosen file, then autosaves edits', async () => {
+    await page.key('s', { modifiers: 2, keyCode: 83 });
+    await page.wait(300);
+    const first = await lastSaved();
+    assert.equal(first.format, 'tas-time-planning-book');
+    assert.equal(first.version, 3);
+    assert.match(await text('.status'), /Saved · plan\.json/);
+    const writes = await ev('window.__saved.length');
+    await nav(1);
+    await page.key('n', { keyCode: 78 });
+    await page.type('Autosaved task');
+    await page.key('Enter', { keyCode: 13 });
+    await page.wait(1800);
+    assert.equal(await ev('window.__saved.length'), writes + 1);
+    assert.ok((await lastSaved()).items.some(i => i.title === 'Autosaved task'));
+  });
+
+  await check('unsaved work survives a reload (recovery copy)', async () => {
+    await ev('window.showSaveFilePicker = undefined; true');
+    await page.reload();
+    assert.ok(await ev(`[...document.querySelectorAll('.row-title')].some(e => e.textContent === 'Autosaved task')`));
+    assert.equal(await text('.book-name'), 'Example planning book');
+    await ev(STUB_FS);
+  });
+
+  await check('opening a version 2 file upgrades it without linking the original', async () => {
+    const v2 = { format: 'tas-time-planning-book', version: 2, name: 'Old book', baselineDate: '', weeks: {},
+      jobs: [{ id: 'j', title: 'Legacy job', code: 'OLD', outcome: '', color: 'plum', status: 'Active', archived: false, notes: { scope: '', decisions: '', working: '', references: '', restart: 'From v2' } }],
+      phases: [], items: [{ id: 'a', jobId: 'j', phaseId: '', title: 'Legacy action', kind: 'Action', owner: '', start: '', finish: '', remaining: 30, status: 'In progress', archived: false, predecessors: [], blocker: '', plannedDay: today, baselineStart: '', baselineFinish: '', acceptedOn: '', notes: '' }] };
+    await ev(`window.__openText = ${JSON.stringify(JSON.stringify(v2))}; true`);
+    await page.key('o', { modifiers: 2, keyCode: 79 });
+    await page.wait(300);
+    assert.equal(await text('.book-name'), 'Old book');
+    assert.ok(await ev(`[...document.querySelectorAll('.row-title')].some(e => e.textContent === 'Legacy action')`));
+    assert.match(await text('.status'), /Not saved to a file/);
+    assert.match(await ev(`[...document.querySelectorAll('.toast')].map(t => t.textContent).join(' ')`), /Upgraded from version 2/);
+  });
+
+  await check('quick add with an unknown #job or day is refused and the text kept', async () => {
+    await nav(1);
+    await quickAdd('Critical review #missing !nonsense');
+    await page.wait(600);
+    assert.equal(await ev(`document.getElementById('quick-add').value`), 'Critical review #missing !nonsense');
+    assert.ok(!(await recoveryBook()).items.some(i => i.title.startsWith('Critical review')));
+    assert.match(await ev(`[...document.querySelectorAll('.toast')].map(t => t.textContent).join(' ')`), /Not added/);
+    await ev(`document.getElementById('quick-add').value = ''; true`);
+  });
+
+  await check('switching books during the autosave delay saves the edits first', async () => {
+    await ev(`window.__pickName = 'plan.json'; true`);
+    await fileMenu('Load example book');
+    await page.key('s', { modifiers: 2, keyCode: 83 });
+    await page.wait(300);
+    assert.match(await text('.status'), /Saved · plan\.json/);
+    await quickAdd('Edit before switch');
+    await fileMenu('Load example book'); // inside the 1.2 s autosave window
+    await page.wait(600);
+    assert.ok((await lastSaved('plan.json')).items.some(i => i.title === 'Edit before switch'), 'edit reached plan.json');
+    assert.match(await text('.status'), /Not saved to a file/, 'new book is not linked to plan.json');
+  });
+
+  await check('a slow permission check never writes another book into the file', async () => {
+    await ev(`window.__pickName = 'original.json'; window.__permDelay = 800; true`);
+    await page.key('s', { modifiers: 2, keyCode: 83 }); // example book, picker → original.json, permission pending
+    await page.wait(100);
+    await fileMenu('New book');
+    await page.wait(1200);
+    await ev('window.__permDelay = 0; true');
+    assert.equal(await lastSaved('original.json'), null, 'nothing written to original.json');
+    assert.equal(await text('.book-name'), 'My planning book');
+    assert.doesNotMatch(await text('.status'), /original\.json/);
+  });
+
+  await check('a slow write finishes with the old book and leaves the new book unlinked', async () => {
+    await ev(`window.__pickName = 'slow.json'; true`);
+    await fileMenu('Load example book');
+    await page.key('s', { modifiers: 2, keyCode: 83 });
+    await page.wait(300);
+    await quickAdd('Last edit before switch');
+    await ev('window.__writeDelay = 800; true');
+    await page.key('s', { modifiers: 2, keyCode: 83 }); // write in flight
+    await page.wait(100);
+    await fileMenu('New book'); // waits for both queued writes before switching
+    await page.wait(2500);
+    await ev('window.__writeDelay = 0; true');
+    const saved = await lastSaved('slow.json');
+    assert.equal(saved.name, 'Example planning book');
+    assert.ok(saved.items.some(i => i.title === 'Last edit before switch'));
+    assert.equal(await ev(`window.__saved.filter(s => JSON.parse(s.raw).name === 'My planning book').length`), 0);
+    assert.equal(await text('.book-name'), 'My planning book');
+    assert.doesNotMatch(await text('.status'), /slow\.json/);
+  });
+
+  await check('appearance: style and theme switch from the menu and persist across reloads', async () => {
+    const bg = () => ev('getComputedStyle(document.body).backgroundColor');
+    const pickAppearance = async label => { await page.click('#appearance'); await page.clickText('.menu-item', label); await page.wait(80); };
+    assert.equal(await ev('document.documentElement.dataset.style'), 'fluent', 'Fluent is the default');
+    const fluentLight = await bg();
+    await pickAppearance('Notebook');
+    assert.equal(await ev('document.documentElement.dataset.style'), 'notebook');
+    assert.notEqual(await bg(), fluentLight);
+    await nav(1);
+    await page.screenshot(join(shots, 's1-today-notebook.png'), { full: false });
+    await pickAppearance('Dark');
+    assert.equal(await ev('document.documentElement.dataset.scheme'), 'dark');
+    const darkBg = await bg();
+    await page.reload();
+    await ev(STUB_FS);
+    assert.equal(await ev('document.documentElement.dataset.style'), 'notebook', 'style persisted');
+    assert.equal(await bg(), darkBg, 'theme persisted');
+    await pickAppearance('Fluent');
+    await pickAppearance('Match Windows');
+    assert.equal(await ev('document.documentElement.dataset.scheme ?? "none"'), 'none');
+    assert.equal(await bg(), fluentLight);
+  });
+
+  await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));
+
+  // Visual checks at other sizes and themes.
+  await ev('document.querySelector("#file-menu").click(); true');
+  await page.clickText('.menu-item', 'Load example book');
+  await page.size(390, 844);
+  for (const [n, v] of [[1, 'today'], [2, 'week'], [3, 'plan']]) {
+    await nav(n);
+    await page.screenshot(join(shots, `m${n}-${v}-phone.png`), { full: false });
+  }
+  await check('no horizontal page overflow at phone width', async () => {
+    for (const n of [1, 2, 3, 4, 5]) {
+      await nav(n);
+      const over = await ev('document.documentElement.scrollWidth - document.documentElement.clientWidth');
+      assert.ok(over <= 0, `view ${n} overflows by ${over}px`);
+    }
+  });
+  await page.size(1440, 900);
+  await page.send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
+  await nav(3);
+  await page.screenshot(join(shots, 'd3-plan-dark.png'), { full: false });
+  await nav(1);
+  await page.clickText('.today-main .row-title', 'Compare methods');
+  await page.screenshot(join(shots, 'd1-today-drawer-dark.png'), { full: false });
+} finally {
+  await page.close();
+}
+
+const failed = results.filter(r => !r[0]);
+for (const [ok, name, why] of results) console.log(`${ok ? '✔' : '✖'} ${name}${why ? `\n    ${why}` : ''}`);
+console.log(`\n${results.length - failed.length}/${results.length} e2e checks passed. Screenshots: .e2e/`);
+process.exit(failed.length ? 1 : 0);
