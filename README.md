@@ -4,6 +4,18 @@
 
 ![The Plan view: two jobs broken into phases, with a Gantt chart showing forecast bars, baselines, slippage and prerequisite links](docs/img/screen-plan.png)
 
+## Download
+
+No installation, account or admin rights needed. Pick your computer:
+
+| Your computer | Download | Then |
+| --- | --- | --- |
+| **Windows** | [**Tas-Time for Windows** (.zip)](https://github.com/spgsu/Tas-Time/releases/latest/download/Tas-Time-Windows.zip) | Right-click the zip → **Extract All**, open the folder, double-click **Open Tas-Time.cmd**. |
+| **Mac** | [**Tas-Time for Mac** (.zip)](https://github.com/spgsu/Tas-Time/releases/latest/download/Tas-Time-macOS.zip) | Double-click the zip. The first time, right-click **Open Tas-Time.command** → **Open** → **Open**. After that, just double-click it. |
+| **Anything else** | [**Tas-Time.html**](https://github.com/spgsu/Tas-Time/releases/latest/download/Tas-Time.html) | Open the file in Edge or Chrome. |
+
+Each download contains a **START HERE.txt** with these steps. Older versions are on the [releases page](https://github.com/spgsu/Tas-Time/releases).
+
 ## Why Tas-Time
 
 Most to-do apps are good at today and bad at the next six weeks. Most project tools are the opposite, and need accounts, servers and a team. Tas-Time sits in between, for one person juggling a few real goals: coursework and a part-time job, a PhD and a family, a renovation and a day job.
@@ -15,14 +27,12 @@ Most to-do apps are good at today and bad at the next six weeks. Most project to
 
 ## Getting started
 
-You need **Microsoft Edge or Google Chrome**, version 123 or later (2024 onwards), on Windows, macOS or Linux.
+You need **Microsoft Edge or Google Chrome**, version 123 or later (2024 onwards).
 
-1. Download this repository (green **Code** button → **Download ZIP**) and unzip it. Everything you need is in the `dist` folder.
-2. Open **`dist/Tas-Time.html`**. For a dedicated app window, double-click the launcher beside it instead:
-   - **Windows:** `Open Tas-Time.cmd` opens it in an Edge app window.
-   - **macOS:** `Open Tas-Time.command` uses Edge or Chrome, whichever is installed. The first time, right-click it and choose **Open** so macOS allows a downloaded script.
-3. Choose **Explore an example** to look around, or **Create your first job**.
-4. Press **Ctrl+S** (**⌘S** on a Mac) once to choose where your planning book is saved. After that, every change saves itself.
+1. Download and open Tas-Time as described above.
+2. Choose **Explore an example** to look around, or **Create your first job**.
+3. Press **Ctrl+S** (**⌘S** on a Mac) once to choose where your planning book is saved. After that, every change saves itself.
+4. Keep **Tas-Time.html** and its launcher together in one folder. Your plan is a separate `.json` file wherever you saved it.
 
 **Never planned your time before?** Open **Beginner's guide** at the bottom of the sidebar. It walks through one real project from first idea to finished: writing an outcome, breaking the goal down with a mind map, a fishbone diagram and working backwards from the deadline, then planning weeks and days. The guide is built into the app and works offline. It is also in this repository as [docs/TUTORIAL.md](docs/TUTORIAL.md).
 
@@ -102,6 +112,7 @@ npm run build   # bundle src/ and docs/ into dist/Tas-Time.html, plus the launch
 npm test        # unit tests: planning logic, file format, calendar export, guide conversion
 npm run e2e     # build, then drive the real app in headless Edge or Chrome
 npm run check   # all of the above
+npm run package # build, then make the release downloads in release/
 ```
 
 The end-to-end suite controls a real browser through the DevTools protocol: typing quick adds, dragging Gantt bars, saving, reloading, importing old files and switching themes. It needs Edge or Chrome installed, or `BROWSER=<path to a Chromium executable>`. Screenshots of every view, at desktop and phone widths and in dark mode, are written to `.e2e/` for review.
@@ -117,10 +128,11 @@ src/
   index.html     Page template
   styles.css     All styles: Fluent and Notebook, light and dark, print
 docs/            Beginner's guide (TUTORIAL.md) and images, bundled into the app at build time
-scripts/         build.mjs (bundler) and markdown.mjs (guide converter)
+scripts/         build.mjs (bundler), markdown.mjs (guide converter), package.mjs (release zips)
 launcher/        Windows (.cmd) and macOS (.command) app-window launchers
 tests/           Unit tests (node:test) and e2e/ (headless browser)
 dist/            Built app, committed so it can be used without Node
+release/         Downloadable zips made by npm run package (not committed; attached to GitHub releases)
 ```
 
 ### Conventions

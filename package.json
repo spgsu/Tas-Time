@@ -13,6 +13,7 @@
     "build": "node scripts/build.mjs",
     "test": "node --test",
     "e2e": "node scripts/build.mjs && node tests/e2e/run.mjs",
-    "check": "node scripts/build.mjs && node --test && node tests/e2e/run.mjs"
+    "check": "node scripts/build.mjs && node --test && node tests/e2e/run.mjs",
+    "package": "node scripts/build.mjs && node scripts/package.mjs"
   }
 }
