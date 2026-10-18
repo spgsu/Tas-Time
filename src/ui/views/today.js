@@ -6,7 +6,8 @@ import { fmtEffort, fmtHours } from '../../core/parse.js';
 import { jobOf, lastWorkedJob, liveJobs, openEffort, readyToPlan, todayList, upcomingMilestones, weekLoad } from '../../core/query.js';
 import { patchItem, setNote } from '../../core/ops.js';
 import { DEFAULT_CAPACITY } from '../../core/model.js';
-import { act, setView, store, today, ui } from '../state.js';
+import { act, notify, setView, store, today, ui } from '../state.js';
+import { undo } from '../commands.js';
 import { btn, emptyState, itemRow, jobColor, jobTag, meter } from '../components.js';
 import { welcome } from './welcome.js';
 
@@ -28,7 +29,12 @@ export function renderToday() {
     : planned.length ? 'Everything planned for today is done.' : 'Nothing planned yet.';
 
   const later = t => [
-    btn('', () => planFor(t.id, addDays(day, 1), 'Move to tomorrow'), { iconName: 'arrowRight', title: 'Move to tomorrow', kind: 'ghost sm' }),
+    btn('Tomorrow', () => {
+      if (planFor(t.id, addDays(day, 1), 'Move to tomorrow')) {
+        ui.week = mondayOf(addDays(day, 1));
+        notify('Moved to tomorrow. See it in Week.', { action: { label: 'Undo', run: undo } });
+      }
+    }, { title: 'Move to tomorrow (shown in Week)', kind: 'ghost sm' }),
   ];
   const bringIn = t => [btn('Today', () => planFor(t.id, day, 'Plan for today'), { kind: 'sm', iconName: 'plus', title: 'Plan for today' })];
 

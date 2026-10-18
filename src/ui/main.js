@@ -4,7 +4,7 @@ import { onRender, store } from './state.js';
 import { initKeys, initQuickAdd, renderShell, renderStatus } from './shell.js';
 import { initToasts } from './overlay.js';
 import { applyAppearance } from './appearance.js';
-import { autosave, prefs, restoreSession, writeRecovery } from './files.js';
+import { autosave, beforeUnload, restoreSession, writeRecovery } from './files.js';
 
 async function start() {
   applyAppearance();
@@ -22,10 +22,6 @@ async function start() {
   document.documentElement.classList.add('ready');
 }
 
-window.addEventListener('beforeunload', event => {
-  writeRecovery.flush();
-  // Unsaved edits are safe only if the recovery copy holds them; an autosave may still be pending.
-  if (store.dirty && !prefs().recovery) { event.preventDefault(); event.returnValue = ''; }
-});
+window.addEventListener('beforeunload', beforeUnload);
 
 start();

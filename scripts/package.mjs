@@ -87,6 +87,7 @@ const startHere = (os) => [
   '   After that, every change saves itself.',
   '',
   'Keep "Tas-Time.html" and the launcher together in the same folder.',
+  ...(os === 'windows' ? ['For a desktop icon, double-click "Create Desktop Shortcut.cmd".', 'Keep Tas-Time.ico beside the HTML file so the shortcut keeps its icon.'] : []),
   'Your plan is a separate .json file. Back it up by copying it.',
   '',
   'Works best in Microsoft Edge or Google Chrome (2024 or newer).',
@@ -104,6 +105,9 @@ mkdirSync(out, { recursive: true });
 writeFileSync(join(out, 'Tas-Time-Windows.zip'), zip([
   { name: 'Tas-Time/Tas-Time.html', data: html },
   { name: 'Tas-Time/Open Tas-Time.cmd', data: readFileSync(join(dist, 'Open Tas-Time.cmd')) },
+  { name: 'Tas-Time/Tas-Time.ico', data: readFileSync(join(dist, 'Tas-Time.ico')) },
+  { name: 'Tas-Time/Create Desktop Shortcut.cmd', data: readFileSync(join(dist, 'Create Desktop Shortcut.cmd')) },
+  { name: 'Tas-Time/Create Desktop Shortcut.ps1', data: readFileSync(join(dist, 'Create Desktop Shortcut.ps1')) },
   { name: 'Tas-Time/START HERE.txt', data: Buffer.from(startHere('windows')) },
   { name: 'Tas-Time/LICENSE.txt', data: Buffer.from(license.replace(/\r?\n/g, '\r\n')) },
 ]));

@@ -8,7 +8,7 @@
 <meta name="generator" content="Tas-Time 3.0.0">
 <meta name="copyright" content="© 2026 Selami Pazarbasi. MIT License.">
 <title>Tas-Time</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%232f6b4f'/%3E%3Cpath d='M8 10h9M11 16h13M14 22h10' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY292ZXIiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzM5ODQ2NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE4NGMzYiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InBhcGVyIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZkZjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlOGVmZGYiLz48L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSIyMjQiIGhlaWdodD0iMjI0IiByeD0iNTIiIGZpbGw9InVybCgjY292ZXIpIi8+CiAgPHJlY3QgeD0iNjIiIHk9IjUxIiB3aWR0aD0iMTM5IiBoZWlnaHQ9IjE2NCIgcng9IjE3IiBmaWxsPSIjMTAzZTMxIiBvcGFjaXR5PSIuMyIvPgogIDxyZWN0IHg9IjU2IiB5PSI0NCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSIxNjQiIHJ4PSIxNyIgZmlsbD0idXJsKCNwYXBlcikiLz4KICA8cGF0aCBkPSJNNzkgNDR2MTY0IiBzdHJva2U9IiNkMWRkYzgiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik01MSA3NmgxNm0tMTYgMzZoMTZtLTE2IDM2aDE2bS0xNiAzNmgxNiIgc3Ryb2tlPSIjYWNkMGI1IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9Ijk2IiB5PSI3NiIgd2lkdGg9IjU5IiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iIzM0N2E1OCIvPgogIDxyZWN0IHg9IjExMiIgeT0iMTExIiB3aWR0aD0iNjQiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjMzQ3YTU4Ii8+CiAgPHJlY3QgeD0iMTMyIiB5PSIxNDYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIxNCIgcng9IjciIGZpbGw9IiMzNDdhNTgiLz4KICA8Y2lyY2xlIGN4PSIxNzgiIGN5PSIxOTAiIHI9IjM1IiBmaWxsPSIjZGJhNTRhIi8+CiAgPHBhdGggZD0iTTE3OCAxNzB2MjFsMTMgOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZGY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K">
 <style>
 /* Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT */
 /* ── Tokens ─────────────────────────────────────────────── */
@@ -404,8 +404,7 @@ h1, h2, h3, p { margin: 0; }
 .note-text { border: 0; border-radius: 0; padding: 20px 28px 40px; font-size: 15px; line-height: 1.75; min-height: 50vh; resize: none; background: transparent; box-shadow: none !important; overflow: hidden; }
 
 /* ── Drawer ─────────────────────────────────────────────── */
-.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: var(--drawer); max-width: 100vw; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow-2); z-index: 20; overflow-y: auto; padding: 14px 22px 40px; display: flex; flex-direction: column; gap: 14px; animation: slide-in .18s ease; outline: none; }
-@keyframes slide-in { from { transform: translateX(24px); opacity: 0; } }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: var(--drawer); max-width: 100vw; background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow-2); z-index: 20; overflow-y: auto; padding: 14px 22px 40px; display: flex; flex-direction: column; gap: 14px; outline: none; }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -8px; }
 .drawer-crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 600; min-width: 0; padding-left: 8px; }
 .drawer-head-actions { display: flex; gap: 2px; }
@@ -1278,7 +1277,7 @@ function notify(message, options = {}) { for (const fn of notifiers) fn(message,
 
 const renderers = [];
 function onRender(fn) { renderers.push(fn); }
-function rerender() { for (const fn of renderers) fn(); }
+function rerender(scope = 'all') { for (const fn of renderers) fn(scope); }
 
 function setView(view) {
   ui.view = view;
@@ -1400,11 +1399,9 @@ function icon(name, size = 18) {
 
 const NATIVE_AUTOSIZE = typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content');
 
-/** The app icon (same artwork as the favicon in index.html): staggered programme bars. */
+/** The app icon is embedded by the build so it also works offline. */
 function appMark(size = 28) {
-  return h('svg', { class: 'app-mark', width: size, height: size, viewBox: '0 0 32 32', 'aria-hidden': 'true' },
-    h('rect', { width: 32, height: 32, rx: 7, fill: '#2f6b4f' }),
-    h('path', { d: 'M8 10h9M11 16h13M14 22h10', stroke: '#ffffff', 'stroke-width': 3, 'stroke-linecap': 'round', fill: 'none' }));
+  return h('img', { class: 'app-mark', width: size, height: size, src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY292ZXIiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzM5ODQ2NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE4NGMzYiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InBhcGVyIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZkZjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlOGVmZGYiLz48L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSIyMjQiIGhlaWdodD0iMjI0IiByeD0iNTIiIGZpbGw9InVybCgjY292ZXIpIi8+CiAgPHJlY3QgeD0iNjIiIHk9IjUxIiB3aWR0aD0iMTM5IiBoZWlnaHQ9IjE2NCIgcng9IjE3IiBmaWxsPSIjMTAzZTMxIiBvcGFjaXR5PSIuMyIvPgogIDxyZWN0IHg9IjU2IiB5PSI0NCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSIxNjQiIHJ4PSIxNyIgZmlsbD0idXJsKCNwYXBlcikiLz4KICA8cGF0aCBkPSJNNzkgNDR2MTY0IiBzdHJva2U9IiNkMWRkYzgiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik01MSA3NmgxNm0tMTYgMzZoMTZtLTE2IDM2aDE2bS0xNiAzNmgxNiIgc3Ryb2tlPSIjYWNkMGI1IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9Ijk2IiB5PSI3NiIgd2lkdGg9IjU5IiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iIzM0N2E1OCIvPgogIDxyZWN0IHg9IjExMiIgeT0iMTExIiB3aWR0aD0iNjQiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjMzQ3YTU4Ii8+CiAgPHJlY3QgeD0iMTMyIiB5PSIxNDYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIxNCIgcng9IjciIGZpbGw9IiMzNDdhNTgiLz4KICA8Y2lyY2xlIGN4PSIxNzgiIGN5PSIxOTAiIHI9IjM1IiBmaWxsPSIjZGJhNTRhIi8+CiAgPHBhdGggZD0iTTE3OCAxNzB2MjFsMTMgOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZGY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K', alt: '', 'aria-hidden': 'true' });
 }
 
 /** Grows a textarea to fit its content (only where CSS field-sizing is unavailable). */
@@ -1684,7 +1681,7 @@ function patchItem(book, id, patch, today) {
   const next = { ...t, ...patch };
   if (patch.jobId && patch.jobId !== t.jobId && !('phaseId' in patch)) next.phaseId = '';
   if (next.kind === 'milestone') {
-    next.finish = next.finish || next.start;
+    if (!('finish' in patch)) next.finish = next.finish || next.start;
     next.start = next.finish;
   }
   if ('start' in patch && next.kind === 'task' && next.start && next.finish && next.finish < next.start) {
@@ -2058,28 +2055,32 @@ async function save({ saveAs = false } = {}) {
     if (!handle) handle = await window.showSaveFilePicker({ suggestedName: file.name || suggestedName(), types: PICKER_TYPES });
     if (!(await ensurePermission(handle, true))) throw new Error('Permission to write the file was not granted.');
     if (snap.session !== session) throw new StaleSave();
-    await queueWrite(handle, snap);
+    await queueWrite(handle, snap, { linkOnSuccess: true });
     if (snap.session !== session) return true; // written, but the user has moved on to another book
-    link(handle);
+    if (store.dirty) autosave();
     notify(`Saved to ${handle.name}`);
     return true;
   } catch (error) {
     if (error.name === 'AbortError') return false;
     if (error.name === 'StaleSave') { notify(error.message, { kind: 'warn' }); return false; }
-    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender(); }
+    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     notify(`Save failed: ${error.message}`, { kind: 'error' });
     return false;
   }
 }
 
 /** Writes are serialised; each writes its own snapshot and only updates state for its own session. */
-function queueWrite(handle, snap) {
-  if (snap.session === session) { file.state = 'saving'; rerender(); }
+function queueWrite(handle, snap, { linkOnSuccess = false } = {}) {
+  if (snap.session === session) { file.state = 'saving'; rerender('status'); }
   writing = writing.catch(() => {}).then(async () => {
     const writer = await handle.createWritable();
     await writer.write(snap.raw);
     await writer.close();
     if (snap.session !== session) return;
+    if (linkOnSuccess) link(handle);
+    // An autosave queued before Save as may still target the previous file.
+    // Only a write to the current destination can mark this book as saved.
+    if (handle !== file.handle) return;
     store.markSaved(snap.rev);
     file.savedAt = new Date(); file.state = 'linked'; file.lastError = '';
     writeRecovery.flush();
@@ -2090,7 +2091,7 @@ function queueWrite(handle, snap) {
 function link(handle) {
   file.handle = handle; file.name = handle.name; file.state = 'linked';
   idbSet('lastFile', handle);
-  rerender();
+  rerender('status');
 }
 
 async function ensurePermission(handle, request) {
@@ -2112,15 +2113,15 @@ async function flushToFile() {
   const snap = snapshot();
   try {
     if (!(await ensurePermission(handle, false))) {
-      if (snap.session === session) { file.state = 'reconnect'; rerender(); }
+      if (snap.session === session) { file.state = 'reconnect'; rerender('status'); }
       return false;
     }
     if (snap.session !== session) return false;
     await queueWrite(handle, snap);
-    if (snap.session === session) rerender();
+    if (snap.session === session) rerender('status');
     return true;
   } catch (error) {
-    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender(); }
+    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     return false;
   }
 }
@@ -2133,7 +2134,7 @@ async function reconnect() {
     if (!(await ensurePermission(file.handle, true)) || mine !== session) return false;
     file.state = 'linked';
     if (store.dirty) await queueWrite(file.handle, snapshot());
-    rerender();
+    rerender('status');
     return true;
   } catch (error) { notify(error.message, { kind: 'error' }); return false; }
 }
@@ -2220,14 +2221,34 @@ function resetView() {
 
 // ── Recovery copy ──
 
+let recoveryRevision = -1;
+let recoveryFailed = false;
+
 const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
     localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book }));
-  } catch { /* quota or storage blocked: the file remains the source of truth */ }
+    recoveryRevision = store.revision;
+    recoveryFailed = false;
+  } catch {
+    recoveryRevision = -1;
+    if (!recoveryFailed) notify('Recovery copy could not be saved. Save your book to a file before closing.', { kind: 'warn' });
+    recoveryFailed = true;
+  }
 }, 400);
 
-function clearRecovery() { try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ } }
+function clearRecovery() {
+  recoveryRevision = -1;
+  try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
+}
+
+/** Closing is safe only when the current edits reached a file or recovery storage. */
+function beforeUnload(event) {
+  writeRecovery.flush();
+  if (store.dirty && (!prefs().recovery || recoveryRevision !== store.revision)) {
+    event.preventDefault(); event.returnValue = '';
+  }
+}
 
 /** On launch: restore the last session (and its file link, pending permission). */
 async function restoreSession() {
@@ -2595,14 +2616,20 @@ function liveText(id, value, onValue, attrs = {}) {
 }
 
 function renderDrawer() {
+  typedSinceRender = false;
   const d = ui.drawer;
   if (!d) return null;
   const record = d.type === 'item' ? itemOf(store.book, d.id) : jobOf(store.book, d.id);
   if (!record) { ui.drawer = null; return null; }
-  const panel = h('aside', { class: 'drawer', id: 'drawer', 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
+  const panel = h('aside', { class: 'drawer', id: 'drawer', 'data-record': d.id, 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
     d.type === 'item' ? itemEditor(record) : jobEditor(record));
   // Text edits commit quietly (without rebuilding the page); refresh once focus leaves the field.
-  panel.addEventListener('focusout', () => { if (typedSinceRender) { typedSinceRender = false; setTimeout(rerender, 0); } });
+  panel.addEventListener('focusout', () => {
+    if (typedSinceRender) {
+      typedSinceRender = false;
+      setTimeout(() => { if (panel.isConnected) rerender(); }, 0);
+    }
+  });
   if (d.focusField) {
     const target = d.focusField;
     d.focusField = '';
@@ -2790,7 +2817,12 @@ function renderToday() {
     : planned.length ? 'Everything planned for today is done.' : 'Nothing planned yet.';
 
   const later = t => [
-    btn('', () => planFor(t.id, addDays(day, 1), 'Move to tomorrow'), { iconName: 'arrowRight', title: 'Move to tomorrow', kind: 'ghost sm' }),
+    btn('Tomorrow', () => {
+      if (planFor(t.id, addDays(day, 1), 'Move to tomorrow')) {
+        ui.week = mondayOf(addDays(day, 1));
+        notify('Moved to tomorrow. See it in Week.', { action: { label: 'Undo', run: undo } });
+      }
+    }, { title: 'Move to tomorrow (shown in Week)', kind: 'ghost sm' }),
   ];
   const bringIn = t => [btn('Today', () => planFor(t.id, day, 'Plan for today'), { kind: 'sm', iconName: 'plus', title: 'Plan for today' })];
 
@@ -3400,12 +3432,15 @@ function filled(job) { return NOTE_PAGES.filter(([k]) => job.notes[k].trim()).le
 
 const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes };
 
-function renderShell() {
+function renderShell(scope = 'all') {
+  if (scope === 'status') { renderStatus(); return; }
   const active = document.activeElement;
   const focusId = active?.id && active !== document.body ? active.id : '';
   const selection = focusId && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
   const keep = ['plan-scroll'].map(id => [id, document.getElementById(id)]).filter(([, el]) => el).map(([id, el]) => [id, el.scrollLeft, el.scrollTop]);
   const pageY = document.getElementById('main')?.scrollTop || 0;
+  const oldDrawer = document.getElementById('drawer');
+  const drawerY = oldDrawer && oldDrawer.dataset.record === ui.drawer?.id ? oldDrawer.scrollTop : 0;
 
   fill(document.getElementById('sidebar'), sidebar());
   renderStatus();
@@ -3414,6 +3449,7 @@ function renderShell() {
   main.scrollTop = pageY;
   const drawer = renderDrawer();
   fill(document.getElementById('drawer-host'), drawer);
+  if (drawer) drawer.scrollTop = drawerY;
   document.body.classList.toggle('has-drawer', !!drawer);
 
   for (const [id, left, top] of keep) {
@@ -3616,11 +3652,7 @@ async function start() {
   document.documentElement.classList.add('ready');
 }
 
-window.addEventListener('beforeunload', event => {
-  writeRecovery.flush();
-  // Unsaved edits are safe only if the recovery copy holds them; an autosave may still be pending.
-  if (store.dirty && !prefs().recovery) { event.preventDefault(); event.returnValue = ''; }
-});
+window.addEventListener('beforeunload', beforeUnload);
 
 start();
 

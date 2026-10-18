@@ -30,14 +30,20 @@ function liveText(id, value, onValue, attrs = {}) {
 }
 
 export function renderDrawer() {
+  typedSinceRender = false;
   const d = ui.drawer;
   if (!d) return null;
   const record = d.type === 'item' ? itemOf(store.book, d.id) : jobOf(store.book, d.id);
   if (!record) { ui.drawer = null; return null; }
-  const panel = h('aside', { class: 'drawer', id: 'drawer', 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
+  const panel = h('aside', { class: 'drawer', id: 'drawer', 'data-record': d.id, 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
     d.type === 'item' ? itemEditor(record) : jobEditor(record));
   // Text edits commit quietly (without rebuilding the page); refresh once focus leaves the field.
-  panel.addEventListener('focusout', () => { if (typedSinceRender) { typedSinceRender = false; setTimeout(rerender, 0); } });
+  panel.addEventListener('focusout', () => {
+    if (typedSinceRender) {
+      typedSinceRender = false;
+      setTimeout(() => { if (panel.isConnected) rerender(); }, 0);
+    }
+  });
   if (d.focusField) {
     const target = d.focusField;
     d.focusField = '';

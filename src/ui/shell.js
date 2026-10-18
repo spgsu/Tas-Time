@@ -21,12 +21,15 @@ import { renderNotes } from './views/notes.js';
 
 const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes };
 
-export function renderShell() {
+export function renderShell(scope = 'all') {
+  if (scope === 'status') { renderStatus(); return; }
   const active = document.activeElement;
   const focusId = active?.id && active !== document.body ? active.id : '';
   const selection = focusId && 'selectionStart' in active ? [active.selectionStart, active.selectionEnd] : null;
   const keep = ['plan-scroll'].map(id => [id, document.getElementById(id)]).filter(([, el]) => el).map(([id, el]) => [id, el.scrollLeft, el.scrollTop]);
   const pageY = document.getElementById('main')?.scrollTop || 0;
+  const oldDrawer = document.getElementById('drawer');
+  const drawerY = oldDrawer && oldDrawer.dataset.record === ui.drawer?.id ? oldDrawer.scrollTop : 0;
 
   fill(document.getElementById('sidebar'), sidebar());
   renderStatus();
@@ -35,6 +38,7 @@ export function renderShell() {
   main.scrollTop = pageY;
   const drawer = renderDrawer();
   fill(document.getElementById('drawer-host'), drawer);
+  if (drawer) drawer.scrollTop = drawerY;
   document.body.classList.toggle('has-drawer', !!drawer);
 
   for (const [id, left, top] of keep) {

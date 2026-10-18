@@ -41,7 +41,7 @@ export function notify(message, options = {}) { for (const fn of notifiers) fn(m
 
 const renderers = [];
 export function onRender(fn) { renderers.push(fn); }
-export function rerender() { for (const fn of renderers) fn(); }
+export function rerender(scope = 'all') { for (const fn of renderers) fn(scope); }
 
 export function setView(view) {
   ui.view = view;

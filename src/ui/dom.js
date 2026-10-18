@@ -84,11 +84,9 @@ export function icon(name, size = 18) {
 
 const NATIVE_AUTOSIZE = typeof CSS !== 'undefined' && CSS.supports('field-sizing', 'content');
 
-/** The app icon (same artwork as the favicon in index.html): staggered programme bars. */
+/** The app icon is embedded by the build so it also works offline. */
 export function appMark(size = 28) {
-  return h('svg', { class: 'app-mark', width: size, height: size, viewBox: '0 0 32 32', 'aria-hidden': 'true' },
-    h('rect', { width: 32, height: 32, rx: 7, fill: '#2f6b4f' }),
-    h('path', { d: 'M8 10h9M11 16h13M14 22h10', stroke: '#ffffff', 'stroke-width': 3, 'stroke-linecap': 'round', fill: 'none' }));
+  return h('img', { class: 'app-mark', width: size, height: size, src: '{{APP_ICON}}', alt: '', 'aria-hidden': 'true' });
 }
 
 /** Grows a textarea to fit its content (only where CSS field-sizing is unavailable). */

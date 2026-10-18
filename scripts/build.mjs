@@ -4,7 +4,7 @@
 // The bundler is deliberately tiny: modules share one scope in dependency order,
 // with `import` lines removed and `export` keywords stripped. That only works if
 // every top-level name is unique across modules, so duplicates fail the build.
-import { chmodSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { chmodSync, copyFileSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { markdownToHtml } from './markdown.mjs';
@@ -65,6 +65,7 @@ const css = readFileSync(join(src, 'styles.css'), 'utf8');
 const license = readFileSync(join(root, 'LICENSE'), 'utf8');
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 const template = readFileSync(join(src, 'index.html'), 'utf8');
+const appIcon = `data:image/svg+xml;base64,${readFileSync(join(src, 'assets', 'tas-time.svg')).toString('base64')}`;
 
 // The beginner's guide ships inside the page so it works offline: images become data URIs.
 const docs = join(root, 'docs');
@@ -82,14 +83,19 @@ const html = template
   .replace('/*SCRIPT*/', () => script)
   .replace('<!--LICENSE-->', () => `<!--\n${license.trim()}\n-->`)
   .replace('<!--GUIDE-->', () => guideHtml)
-  .replaceAll('{{VERSION}}', pkg.version);
+  .replaceAll('{{VERSION}}', pkg.version)
+  .replaceAll('{{APP_ICON}}', appIcon);
 
-for (const marker of ['/*STYLES*/', '/*SCRIPT*/', '<!--LICENSE-->', '<!--GUIDE-->', '{{VERSION}}']) {
+for (const marker of ['/*STYLES*/', '/*SCRIPT*/', '<!--LICENSE-->', '<!--GUIDE-->', '{{VERSION}}', '{{APP_ICON}}']) {
   if (html.includes(marker)) throw new Error(`Template marker ${marker} was not replaced.`);
 }
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, 'Tas-Time.html'), html);
+copyFileSync(join(src, 'assets', 'tas-time.ico'), join(outDir, 'Tas-Time.ico'));
+for (const name of ['Create Desktop Shortcut.cmd', 'Create Desktop Shortcut.ps1']) {
+  writeFileSync(join(outDir, name), readFileSync(join(root, 'launcher', name), 'utf8').replace(/\r?\n/g, '\r\n'));
+}
 writeFileSync(join(outDir, 'Open Tas-Time.cmd'), readFileSync(join(root, 'launcher', 'Open Tas-Time.cmd'), 'utf8').replace(/\r?\n/g, '\r\n'));
 const macLauncher = join(outDir, 'Open Tas-Time.command');
 writeFileSync(macLauncher, readFileSync(join(root, 'launcher', 'Open Tas-Time.command'), 'utf8').replace(/\r\n/g, '\n'));

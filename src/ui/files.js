@@ -63,28 +63,32 @@ export async function save({ saveAs = false } = {}) {
     if (!handle) handle = await window.showSaveFilePicker({ suggestedName: file.name || suggestedName(), types: PICKER_TYPES });
     if (!(await ensurePermission(handle, true))) throw new Error('Permission to write the file was not granted.');
     if (snap.session !== session) throw new StaleSave();
-    await queueWrite(handle, snap);
+    await queueWrite(handle, snap, { linkOnSuccess: true });
     if (snap.session !== session) return true; // written, but the user has moved on to another book
-    link(handle);
+    if (store.dirty) autosave();
     notify(`Saved to ${handle.name}`);
     return true;
   } catch (error) {
     if (error.name === 'AbortError') return false;
     if (error.name === 'StaleSave') { notify(error.message, { kind: 'warn' }); return false; }
-    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender(); }
+    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     notify(`Save failed: ${error.message}`, { kind: 'error' });
     return false;
   }
 }
 
 /** Writes are serialised; each writes its own snapshot and only updates state for its own session. */
-function queueWrite(handle, snap) {
-  if (snap.session === session) { file.state = 'saving'; rerender(); }
+function queueWrite(handle, snap, { linkOnSuccess = false } = {}) {
+  if (snap.session === session) { file.state = 'saving'; rerender('status'); }
   writing = writing.catch(() => {}).then(async () => {
     const writer = await handle.createWritable();
     await writer.write(snap.raw);
     await writer.close();
     if (snap.session !== session) return;
+    if (linkOnSuccess) link(handle);
+    // An autosave queued before Save as may still target the previous file.
+    // Only a write to the current destination can mark this book as saved.
+    if (handle !== file.handle) return;
     store.markSaved(snap.rev);
     file.savedAt = new Date(); file.state = 'linked'; file.lastError = '';
     writeRecovery.flush();
@@ -95,7 +99,7 @@ function queueWrite(handle, snap) {
 function link(handle) {
   file.handle = handle; file.name = handle.name; file.state = 'linked';
   idbSet('lastFile', handle);
-  rerender();
+  rerender('status');
 }
 
 async function ensurePermission(handle, request) {
@@ -117,15 +121,15 @@ async function flushToFile() {
   const snap = snapshot();
   try {
     if (!(await ensurePermission(handle, false))) {
-      if (snap.session === session) { file.state = 'reconnect'; rerender(); }
+      if (snap.session === session) { file.state = 'reconnect'; rerender('status'); }
       return false;
     }
     if (snap.session !== session) return false;
     await queueWrite(handle, snap);
-    if (snap.session === session) rerender();
+    if (snap.session === session) rerender('status');
     return true;
   } catch (error) {
-    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender(); }
+    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     return false;
   }
 }
@@ -138,7 +142,7 @@ export async function reconnect() {
     if (!(await ensurePermission(file.handle, true)) || mine !== session) return false;
     file.state = 'linked';
     if (store.dirty) await queueWrite(file.handle, snapshot());
-    rerender();
+    rerender('status');
     return true;
   } catch (error) { notify(error.message, { kind: 'error' }); return false; }
 }
@@ -225,14 +229,34 @@ function resetView() {
 
 // ── Recovery copy ──
 
+let recoveryRevision = -1;
+let recoveryFailed = false;
+
 export const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
     localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book }));
-  } catch { /* quota or storage blocked: the file remains the source of truth */ }
+    recoveryRevision = store.revision;
+    recoveryFailed = false;
+  } catch {
+    recoveryRevision = -1;
+    if (!recoveryFailed) notify('Recovery copy could not be saved. Save your book to a file before closing.', { kind: 'warn' });
+    recoveryFailed = true;
+  }
 }, 400);
 
-function clearRecovery() { try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ } }
+function clearRecovery() {
+  recoveryRevision = -1;
+  try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
+}
+
+/** Closing is safe only when the current edits reached a file or recovery storage. */
+export function beforeUnload(event) {
+  writeRecovery.flush();
+  if (store.dirty && (!prefs().recovery || recoveryRevision !== store.revision)) {
+    event.preventDefault(); event.returnValue = '';
+  }
+}
 
 /** On launch: restore the last session (and its file link, pending permission). */
 export async function restoreSession() {

@@ -113,6 +113,19 @@ test('editing a start past the finish keeps the duration; milestones collapse to
   assert.equal(t.start, '2026-10-25');
 });
 
+test('milestone dates can be cleared and scheduled again', () => {
+  const { b, job } = book2();
+  const t = addItem(b, { jobId: job.id, kind: 'milestone', finish: '2026-10-20' });
+  patchItem(b, t.id, { finish: '' }, TODAY);
+  assert.equal(t.start, '');
+  assert.equal(t.finish, '');
+  validate(b);
+  patchItem(b, t.id, { finish: '2026-10-25' }, TODAY);
+  assert.equal(t.start, '2026-10-25');
+  assert.equal(t.finish, '2026-10-25');
+  validate(b);
+});
+
 test('delete removes dependency links; phase delete keeps its items unphased', () => {
   const { b, job, phases } = book2();
   const a = addItem(b, { jobId: job.id, phaseId: phases[0].id, title: 'A' });

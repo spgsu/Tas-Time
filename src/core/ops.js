@@ -24,7 +24,7 @@ export function patchItem(book, id, patch, today) {
   const next = { ...t, ...patch };
   if (patch.jobId && patch.jobId !== t.jobId && !('phaseId' in patch)) next.phaseId = '';
   if (next.kind === 'milestone') {
-    next.finish = next.finish || next.start;
+    if (!('finish' in patch)) next.finish = next.finish || next.start;
     next.start = next.finish;
   }
   if ('start' in patch && next.kind === 'task' && next.start && next.finish && next.finish < next.start) {

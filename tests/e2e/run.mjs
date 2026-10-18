@@ -231,6 +231,36 @@ try {
     assert.ok((await lastSaved()).items.some(i => i.title === 'Autosaved task'));
   });
 
+  await check('autosave keeps the task editor in place without replaying an animation', async () => {
+    await page.clickText('.today-main .row-title', 'Autosaved task');
+    await ev('document.getElementById("d-owner").focus(); window.__editor = document.getElementById("drawer"); window.__editorY = window.__editor.scrollTop; true');
+    await page.type('Myself');
+    await page.wait(1800);
+    assert.equal(await ev('document.getElementById("drawer") === window.__editor'), true, 'editor DOM is preserved');
+    assert.equal(await ev('document.activeElement.id'), 'd-owner', 'typing focus stays in the editor');
+    assert.equal(await ev('document.getElementById("d-owner").value'), 'Myself', 'typed value is preserved');
+    assert.equal(await ev('document.getElementById("drawer").scrollTop === window.__editorY'), true, 'scroll stays in place');
+    assert.equal(await ev('getComputedStyle(document.getElementById("drawer")).animationName'), 'none', 'no repeated opening animation');
+    await page.key('Escape', { keyCode: 27 });
+  });
+
+  await check('Tomorrow explains where the task went and lets the move be undone', async () => {
+    const before = await recoveryBook();
+    const task = before.items.find(t => t.title === 'Autosaved task');
+    await page.clickText(`[data-item="${task.id}"] .row-actions .btn`, 'Tomorrow');
+    await page.wait(600);
+    const after = await recoveryBook();
+    assert.equal(after.items.length, before.items.length);
+    assert.equal(after.items.find(t => t.id === task.id).plannedDay, addDays(today, 1));
+    assert.match(await text('.toasts'), /Moved to tomorrow\. See it in Week\./);
+    assert.equal(await count(`.today-main [data-item="${task.id}"]`), 0);
+    await nav(2);
+    assert.equal(await count(`.day [data-item="${task.id}"]`), 1);
+    await page.click('.toast:last-child .toast-action');
+    await nav(1);
+    assert.equal(await count(`.today-main [data-item="${task.id}"]`), 1);
+  });
+
   await check('unsaved work survives a reload (recovery copy)', async () => {
     await ev('window.showSaveFilePicker = undefined; true');
     await page.reload();

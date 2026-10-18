@@ -36,6 +36,8 @@ You need **Microsoft Edge or Google Chrome**, version 123 or later (2024 onwards
 
 **Never planned your time before?** Open **Beginner's guide** at the bottom of the sidebar. It walks through one real project from first idea to finished: writing an outcome, breaking the goal down with a mind map, a fishbone diagram and working backwards from the deadline, then planning weeks and days. The guide is built into the app and works offline. It is also in this repository as [docs/TUTORIAL.md](docs/TUTORIAL.md).
 
+**Windows desktop icon:** Double-click **Create Desktop Shortcut.cmd** in the extracted folder (or `dist/` after building). This creates **Tas-Time** on your desktop with its own icon and opens it in an Edge or Chrome app window. Keep the extracted folder in place; the shortcut points to it. If you move it, run the shortcut creator again.
+
 ## How it works
 
 A **job** is a goal with an outcome, such as *Science fair project* or *Kitchen refit*. Jobs have **phases**, phases have **tasks** and **milestones**, and tasks can depend on each other. Five views show that same data at different distances.
