@@ -40,7 +40,7 @@ You need **Microsoft Edge or Google Chrome**, version 123 or later (2024 onwards
 
 ## How it works
 
-A **job** is a goal with an outcome, such as *Science fair project* or *Kitchen refit*. Jobs have **phases**, phases have **tasks** and **milestones**, and tasks can depend on each other. Five views show that same data at different distances.
+A **job** is a goal with an outcome, such as *Science fair project* or *Kitchen refit*. Jobs have **phases**, phases have **tasks** and **milestones**, and tasks can depend on each other. Six views show that same data at different distances.
 
 | View | Key | What it is for |
 | --- | --- | --- |
@@ -49,6 +49,7 @@ A **job** is a goal with an outcome, such as *Science fair project* or *Kitchen 
 | **Plan** | 3 | The programme: a Gantt chart by job and phase. Drag a bar to re-forecast, set a baseline, see slippage and prerequisite links. |
 | **Board** | 4 | To do, Doing, Blocked and Done at a glance, with job colours. |
 | **Notes** | 5 | A notebook per job: resume here, scope, decisions, working notes, references and lessons learned. |
+| **Assignments** | 6 | A person's work across jobs, with status/week filters, workload, CSV export and a printable report. |
 
 <table>
   <tr>
@@ -80,6 +81,16 @@ Choose **Job** and optional **Phase** beside quick add, or click **Add task** to
 Quick add behaves the same in every view: tasks have no work day unless you include `@day`. For a specific day, use **Add task for today** or **Add task** in a Week day column. Always include effort units (`10h`, `45m`); bare numbers are not accepted in effort fields. One work day receives the whole remaining estimate; split work into smaller tasks for separate sessions.
 
 **On hold** and **Complete** pause a job's tasks in Today and Week without deleting them. Find them in Plan, Board or Notes and set the job to **Active** to restore daily planning. Completing a job with unfinished tasks asks for confirmation.
+
+### People and assignment reports
+
+Open **Assignments → People & capacity** to add people. Rename **Me** to your name; that person remains **My work**. In a task editor, choose its **Assignee** (one responsible person) or **Unassigned**. Global quick add also has an explicit Assignee selector. **Contacts / consulted** is separate, and task Notes remain attached to the task.
+
+In Assignments, select **David** to see **David's assignments** across jobs. Filter by open/doing/blocked/done/past forecast finish, scheduled week, unscheduled work, job or search text. Group by job, assignee, status or work week. **Export CSV** exports exactly the selected tasks, including contacts and notes; **Print report** prints the current selection. Paused jobs are excluded unless explicitly included; archived work is excluded.
+
+Today and Week default to **My work**. Use **Show work for** to choose another person, everyone or unassigned work. Each person's available time covers their active scheduled work across all jobs. Set their normal availability in **People & capacity** and override a particular week in Week. Unassigned work has no capacity and is excluded from the combined capacity calculation. Week intent notes remain shared for the whole book.
+
+Books from older app versions upgrade to **format 4**. Their existing tasks remain in My work, owner/contact text stays in Contacts, and notes and existing weekly capacity are preserved. Save the upgraded book as a new file; apps that only support format 3 cannot open format 4. The original file is kept intact. These are local assignments in one planning book; no emails or notifications are sent.
 
 ### Planning rules
 

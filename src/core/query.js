@@ -8,6 +8,15 @@ export function liveJobs(book) { return book.jobs.filter(j => !j.archived); }
 export function isHidden(book, t) { return t.archived || !!jobOf(book, t.jobId)?.archived; }
 export function liveItems(book) { return book.items.filter(t => !isHidden(book, t)); }
 export function activeItems(book) { return liveItems(book).filter(t => jobOf(book, t.jobId)?.status === 'active'); }
+export function personName(book, id) { return book.people.find(p => p.id === id)?.name || 'Unassigned'; }
+export function matchesPerson(t, id = 'all') { return id === 'all' || (id === 'unassigned' ? !t.assigneeId : t.assigneeId === id); }
+export function personCapacity(book, monday, id) {
+  if (id === 'all') return book.people.reduce((n, p) => n + personCapacity(book, monday, p.id), 0);
+  const person = book.people.find(p => p.id === id);
+  if (!person) return 0;
+  const overrides = book.weeks[monday]?.people || {};
+  return Object.hasOwn(overrides, id) ? overrides[id] : person.capacity;
+}
 
 export function phasesOf(book, jobId) {
   return book.phases.filter(p => p.jobId === jobId).sort((a, b) => a.order - b.order);
@@ -65,10 +74,10 @@ export function matchesFocus(t, focus) { return !focus || t.jobId === focus; }
 
 export function openEffort(list) { return list.reduce((n, t) => n + (t.status === 'done' ? 0 : t.effort), 0); }
 
-export function weekLoad(book, monday, focus = '') {
+export function weekLoad(book, monday, focus = '', personId = 'all') {
   const days = weekDays(monday);
   const end = days[6];
-  const items = activeItems(book).filter(t => t.plannedDay >= monday && t.plannedDay <= end);
+  const items = activeItems(book).filter(t => matchesPerson(t, personId) && t.plannedDay >= monday && t.plannedDay <= end);
   const byDay = Object.fromEntries(days.map(d => [d, []]));
   for (const t of items) byDay[t.plannedDay].push(t);
   const shown = items.filter(t => matchesFocus(t, focus));
@@ -82,9 +91,9 @@ export function weekLoad(book, monday, focus = '') {
 }
 
 /** Active open work with no planned day, or carried from before this week. Includes blocked tasks with their explanations. */
-export function readyToPlan(book, monday, focus = '') {
+export function readyToPlan(book, monday, focus = '', personId = 'all') {
   return activeItems(book)
-    .filter(t => t.status !== 'done' && t.kind === 'task' && matchesFocus(t, focus))
+    .filter(t => t.status !== 'done' && t.kind === 'task' && matchesFocus(t, focus) && matchesPerson(t, personId))
     .filter(t => !t.plannedDay || t.plannedDay < monday)
     .sort(byUrgency);
 }
@@ -93,8 +102,8 @@ export function byUrgency(a, b) {
   return (a.finish || '9999').localeCompare(b.finish || '9999') || (a.start || '9999').localeCompare(b.start || '9999') || a.title.localeCompare(b.title);
 }
 
-export function todayList(book, today, focus = '') {
-  const live = activeItems(book).filter(t => matchesFocus(t, focus));
+export function todayList(book, today, focus = '', personId = 'all') {
+  const live = activeItems(book).filter(t => matchesFocus(t, focus) && matchesPerson(t, personId));
   const planned = live.filter(t => t.plannedDay === today);
   const carried = live.filter(t => t.status !== 'done' && t.plannedDay && t.plannedDay < today).sort(byUrgency);
   const overdue = live.filter(t => isLate(t, today) && t.plannedDay !== today && !carried.includes(t)).sort(byUrgency);
@@ -102,19 +111,19 @@ export function todayList(book, today, focus = '') {
 }
 
 /** The live job touched most recently: latest completion or planned day up to today. */
-export function lastWorkedJob(book, today) {
+export function lastWorkedJob(book, today, personId = 'all') {
   let best = null; let bestDay = '';
-  for (const t of activeItems(book)) {
+  for (const t of activeItems(book).filter(t => matchesPerson(t, personId))) {
     const day = [t.doneOn, t.plannedDay <= today ? t.plannedDay : ''].filter(Boolean).sort().at(-1) || '';
     if (day > bestDay) { bestDay = day; best = t.jobId; }
   }
   return jobOf(book, best) || liveJobs(book).find(j => j.status === 'active' && j.notes.restart.trim()) || null;
 }
 
-export function upcomingMilestones(book, today, days = 21, focus = '') {
+export function upcomingMilestones(book, today, days = 21, focus = '', personId = 'all') {
   const end = addDays(today, days);
   return activeItems(book)
-    .filter(t => t.kind === 'milestone' && t.status !== 'done' && t.finish && t.finish <= end && matchesFocus(t, focus))
+    .filter(t => t.kind === 'milestone' && t.status !== 'done' && t.finish && t.finish <= end && matchesFocus(t, focus) && matchesPerson(t, personId))
     .sort(byUrgency);
 }
 

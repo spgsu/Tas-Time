@@ -3,7 +3,7 @@
 import { isIsoDate, mondayOf } from './dates.js';
 
 export const FORMAT = 'tas-time-planning-book';
-export const VERSION = 3;
+export const VERSION = 4;
 export const MAX_FILE_BYTES = 15_000_000;
 
 export const STATUS = { todo: 'To do', doing: 'Doing', done: 'Done' };
@@ -33,7 +33,8 @@ export function uid() {
 }
 
 export function newBook(name = 'My planning book') {
-  return { format: FORMAT, version: VERSION, id: uid(), name, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
+  const self = { id: uid(), name: 'Me', capacity: DEFAULT_CAPACITY };
+  return { format: FORMAT, version: VERSION, id: uid(), name, people: [self], selfId: self.id, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
 }
 
 export function newJob(fields = {}) {
@@ -48,7 +49,7 @@ export function newPhase(jobId, title, order) { return { id: uid(), jobId, title
 export function newItem(fields = {}) {
   return {
     id: uid(), jobId: '', phaseId: '', title: '', kind: 'task', status: 'todo',
-    start: '', finish: '', effort: 0, plannedDay: '', owner: '', blocker: '', deps: [],
+    start: '', finish: '', effort: 0, plannedDay: '', assigneeId: '', owner: '', blocker: '', deps: [],
     baseline: null, doneOn: '', notes: '', archived: false, ...fields,
   };
 }
@@ -69,6 +70,17 @@ export function validate(book) {
   if (!book || book.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
   if (book.version !== VERSION) fail(`Unsupported planning-book version ${book.version}.`);
   text(book.name, 'Book name', 200);
+  if (!Array.isArray(book.people) || !book.people.length || book.people.length > 2000) fail('The people list is invalid.');
+  const people = new Map(); const names = new Set();
+  for (const p of book.people) {
+    if (!p || typeof p !== 'object') fail('A person is malformed.');
+    text(p.id, 'Person identifier', 200); text(p.name, 'Person name', 200);
+    const name = p.name.trim().toLowerCase();
+    if (!p.id || people.has(p.id) || !name || names.has(name)) fail('People need unique identifiers and names.');
+    whole(p.capacity, 'Default weekly capacity', 7 * 24 * 60);
+    people.set(p.id, p); names.add(name);
+  }
+  if (!people.has(book.selfId)) fail('Choose a person for My work.');
   for (const k of ['jobs', 'phases', 'items']) if (!Array.isArray(book[k]) || book[k].length > 20000) fail(`The ${k} list is invalid.`);
   const ids = new Set();
   for (const row of [...book.jobs, ...book.phases, ...book.items]) {
@@ -95,6 +107,7 @@ export function validate(book) {
   }
   for (const t of book.items) {
     if (!jobs.has(t.jobId)) fail(`"${t.title}" belongs to a missing job.`);
+    if (typeof t.assigneeId !== 'string' || (t.assigneeId && !people.has(t.assigneeId))) fail(`"${t.title}" has a missing assignee.`);
     if (t.phaseId && phases.get(t.phaseId)?.jobId !== t.jobId) fail(`"${t.title}" refers to a phase from another job.`);
     if (!['task', 'milestone'].includes(t.kind)) fail('Invalid item kind.');
     if (!STATUS[t.status]) fail('Invalid item status.');
@@ -116,6 +129,13 @@ export function validate(book) {
   for (const [key, w] of Object.entries(book.weeks)) {
     if (!isIsoDate(key) || mondayOf(key) !== key) fail('Weekly plans must start on a Monday.');
     whole(w.capacity, 'Weekly capacity', 7 * 24 * 60); text(w.notes, 'Week notes');
+    if (w.people !== undefined) {
+      if (!w.people || typeof w.people !== 'object' || Array.isArray(w.people)) fail('Invalid weekly person capacities.');
+      for (const [id, minutes] of Object.entries(w.people)) {
+        if (!people.has(id)) fail('A weekly capacity refers to a missing person.');
+        whole(minutes, 'Person weekly capacity', 7 * 24 * 60);
+      }
+    }
   }
   date(book.baselineDate, 'Baseline date');
   return book;
@@ -150,10 +170,17 @@ const V2_JOB_STATUS = { Active: 'active', 'On hold': 'hold', Complete: 'done' };
 export function migrate(raw) {
   if (!raw || raw.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
   if (raw.version === VERSION) return addMissingNotePages(raw);
+  if (raw.version === 3) {
+    const b = newBook();
+    return addMissingNotePages({ ...raw, version: VERSION, people: b.people, selfId: b.selfId,
+      weeks: Object.fromEntries(Object.entries(raw.weeks || {}).map(([day, week]) => [day, { ...week, people: { [b.selfId]: week.capacity } }])),
+      items: raw.items.map(t => ({ ...t, assigneeId: b.selfId })) });
+  }
   if (raw.version !== 1 && raw.version !== 2) fail(`Unsupported planning-book version ${raw.version}.`);
   const book = newBook(String(raw.name || 'Imported planning book'));
   book.baselineDate = raw.baselineDate || '';
   book.weeks = structuredClone(raw.weeks || {});
+  for (const week of Object.values(book.weeks)) week.people = { [book.selfId]: week.capacity };
   for (const j of raw.jobs || []) {
     const notes = { ...newJob().notes, ...(j.notes || {}) };
     const color = COLORS[j.color] ? j.color : 'forest';
@@ -165,6 +192,7 @@ export function migrate(raw) {
     const hasBaseline = t.baselineStart || t.baselineFinish;
     book.items.push(newItem({
       id: t.id, jobId: t.jobId, phaseId: t.phaseId || '', title: t.title, kind: t.kind === 'Milestone' ? 'milestone' : 'task',
+      assigneeId: book.selfId,
       status: V2_STATUS[t.status] || 'todo', start: t.start || '', finish: t.finish || '', effort: t.remaining || 0,
       plannedDay: t.plannedDay || '', owner: t.owner || '', blocker: t.blocker || '', deps: [...(t.predecessors || [])],
       baseline: hasBaseline ? { start: t.baselineStart || '', finish: t.baselineFinish || '' } : null,

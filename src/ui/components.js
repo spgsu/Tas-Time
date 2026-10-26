@@ -2,7 +2,7 @@
 // Small building blocks shared by several views.
 import { h, icon } from './dom.js';
 import { COLORS } from '../core/model.js';
-import { blockers, isBlocked, isLate, jobOf, phaseTitle, waitingOn } from '../core/query.js';
+import { blockers, isBlocked, isLate, jobOf, personName, phaseTitle, waitingOn } from '../core/query.js';
 import { addDays, fmtDate, relDay } from '../core/dates.js';
 import { fmtEffort, fmtHours } from '../core/parse.js';
 import { act, openDrawer, store, today } from './state.js';
@@ -68,6 +68,7 @@ export function itemRow(t, { actions = null, showJob = true, showPhase = false, 
       h('button', { class: 'row-title', onclick: () => openDrawer('item', t.id) }, t.title),
       h('div', { class: 'row-meta' },
         showJob ? jobTag(job) : null,
+        chip(personName(book, t.assigneeId), 'muted', 'Assignee'),
         phase ? h('span', { class: 'muted' }, phase) : null,
         t.status === 'doing' ? chip('Doing', 'accent') : null,
         dueChip(t),

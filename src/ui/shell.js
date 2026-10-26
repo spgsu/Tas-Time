@@ -3,7 +3,7 @@
 import { appMark, fill, h, icon } from './dom.js';
 import { fmtEffort, parseQuickAdd } from '../core/parse.js';
 import { fmtDate } from '../core/dates.js';
-import { jobSummary, liveJobs, phasesOf } from '../core/query.js';
+import { jobSummary, liveJobs, personName, phasesOf } from '../core/query.js';
 import { APP_VERSION, IS_MAC, VIEWS, keys, closeDrawer, openDrawer, rerender, setFocus, setView, store, today, ui } from './state.js';
 import { btn, iconBtn, jobColor } from './components.js';
 import { createJob, createTask, quickAdd, redo, undo } from './commands.js';
@@ -18,8 +18,10 @@ import { renderWeek } from './views/week.js';
 import { renderPlan } from './views/plan.js';
 import { renderBoard } from './views/board.js';
 import { renderNotes } from './views/notes.js';
+import { renderAssignments } from './views/assignments.js';
+import { showPeople } from './people.js';
 
-const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes };
+const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes, assignments: renderAssignments };
 
 export function renderShell(scope = 'all') {
   if (scope === 'status') { renderStatus(); return; }
@@ -100,16 +102,20 @@ function renderQuickDestination() {
   ui.quickJob = selected?.id || '';
   const phases = phasesOf(store.book, ui.quickJob);
   if (!phases.some(p => p.id === ui.quickPhase)) ui.quickPhase = '';
+  if (ui.quickAssignee !== 'unassigned' && !store.book.people.some(p => p.id === ui.quickAssignee)) ui.quickAssignee = store.book.selfId;
   fill(document.getElementById('quick-destination'),
     h('label', null, 'Job', h('select', { id: 'quick-job', 'aria-label': 'New task job', onchange: e => { ui.quickJob = e.target.value; ui.quickPhase = ''; renderQuickDestination(); document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
       jobs.length ? jobs.map(j => h('option', { value: j.id, selected: j.id === ui.quickJob }, j.title)) : h('option', { value: '' }, 'New Inbox'))),
     h('label', null, 'Phase', h('select', { id: 'quick-phase', 'aria-label': 'New task phase', onchange: e => { ui.quickPhase = e.target.value; document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
       h('option', { value: '' }, 'No phase (optional)'), phases.map(p => h('option', { value: p.id, selected: p.id === ui.quickPhase }, p.title)))),
+    h('label', null, 'Assignee', h('select', { id: 'quick-assignee', 'aria-label': 'New task assignee', onchange: e => { ui.quickAssignee = e.target.value; document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
+      h('option', { value: 'unassigned', selected: ui.quickAssignee === 'unassigned' }, 'Unassigned'),
+      store.book.people.map(p => h('option', { value: p.id, selected: ui.quickAssignee === p.id }, p.name)))),
     btn('Add task', () => {
       const input = document.getElementById('quick-add');
       if (input.value.trim()) {
-        if (quickAdd(input.value, { jobId: ui.quickJob, phaseId: ui.quickPhase })) { input.value = ''; input.dispatchEvent(new Event('input')); }
-      } else createTask(ui.quickJob, ui.quickPhase);
+        if (quickAdd(input.value, { jobId: ui.quickJob, phaseId: ui.quickPhase, assigneeId: ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee })) { input.value = ''; input.dispatchEvent(new Event('input')); }
+      } else createTask(ui.quickJob, ui.quickPhase, '', ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee);
     }, { kind: 'sm', iconName: 'plus' }));
 }
 
@@ -149,6 +155,8 @@ function fileMenu() {
     { label: 'All jobs', run: () => { ui.focus = ''; rerender(); } },
     ...liveJobs(store.book).map(j => ({ label: `Show job: ${j.title}`, run: () => { ui.focus = j.id; ui.quickJob = j.id; ui.quickPhase = ''; rerender(); } })),
     { label: 'New job', icon: 'plus', run: () => createJob() },
+    { label: 'People & capacity', icon: 'people', run: showPeople },
+    { label: 'Assignment reports', icon: 'people', run: () => setView('assignments') },
     { label: 'Beginner’s guide', icon: 'book', run: showGuide },
     { label: 'Shortcuts & help', icon: 'keyboard', run: showHelp },
     { label: 'Appearance', icon: 'palette', run: () => appearanceMenu(document.getElementById('file-menu')) },
@@ -186,6 +194,7 @@ export function initQuickAdd() {
       job ? h('span', { class: 'job-tag', style: { '--job': jobColor(job) } }, h('span', { class: 'dot' }), job.title) : h('span', { class: 'chip' }, 'New “Inbox” job'),
       q.effort ? h('span', { class: 'chip' }, fmtEffort(q.effort)) : null,
       h('span', { class: 'chip' }, phase?.title || 'No phase'),
+      h('span', { class: 'chip' }, `Assignee: ${personName(store.book, ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee)}`),
       q.plannedDay ? h('span', { class: 'chip accent' }, `Work on ${fmtDate(q.plannedDay)}`) : null,
       q.finish ? h('span', { class: 'chip' }, `${q.kind === 'milestone' ? 'On' : 'Forecast finish'} ${fmtDate(q.finish)}`) : null,
       !q.plannedDay ? h('span', { class: 'chip' }, 'No work day set · use @today or choose a day in Week') : null,
@@ -199,7 +208,7 @@ export function initQuickAdd() {
   input.addEventListener('keydown', e => {
     if (e.key === 'Escape') { input.value = ''; preview.hidden = true; input.blur(); }
     if (e.key === 'Enter' && input.value.trim()) {
-      const defaults = { jobId: ui.quickJob, phaseId: ui.quickPhase };
+      const defaults = { jobId: ui.quickJob, phaseId: ui.quickPhase, assigneeId: ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee };
       if (quickAdd(input.value, defaults)) { input.value = ''; update(); }
     }
   });
@@ -247,7 +256,7 @@ export function showHelp() {
           row(['@tue', '@today'], 'day you’ll work on it (otherwise unscheduled in every view)'), row(['!fri', '!2026-12-01'], 'forecast finish, not a fixed deadline'), row(['*'], 'at the start: a milestone')),
         h('h3', null, 'Keys'),
         h('table', { class: 'keys' },
-          row(['N', '/'], 'Quick add'), row(['1–5'], 'Today, Week, Plan, Board, Notes'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
+          row(['N', '/'], 'Quick add'), row(['1–6'], 'Today, Week, Plan, Board, Notes, Assignments'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
           row([keys('O')], 'Open'), row([keys('Z'), keys(IS_MAC ? 'Shift+Z' : 'Y')], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
           row(['← →'], 'Move a focused bar on the Plan'), row(['Shift+← →'], 'Change its finish'))),
       h('section', null,

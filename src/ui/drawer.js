@@ -10,6 +10,7 @@ import { addDep, addPhase, deletePhase, duplicateItem, movePhase, patchItem, pat
 import { act, closeDrawer, openDrawer, rerender, setView, store, today, ui } from './state.js';
 import { btn, chip, iconBtn, jobColor, segmented } from './components.js';
 import { STANDARD_PHASES, createTask, removeItem, removeJob } from './commands.js';
+import { personSelect, showPeople } from './people.js';
 
 let typedSinceRender = false;
 
@@ -114,6 +115,9 @@ function itemEditor(t) {
       field('Phase (optional group)', h('select', { id: 'd-phase', onchange: e => set('Change phase', { phaseId: e.target.value }) },
         h('option', { value: '' }, 'No phase'), phasesOf(book, t.jobId).map(p => h('option', { value: p.id, selected: p.id === t.phaseId }, p.title))), { id: 'd-phase' })),
 
+    h('div', { class: 'field' }, personSelect(t.assigneeId, value => set('Assign task', { assigneeId: value }), { id: 'd-assignee', all: false }),
+      btn('People & capacity', showPeople, { kind: 'sm ghost' })),
+
     h('div', { class: 'fields two' },
       isMs ? null : field('Forecast start', dateInput('start', t.start), { id: 'd-start' }),
       field(isMs ? 'Milestone date' : 'Forecast finish', dateInput('finish', t.finish), { id: 'd-finish', hint: isMs ? '' : 'Expected finish, not a fixed deadline. Moving the timeline changes this date.' })),
@@ -138,7 +142,7 @@ function itemEditor(t) {
       depSelect,
       neededBy.length ? h('p', { class: 'field-hint' }, 'Needed by: ', neededBy.map((x, i) => [i ? ', ' : '', h('button', { class: 'link', onclick: () => openDrawer('item', x.id) }, x.title)])) : null),
 
-    field('Owner / contact', liveText('d-owner', t.owner, typed('owner', 'Edit owner'), { maxlength: 200, placeholder: 'Optional' }), { id: 'd-owner' }),
+    field('Contacts / consulted', liveText('d-owner', t.owner, typed('owner', 'Edit contacts'), { maxlength: 200, placeholder: 'Optional: suppliers, reviewers, contacts' }), { id: 'd-owner', hint: 'Separate from the person responsible for completing this task. Existing owner/contact text is kept here.' }),
     field(isMs ? 'Acceptance criteria' : 'Notes', liveText('d-notes', t.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: isMs ? 'What must be true for this to be accepted?' : 'Details, links, acceptance criteria…' }), { id: 'd-notes' }),
     t.doneOn ? h('p', { class: 'field-hint' }, `Completed ${fmtDate(t.doneOn)}.`) : null,
   ];

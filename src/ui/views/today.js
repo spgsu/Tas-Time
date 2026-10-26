@@ -3,13 +3,14 @@
 import { h, autosize } from '../dom.js';
 import { addDays, fmtDate, fmtLong, mondayOf, relDay } from '../../core/dates.js';
 import { fmtEffort, fmtHours } from '../../core/parse.js';
-import { jobOf, lastWorkedJob, liveJobs, openEffort, readyToPlan, todayList, upcomingMilestones, weekLoad } from '../../core/query.js';
+import { jobOf, lastWorkedJob, liveJobs, openEffort, personCapacity, personName, readyToPlan, todayList, upcomingMilestones, weekLoad } from '../../core/query.js';
 import { patchItem, setNote } from '../../core/ops.js';
 import { DEFAULT_CAPACITY } from '../../core/model.js';
-import { act, notify, setView, store, today, ui } from '../state.js';
+import { act, notify, rerender, setView, store, today, ui } from '../state.js';
 import { createTask, undo } from '../commands.js';
 import { btn, emptyState, itemRow, jobColor, jobTag, meter } from '../components.js';
 import { welcome } from './welcome.js';
+import { personSelect, workPersonId } from '../people.js';
 
 function planFor(id, day, label) {
   return act(label, d => patchItem(d, id, { plannedDay: day }, today()));
@@ -19,10 +20,12 @@ export function renderToday() {
   const book = store.book;
   if (!liveJobs(book).length) return welcome();
   const day = today();
-  const { planned, carried, overdue } = todayList(book, day, ui.focus);
+  const personId = workPersonId();
+  const { planned, carried, overdue } = todayList(book, day, ui.focus, personId);
   const open = planned.filter(t => t.status !== 'done');
-  const load = weekLoad(book, mondayOf(day));
-  const capacity = book.weeks[mondayOf(day)]?.capacity ?? DEFAULT_CAPACITY;
+  const load = weekLoad(book, mondayOf(day), '', personId);
+  const capacity = personCapacity(book, mondayOf(day), personId);
+  const unassigned = personId === 'all' ? weekLoad(book, mondayOf(day), '', 'unassigned').planned : 0;
 
   const sub = open.length
     ? `${open.length} to do · ${fmtHours(openEffort(open))} of work${planned.length - open.length ? ` · ${planned.length - open.length} done` : ''}`
@@ -40,7 +43,7 @@ export function renderToday() {
 
   const main = h('div', { class: 'today-main' },
     h('section', { class: 'panel' },
-      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today'), btn('Add task for today', () => createTask(undefined, '', day), { kind: 'sm', iconName: 'plus' })),
+      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today'), btn('Add task for today', () => createTask(undefined, '', day, personId === 'unassigned' ? '' : personId === 'all' ? book.selfId : personId), { kind: 'sm', iconName: 'plus' })),
       planned.length
         ? h('div', { class: 'list' }, [...open, ...planned.filter(t => t.status === 'done')].map(t => itemRow(t, { actions: t.status === 'done' ? null : later(t), showPhase: true })))
         : suggestions(book, day)),
@@ -57,18 +60,20 @@ export function renderToday() {
   const side = h('aside', { class: 'today-side' },
     h('section', { class: 'panel' },
       h('div', { class: 'panel-head' }, h('h2', null, 'This week'), btn('Open week', () => setView('week'), { kind: 'ghost sm' })),
-      meter(load.planned, capacity)),
+      personId === 'unassigned' ? h('p', null, 'Assign a person to compare workload with capacity.') : meter(load.planned - unassigned, capacity),
+      unassigned ? h('p', { class: 'hint' }, `${fmtHours(unassigned)} unassigned; excluded from capacity.`) : null),
     resumeNotes(book, planned, carried, day),
     milestones(book, day));
 
   return h('div', { class: 'view today' },
     h('header', { class: 'page-head' },
-      h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub))),
+      h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub)),
+      personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'today-person', label: 'Show work for' })),
     h('div', { class: 'today-grid' }, main, side));
 }
 
 function suggestions(book, day) {
-  const ready = readyToPlan(book, mondayOf(day), ui.focus).filter(t => !t.blocker && t.deps.every(id => book.items.find(x => x.id === id)?.status === 'done')).slice(0, 5);
+  const ready = readyToPlan(book, mondayOf(day), ui.focus, workPersonId()).filter(t => !t.blocker && t.deps.every(id => book.items.find(x => x.id === id)?.status === 'done')).slice(0, 5);
   if (!ready.length) return emptyState('Nothing planned for today', 'Add a task above, or plan work from the Week view.');
   return h('div', null,
     h('p', { class: 'hint' }, 'Nothing planned for today. Ready to start, most urgent first:'),
@@ -81,7 +86,7 @@ function resumeNotes(book, planned, carried, day) {
   let ids = ui.focus ? [ui.focus] : [...new Set(planned.map(t => t.jobId))];
   if (!ids.length) ids = [...new Set(carried.map(t => t.jobId))].slice(0, 2);
   const fallback = !ids.length;
-  if (fallback) ids = [lastWorkedJob(book, day)?.id].filter(Boolean);
+  if (fallback) ids = [lastWorkedJob(book, day, workPersonId())?.id].filter(Boolean);
   const jobs = ids.map(id => jobOf(book, id)).filter(j => j && !j.archived && j.status === 'active');
   if (!jobs.length) return null;
   return h('section', { class: 'panel' },
@@ -99,7 +104,7 @@ function resumeNotes(book, planned, carried, day) {
 }
 
 function milestones(book, day) {
-  const list = upcomingMilestones(book, day, 28, ui.focus);
+  const list = upcomingMilestones(book, day, 28, ui.focus, workPersonId());
   if (!list.length) return null;
   return h('section', { class: 'panel' },
     h('div', { class: 'panel-head' }, h('h2', null, 'Milestones ahead')),

@@ -730,3 +730,41 @@ h1, h2, h3, p { margin: 0; }
   .quick-destination, .focus-banner, .mobile-plan-toggle, .plan-list { display: none !important; }
   .plan .plan-scroll { display: block !important; }
 }
+
+/* People, workload and assignment reports. */
+.person-filter { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; min-width: 0; }
+.person-filter select { min-width: 150px; max-width: 100%; }
+.quick-destination { flex-wrap: wrap; }
+.people-manager { display: grid; gap: 18px; }
+.person-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.person-editor label { display: grid; gap: 4px; font-size: 12px; }
+.assignment-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 16px; }
+.assignment-filters > label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; min-width: 0; }
+.assignment-filters > label.toggle { flex-direction: row; align-items: center; }
+.assignment-filter-panel > summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
+.assignment-detail { font-size: 12px; margin: -4px 16px 12px 42px; }
+.assignment-scope { margin: 14px 0; color: var(--muted); font-size: 12px; }
+.assignment-summary { padding: 14px 16px; margin-bottom: 16px; }
+.assignment-workload { padding: 16px; margin-bottom: 20px; }
+.assignment-workload .hint { margin-top: 8px; }
+.assignment-group { margin-bottom: 16px; }
+.assignments .row-title { white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.assignment-workload .panel-head label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+@media (max-width: 760px) {
+  .sidebar .brand { flex-basis: 100%; }
+  .nav { min-width: 0; flex-basis: 100%; width: 100%; }
+  .nav-item { flex: 1; min-width: 0; padding: 4px; font-size: 10px; }
+  .nav-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .people-manager .person-editor { grid-template-columns: 1fr; }
+  .person-filter { max-width: 100%; }
+  .quick-destination { grid-template-columns: 1fr 1fr; }
+  .quick-destination > .btn { align-self: end; min-height: 32px; }
+  .assignment-filters { grid-template-columns: 1fr; }
+  .assignment-workload .panel-head { flex-wrap: wrap; }
+}
+@media print {
+  .assignment-filter-panel, .assignments .tick { display: none !important; }
+  .assignment-group { break-inside: auto; }
+  .assignment-group .row-item { break-inside: avoid; }
+  .assignments .row-title { color: #000; }
+}

@@ -226,6 +226,9 @@ function unlink() { file.handle = null; file.name = ''; file.state = 'none'; fil
 function resetView() {
   ui.focus = ''; ui.drawer = null; ui.notesJob = ''; ui.week = mondayOf(todayIso());
   ui.quickJob = ''; ui.quickPhase = ''; ui.addingIn = ''; ui.collapsedPhases.clear();
+  ui.workPerson = ''; ui.assignments = { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' }; ui.assignmentWeek = mondayOf(todayIso());
+  ui.assignmentFiltersOpen = false;
+  ui.quickAssignee = '';
 }
 
 // ── Recovery copy ──
@@ -264,11 +267,16 @@ export async function restoreSession() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(RECOVERY_KEY) || 'null'); } catch { saved = null; }
   if (!saved?.book) return false;
-  let book;
-  try { book = decodeBook(JSON.stringify(saved.book)).book; } catch { return false; }
-  store.replace(book, { dirty: !!saved.dirty });
+  let book; let upgradedFrom;
+  try { ({ book, upgradedFrom } = decodeBook(JSON.stringify(saved.book))); } catch { return false; }
+  store.replace(book, { dirty: !!saved.dirty || !!upgradedFrom });
   file.name = saved.fileName || '';
   if (saved.dirty) file.restoredAt = new Date(saved.at);
+  if (upgradedFrom) {
+    file.name = ''; file.handle = null; file.state = 'none';
+    notify(`Recovered a version ${upgradedFrom} book and upgraded it for assignments. Save a new copy; the original file is untouched.`, { kind: 'warn', timeout: 12000 });
+    return true;
+  }
   const handle = await idbGet('lastFile');
   if (handle && handle.name === saved.fileName) {
     file.handle = handle;

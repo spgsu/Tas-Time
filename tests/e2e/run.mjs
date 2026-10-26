@@ -228,7 +228,7 @@ try {
     await page.wait(300);
     const first = await lastSaved();
     assert.equal(first.format, 'tas-time-planning-book');
-    assert.equal(first.version, 3);
+    assert.equal(first.version, 4);
     assert.match(await text('.status'), /Saved · plan\.json/);
     const writes = await ev('window.__saved.length');
     await nav(1);
@@ -604,6 +604,88 @@ try {
     await page.size(1440, 900);
   });
 
+  await check('assignments: add David, assign a task, preserve contacts and separate personal workload', async () => {
+    await nav(6);
+    await page.clickText('.assignments .btn', 'People & capacity');
+    await ev('document.getElementById("new-person-name").focus(); true');
+    await page.type('David');
+    await page.clickText('.people-manager .btn', 'Add person');
+    await page.wait(600);
+    const b = await recoveryBook();
+    const david = b.people.find(p => p.name === 'David');
+    assert.ok(david?.id);
+    await ev('document.querySelector("dialog").close(); true');
+    await nav(4);
+    await page.clickText('.bcard-title', 'Today task');
+    await ev(`(() => { const e = document.getElementById('d-assignee'); e.value = ${JSON.stringify(david.id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    await ev(`(() => { const e = document.getElementById('d-effort'); e.value = '2h'; e.dispatchEvent(new Event('change')); return true; })()`);
+    await ev('document.getElementById("d-owner").focus(); true');
+    await page.type('Supplier contact');
+    await page.key('Escape', { keyCode: 27 });
+    await nav(1);
+    assert.equal(await count('.today-main [data-item="' + b.items.find(t => t.title === 'Today task').id + '"]'), 0);
+    await ev(`(() => { const e = document.getElementById('today-person'); e.value = ${JSON.stringify(david.id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    assert.match(await text('.today-main'), /Today task/);
+    await nav(2);
+    await page.clickText('.page-actions .btn', 'This week');
+    await ev(`(() => { const e = document.getElementById('week-capacity'); e.value = '3h'; e.dispatchEvent(new Event('change')); return true; })()`);
+    await page.wait(600);
+    const after = await recoveryBook();
+    const monday = Object.keys(after.weeks).find(k => after.weeks[k].people?.[david.id] === 180);
+    assert.ok(monday);
+    assert.equal(after.items.find(t => t.title === 'Today task').owner, 'Supplier contact');
+    assert.equal(after.items.find(t => t.title === 'Today task').assigneeId, david.id);
+    assert.match(await text('.week-summary .meter-label'), /2h planned of 3h/);
+  });
+
+  await check('assignments: David report spans jobs, exports its selection and survives save/reload', async () => {
+    const david = (await recoveryBook()).people.find(p => p.name === 'David');
+    await fileMenu('New job');
+    await page.type('Office assignments');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(100);
+    await page.key('Escape', { keyCode: 27 });
+    await ev(`(() => { const e = document.getElementById('quick-assignee'); e.value = ${JSON.stringify(david.id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    await quickAdd('Office David task');
+    await fileMenu('All jobs');
+    await nav(6);
+    await ev(`(() => { const e = document.getElementById('assignment-person'); e.value = ${JSON.stringify(david.id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    assert.match(await text('.assignments h1'), /David’s assignments/);
+    assert.equal(await count('.assignment-group .row-item'), 2);
+    assert.match(await text('.assignments'), /Kitchen UX/);
+    assert.match(await text('.assignments'), /Office assignments/);
+    await ev(`(() => { const e = document.getElementById('assignment-status'); e.value = 'done'; e.dispatchEvent(new Event('change')); return true; })()`);
+    assert.equal(await count('.assignment-group .row-item'), 0);
+    await ev(`(() => { const e = document.getElementById('assignment-status'); e.value = 'open'; e.dispatchEvent(new Event('change')); return true; })()`);
+    await ev(`window.__assignmentBlobs = []; const original = URL.createObjectURL; URL.createObjectURL = b => { window.__assignmentBlobs.push(b); return original.call(URL, b); }; true`);
+    await page.clickText('.assignments .btn', 'Export CSV');
+    const csv = await ev('window.__assignmentBlobs.at(-1).text()');
+    assert.match(csv, /Today task/);
+    assert.match(csv, /Office David task/);
+    assert.doesNotMatch(csv, /Measure kitchen/);
+    writeFileSync(join(shots, 'assignments.csv'), csv);
+    await page.screenshot(join(shots, '06-assignments.png'), { full: false });
+    await page.send('Emulation.setEmulatedMedia', { media: 'print' });
+    assert.equal(await ev('getComputedStyle(document.querySelector(".assignment-filter-panel")).display'), 'none');
+    assert.equal(await ev('getComputedStyle(document.querySelector(".assignments .page-actions")).display'), 'none');
+    assert.equal(await count('.assignment-group .row-item'), 2);
+    await page.screenshot(join(shots, 'p6-assignments-print.png'), { full: false });
+    await page.send('Emulation.setEmulatedMedia', { media: '' });
+    await page.size(390, 844);
+    await nav(6);
+    assert.ok(await ev('document.documentElement.scrollWidth <= document.documentElement.clientWidth'));
+    await page.screenshot(join(shots, 'm6-assignments-phone.png'), { full: false });
+    await page.size(1440, 900);
+    await page.key('s', { modifiers: 2, keyCode: 83 });
+    await page.wait(400);
+    assert.equal((await lastSaved()).people.find(p => p.id === david.id).name, 'David');
+    await page.reload();
+    await ev(STUB_FS);
+    await nav(6);
+    await ev(`(() => { const e = document.getElementById('assignment-person'); e.value = ${JSON.stringify(david.id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    assert.equal(await count('.assignment-group .row-item'), 2);
+  });
+
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));
 
   // Visual checks at other sizes and themes.
@@ -615,7 +697,7 @@ try {
     await page.screenshot(join(shots, `m${n}-${v}-phone.png`), { full: false });
   }
   await check('no horizontal page overflow at phone width', async () => {
-    for (const n of [1, 2, 3, 4, 5]) {
+    for (const n of [1, 2, 3, 4, 5, 6]) {
       await nav(n);
       const over = await ev('document.documentElement.scrollWidth - document.documentElement.clientWidth');
       assert.ok(over <= 0, `view ${n} overflows by ${over}px`);

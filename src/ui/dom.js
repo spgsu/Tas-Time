@@ -44,6 +44,7 @@ export function fill(el, ...children) {
 }
 
 const ICONS = {
+  people: 'M9 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8M2 21v-3a7 7 0 0 1 14 0v3M17 4a4 4 0 0 1 0 8M18 15a6 6 0 0 1 4 6',
   today: 'M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8',
   week: 'M4 5h16v15H4zM4 9h16M9 3v4M15 3v4M8 13h2M11 13h2M14 13h2M8 16h2M11 16h2',
   plan: 'M4 6h7M7 11h9M10 16h10M4 3v18',

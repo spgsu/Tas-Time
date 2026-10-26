@@ -37,6 +37,7 @@ export function quickAdd(text, defaults = {}) {
     jobId, phaseId: book.phases.some(p => p.id === defaults.phaseId && p.jobId === jobId) ? defaults.phaseId : '', title: q.title, kind: q.kind,
     effort: q.effort ?? 0, plannedDay: q.kind === 'milestone' ? '' : q.plannedDay || defaults.plannedDay || '', finish,
     start: defaults.start || '',
+    assigneeId: defaults.assigneeId ?? book.selfId,
   }));
   if (item) {
     const job = jobOf(store.book, item.jobId);
@@ -47,10 +48,10 @@ export function quickAdd(text, defaults = {}) {
 }
 
 /** Structured creation keeps destination and work day visible in the task editor. */
-export function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.book)[0]?.id, phaseId = '', plannedDay = '') {
+export function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.book)[0]?.id, phaseId = '', plannedDay = '', assigneeId = store.book.selfId) {
   if (!jobId) jobId = createJob('Inbox')?.id;
   if (!jobId) return;
-  const item = act('New task', d => addItem(d, { jobId, phaseId, plannedDay, title: 'Untitled task' }));
+  const item = act('New task', d => addItem(d, { jobId, phaseId, plannedDay, assigneeId, title: 'Untitled task' }));
   if (item) openDrawer('item', item.id, 'title');
   return item;
 }

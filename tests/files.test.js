@@ -15,7 +15,7 @@ globalThis.localStorage = {
   },
   removeItem: key => storage.delete(key),
 };
-const { autosave, beforeUnload, file, save, setPref, writeRecovery } = await import('../src/ui/files.js');
+const { autosave, beforeUnload, file, restoreSession, save, setPref, writeRecovery } = await import('../src/ui/files.js');
 let pickedHandle;
 const tick = () => new Promise(resolve => setImmediate(resolve));
 
@@ -49,6 +49,18 @@ test.beforeEach(() => {
   Object.assign(file, { handle: null, name: '', state: 'none' });
 });
 test.afterEach(() => { autosave.cancel(); writeRecovery.cancel(); });
+
+test('recovering a version 3 book upgrades without reconnecting or overwriting its original', async () => {
+  const legacy = newBook('Legacy');
+  legacy.version = 3;
+  delete legacy.people; delete legacy.selfId;
+  storage.set('tas-time:recovery:v3', JSON.stringify({ at: new Date().toISOString(), dirty: false, fileName: 'original.json', book: legacy }));
+  assert.equal(await restoreSession(), true);
+  assert.equal(store.book.version, 4);
+  assert.equal(store.dirty, true);
+  assert.equal(file.handle, null);
+  assert.equal(file.name, '');
+});
 
 test('Save as keeps newer edits dirty until they reach the new destination', async () => {
   const old = diskHandle('old.json');

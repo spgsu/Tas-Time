@@ -4,7 +4,7 @@
 import { h } from '../dom.js';
 import { addDays } from '../../core/dates.js';
 import { fmtEffort } from '../../core/parse.js';
-import { blockers, boardColumn, byUrgency, isBlocked, jobOf, liveItems, liveJobs, phaseTitle, waitingOn } from '../../core/query.js';
+import { blockers, boardColumn, byUrgency, isBlocked, jobOf, liveItems, liveJobs, personName, phaseTitle, waitingOn } from '../../core/query.js';
 import { patchItem } from '../../core/ops.js';
 import { STATUS } from '../../core/model.js';
 import { act, openDrawer, rerender, store, today, ui, notify } from '../state.js';
@@ -58,7 +58,7 @@ function boardCard(t) {
   const waiting = blocked ? [] : waitingOn(book, t);
   const el = h('article', { class: ['bcard', t.kind === 'milestone' && 'is-ms'], style: { '--job': jobColor(job) }, 'data-item': t.id },
     h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
-    h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
+    h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
     blocked ? h('p', { class: 'bcard-why' }, blockers(book, t).join(' · ')) : null,
     waiting.length ? h('p', { class: 'bcard-after' }, `After ${waiting.map(w => `“${w.title}”`).join(', ')}`) : null,
     h('div', { class: 'bcard-foot' }, dueChip(t), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, t.owner ? h('span', { class: 'muted' }, t.owner) : null));

@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // Mutations. Each takes a draft book (already cloned by the store) and edits it in place.
 import { addDays, diffDays } from './dates.js';
-import { newItem, newJob, newPhase, nextColor, uid } from './model.js';
+import { DEFAULT_CAPACITY, newItem, newJob, newPhase, nextColor, uid } from './model.js';
 import { blockers, itemOf, jobOf, phasesOf } from './query.js';
 
 export function addJob(book, fields = {}, phaseTitles = []) {
@@ -12,7 +12,7 @@ export function addJob(book, fields = {}, phaseTitles = []) {
 }
 
 export function addItem(book, fields) {
-  const item = newItem(fields);
+  const item = newItem({ assigneeId: book.selfId, ...fields });
   if (item.kind === 'milestone') item.start = item.finish;
   book.items.push(item);
   return item;
@@ -115,8 +115,24 @@ export function captureBaseline(book, today) {
   for (const t of book.items) if (!t.archived) t.baseline = t.start || t.finish ? { start: t.start, finish: t.finish } : null;
 }
 
-export function setCapacity(book, monday, minutes) {
-  book.weeks[monday] = { notes: '', ...book.weeks[monday], capacity: minutes };
+export function setCapacity(book, monday, minutes, personId = book.selfId) {
+  if (!book.people.some(p => p.id === personId)) throw new Error('Choose a person before setting capacity.');
+  const week = { notes: '', capacity: book.people.find(p => p.id === book.selfId).capacity, ...book.weeks[monday] };
+  week.people = { ...week.people, [personId]: minutes };
+  if (personId === book.selfId) week.capacity = minutes;
+  book.weeks[monday] = week;
+}
+
+export function addPerson(book, name) {
+  const person = { id: uid(), name: name.trim(), capacity: DEFAULT_CAPACITY };
+  book.people.push(person);
+  return person;
+}
+
+export function patchPerson(book, id, patch) {
+  const person = book.people.find(p => p.id === id);
+  if (!person) throw new Error('That person no longer exists.');
+  Object.assign(person, patch);
 }
 
 export function setWeekNotes(book, monday, notes, defaultCapacity) {

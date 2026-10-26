@@ -233,6 +233,16 @@ Choose the **Job** and optional **Phase** below quick add before typing, or use 
 
 **Faster for a whole phase:** open the **Plan** view. Under each phase there is a visible **Add task to Research** line. Click it and type tasks one after another, pressing Enter each time. They go straight into that phase. A phase is an optional group of tasks, not a task itself. Its arrow collapses the tasks. On a phone, Plan shows a readable task list with dates; use **Show timeline** for the Gantt.
 
+### Assign work to people (optional)
+
+Open **Assignments** (shortcut **6**) and choose **People & capacity**. Rename **Me** to your own name, and add other people such as David. Each task has an **Assignee** selector in its editor; choose one responsible person, or Unassigned. Use **Contacts / consulted** for other people involved. Task Notes are separate from the job notebook.
+
+Choose David in Assignments to see his work across jobs. Filter by status, work week, unscheduled work or a job, and group the result by job, person, status or week. CSV exports the selected tasks with their notes and contacts. Print report prints that selection. Include paused jobs only when needed.
+
+Today and Week start with My work. The **Show work for** selector switches to another person, all people or unassigned work. Availability belongs to each person: set a normal weekly amount in People & capacity and a specific week's override in Week. Unassigned work is shown separately from capacity. Tasks created with a day's Add task button inherit the selected person (All people defaults to My work).
+
+Older books upgrade without losing their notes or owner/contact text. Existing tasks stay in My work. Save a new format 4 copy; older app versions cannot open it. The original file is left intact.
+
 ### Estimate effort honestly
 
 - Think of a similar task you have done. How long did it *really* take?

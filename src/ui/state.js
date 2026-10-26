@@ -10,6 +10,7 @@ export const VIEWS = [
   { id: 'plan', label: 'Plan', key: '3', icon: 'plan' },
   { id: 'board', label: 'Board', key: '4', icon: 'board' },
   { id: 'notes', label: 'Notes', key: '5', icon: 'notes' },
+  { id: 'assignments', label: 'Assignments', key: '6', icon: 'people' },
 ];
 
 export const store = createStore(newBook());
@@ -30,6 +31,11 @@ export const ui = {
   planMobileTimeline: false,
   quickJob: '',
   quickPhase: '',
+  quickAssignee: '',
+  workPerson: '',
+  assignmentWeek: mondayOf(todayIso()),
+  assignmentFiltersOpen: false,
+  assignments: { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' },
 };
 
 export function today() { return todayIso(); }

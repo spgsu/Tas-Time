@@ -743,6 +743,44 @@ h1, h2, h3, p { margin: 0; }
   .plan .plan-scroll { display: block !important; }
 }
 
+/* People, workload and assignment reports. */
+.person-filter { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; min-width: 0; }
+.person-filter select { min-width: 150px; max-width: 100%; }
+.quick-destination { flex-wrap: wrap; }
+.people-manager { display: grid; gap: 18px; }
+.person-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.person-editor label { display: grid; gap: 4px; font-size: 12px; }
+.assignment-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; padding: 16px; }
+.assignment-filters > label { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; min-width: 0; }
+.assignment-filters > label.toggle { flex-direction: row; align-items: center; }
+.assignment-filter-panel > summary { cursor: pointer; padding: 12px 16px; font-weight: 600; }
+.assignment-detail { font-size: 12px; margin: -4px 16px 12px 42px; }
+.assignment-scope { margin: 14px 0; color: var(--muted); font-size: 12px; }
+.assignment-summary { padding: 14px 16px; margin-bottom: 16px; }
+.assignment-workload { padding: 16px; margin-bottom: 20px; }
+.assignment-workload .hint { margin-top: 8px; }
+.assignment-group { margin-bottom: 16px; }
+.assignments .row-title { white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.assignment-workload .panel-head label { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+@media (max-width: 760px) {
+  .sidebar .brand { flex-basis: 100%; }
+  .nav { min-width: 0; flex-basis: 100%; width: 100%; }
+  .nav-item { flex: 1; min-width: 0; padding: 4px; font-size: 10px; }
+  .nav-item span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .people-manager .person-editor { grid-template-columns: 1fr; }
+  .person-filter { max-width: 100%; }
+  .quick-destination { grid-template-columns: 1fr 1fr; }
+  .quick-destination > .btn { align-self: end; min-height: 32px; }
+  .assignment-filters { grid-template-columns: 1fr; }
+  .assignment-workload .panel-head { flex-wrap: wrap; }
+}
+@media print {
+  .assignment-filter-panel, .assignments .tick { display: none !important; }
+  .assignment-group { break-inside: auto; }
+  .assignment-group .row-item { break-inside: avoid; }
+  .assignments .row-title { color: #000; }
+}
+
 </style>
 </head>
 <body>
@@ -866,6 +904,11 @@ SOFTWARE.
 <p>If you mistype a code, the app refuses to add the task and tells you why, so nothing ends up in the wrong place.</p>
 <p>Choose the <strong>Job</strong> and optional <strong>Phase</strong> below quick add before typing, or use <strong>Add task</strong> to open the task editor. Quick add leaves the work day empty unless you include <code>@day</code>, in every view. Use <strong>Add task for today</strong> or a day column's <strong>Add task</strong> button to schedule directly. Effort fields require units such as <code>10h</code> or <code>45m</code>.</p>
 <p><strong>Faster for a whole phase:</strong> open the <strong>Plan</strong> view. Under each phase there is a visible <strong>Add task to Research</strong> line. Click it and type tasks one after another, pressing Enter each time. They go straight into that phase. A phase is an optional group of tasks, not a task itself. Its arrow collapses the tasks. On a phone, Plan shows a readable task list with dates; use <strong>Show timeline</strong> for the Gantt.</p>
+<h3 id="g-assign-work-to-people-optional">Assign work to people (optional)</h3>
+<p>Open <strong>Assignments</strong> (shortcut <strong>6</strong>) and choose <strong>People &amp; capacity</strong>. Rename <strong>Me</strong> to your own name, and add other people such as David. Each task has an <strong>Assignee</strong> selector in its editor; choose one responsible person, or Unassigned. Use <strong>Contacts / consulted</strong> for other people involved. Task Notes are separate from the job notebook.</p>
+<p>Choose David in Assignments to see his work across jobs. Filter by status, work week, unscheduled work or a job, and group the result by job, person, status or week. CSV exports the selected tasks with their notes and contacts. Print report prints that selection. Include paused jobs only when needed.</p>
+<p>Today and Week start with My work. The <strong>Show work for</strong> selector switches to another person, all people or unassigned work. Availability belongs to each person: set a normal weekly amount in People &amp; capacity and a specific week's override in Week. Unassigned work is shown separately from capacity. Tasks created with a day's Add task button inherit the selected person (All people defaults to My work).</p>
+<p>Older books upgrade without losing their notes or owner/contact text. Existing tasks stay in My work. Save a new format 4 copy; older app versions cannot open it. The original file is left intact.</p>
 <h3 id="g-estimate-effort-honestly">Estimate effort honestly</h3>
 <ul><li>Think of a similar task you have done. How long did it <em>really</em> take?</li><li>Add 50% for anything new to you. Writing usually takes double.</li><li>Under 15 minutes? Merge it with another task. Over 2 hours? Split it.</li><li>Unsure? Guess anyway. A rough number is far more useful than no number, and you can fix it later.</li></ul>
 <h3 id="g-link-the-prerequisites">Link the prerequisites</h3>
@@ -1038,7 +1081,7 @@ const MONTH_NAMES = MONTHS;
 // Planning-book schema: factories, validation and migration from older files.
 
 const FORMAT = 'tas-time-planning-book';
-const VERSION = 3;
+const VERSION = 4;
 const MAX_FILE_BYTES = 15_000_000;
 
 const STATUS = { todo: 'To do', doing: 'Doing', done: 'Done' };
@@ -1068,7 +1111,8 @@ function uid() {
 }
 
 function newBook(name = 'My planning book') {
-  return { format: FORMAT, version: VERSION, id: uid(), name, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
+  const self = { id: uid(), name: 'Me', capacity: DEFAULT_CAPACITY };
+  return { format: FORMAT, version: VERSION, id: uid(), name, people: [self], selfId: self.id, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
 }
 
 function newJob(fields = {}) {
@@ -1083,7 +1127,7 @@ function newPhase(jobId, title, order) { return { id: uid(), jobId, title, order
 function newItem(fields = {}) {
   return {
     id: uid(), jobId: '', phaseId: '', title: '', kind: 'task', status: 'todo',
-    start: '', finish: '', effort: 0, plannedDay: '', owner: '', blocker: '', deps: [],
+    start: '', finish: '', effort: 0, plannedDay: '', assigneeId: '', owner: '', blocker: '', deps: [],
     baseline: null, doneOn: '', notes: '', archived: false, ...fields,
   };
 }
@@ -1104,6 +1148,17 @@ function validate(book) {
   if (!book || book.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
   if (book.version !== VERSION) fail(`Unsupported planning-book version ${book.version}.`);
   text(book.name, 'Book name', 200);
+  if (!Array.isArray(book.people) || !book.people.length || book.people.length > 2000) fail('The people list is invalid.');
+  const people = new Map(); const names = new Set();
+  for (const p of book.people) {
+    if (!p || typeof p !== 'object') fail('A person is malformed.');
+    text(p.id, 'Person identifier', 200); text(p.name, 'Person name', 200);
+    const name = p.name.trim().toLowerCase();
+    if (!p.id || people.has(p.id) || !name || names.has(name)) fail('People need unique identifiers and names.');
+    whole(p.capacity, 'Default weekly capacity', 7 * 24 * 60);
+    people.set(p.id, p); names.add(name);
+  }
+  if (!people.has(book.selfId)) fail('Choose a person for My work.');
   for (const k of ['jobs', 'phases', 'items']) if (!Array.isArray(book[k]) || book[k].length > 20000) fail(`The ${k} list is invalid.`);
   const ids = new Set();
   for (const row of [...book.jobs, ...book.phases, ...book.items]) {
@@ -1130,6 +1185,7 @@ function validate(book) {
   }
   for (const t of book.items) {
     if (!jobs.has(t.jobId)) fail(`"${t.title}" belongs to a missing job.`);
+    if (typeof t.assigneeId !== 'string' || (t.assigneeId && !people.has(t.assigneeId))) fail(`"${t.title}" has a missing assignee.`);
     if (t.phaseId && phases.get(t.phaseId)?.jobId !== t.jobId) fail(`"${t.title}" refers to a phase from another job.`);
     if (!['task', 'milestone'].includes(t.kind)) fail('Invalid item kind.');
     if (!STATUS[t.status]) fail('Invalid item status.');
@@ -1151,6 +1207,13 @@ function validate(book) {
   for (const [key, w] of Object.entries(book.weeks)) {
     if (!isIsoDate(key) || mondayOf(key) !== key) fail('Weekly plans must start on a Monday.');
     whole(w.capacity, 'Weekly capacity', 7 * 24 * 60); text(w.notes, 'Week notes');
+    if (w.people !== undefined) {
+      if (!w.people || typeof w.people !== 'object' || Array.isArray(w.people)) fail('Invalid weekly person capacities.');
+      for (const [id, minutes] of Object.entries(w.people)) {
+        if (!people.has(id)) fail('A weekly capacity refers to a missing person.');
+        whole(minutes, 'Person weekly capacity', 7 * 24 * 60);
+      }
+    }
   }
   date(book.baselineDate, 'Baseline date');
   return book;
@@ -1185,10 +1248,17 @@ const V2_JOB_STATUS = { Active: 'active', 'On hold': 'hold', Complete: 'done' };
 function migrate(raw) {
   if (!raw || raw.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
   if (raw.version === VERSION) return addMissingNotePages(raw);
+  if (raw.version === 3) {
+    const b = newBook();
+    return addMissingNotePages({ ...raw, version: VERSION, people: b.people, selfId: b.selfId,
+      weeks: Object.fromEntries(Object.entries(raw.weeks || {}).map(([day, week]) => [day, { ...week, people: { [b.selfId]: week.capacity } }])),
+      items: raw.items.map(t => ({ ...t, assigneeId: b.selfId })) });
+  }
   if (raw.version !== 1 && raw.version !== 2) fail(`Unsupported planning-book version ${raw.version}.`);
   const book = newBook(String(raw.name || 'Imported planning book'));
   book.baselineDate = raw.baselineDate || '';
   book.weeks = structuredClone(raw.weeks || {});
+  for (const week of Object.values(book.weeks)) week.people = { [book.selfId]: week.capacity };
   for (const j of raw.jobs || []) {
     const notes = { ...newJob().notes, ...(j.notes || {}) };
     const color = COLORS[j.color] ? j.color : 'forest';
@@ -1200,6 +1270,7 @@ function migrate(raw) {
     const hasBaseline = t.baselineStart || t.baselineFinish;
     book.items.push(newItem({
       id: t.id, jobId: t.jobId, phaseId: t.phaseId || '', title: t.title, kind: t.kind === 'Milestone' ? 'milestone' : 'task',
+      assigneeId: book.selfId,
       status: V2_STATUS[t.status] || 'todo', start: t.start || '', finish: t.finish || '', effort: t.remaining || 0,
       plannedDay: t.plannedDay || '', owner: t.owner || '', blocker: t.blocker || '', deps: [...(t.predecessors || [])],
       baseline: hasBaseline ? { start: t.baselineStart || '', finish: t.baselineFinish || '' } : null,
@@ -1307,6 +1378,7 @@ const VIEWS = [
   { id: 'plan', label: 'Plan', key: '3', icon: 'plan' },
   { id: 'board', label: 'Board', key: '4', icon: 'board' },
   { id: 'notes', label: 'Notes', key: '5', icon: 'notes' },
+  { id: 'assignments', label: 'Assignments', key: '6', icon: 'people' },
 ];
 
 const store = createStore(newBook());
@@ -1327,6 +1399,11 @@ const ui = {
   planMobileTimeline: false,
   quickJob: '',
   quickPhase: '',
+  quickAssignee: '',
+  workPerson: '',
+  assignmentWeek: mondayOf(todayIso()),
+  assignmentFiltersOpen: false,
+  assignments: { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' },
 };
 
 function today() { return todayIso(); }
@@ -1427,6 +1504,7 @@ function fill(el, ...children) {
 }
 
 const ICONS = {
+  people: 'M9 11a4 4 0 1 0 0-8a4 4 0 0 0 0 8M2 21v-3a7 7 0 0 1 14 0v3M17 4a4 4 0 0 1 0 8M18 15a6 6 0 0 1 4 6',
   today: 'M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M3 12h2M19 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8',
   week: 'M4 5h16v15H4zM4 9h16M9 3v4M15 3v4M8 13h2M11 13h2M14 13h2M8 16h2M11 16h2',
   plan: 'M4 6h7M7 11h9M10 16h10M4 3v18',
@@ -1565,6 +1643,15 @@ function liveJobs(book) { return book.jobs.filter(j => !j.archived); }
 function isHidden(book, t) { return t.archived || !!jobOf(book, t.jobId)?.archived; }
 function liveItems(book) { return book.items.filter(t => !isHidden(book, t)); }
 function activeItems(book) { return liveItems(book).filter(t => jobOf(book, t.jobId)?.status === 'active'); }
+function personName(book, id) { return book.people.find(p => p.id === id)?.name || 'Unassigned'; }
+function matchesPerson(t, id = 'all') { return id === 'all' || (id === 'unassigned' ? !t.assigneeId : t.assigneeId === id); }
+function personCapacity(book, monday, id) {
+  if (id === 'all') return book.people.reduce((n, p) => n + personCapacity(book, monday, p.id), 0);
+  const person = book.people.find(p => p.id === id);
+  if (!person) return 0;
+  const overrides = book.weeks[monday]?.people || {};
+  return Object.hasOwn(overrides, id) ? overrides[id] : person.capacity;
+}
 
 function phasesOf(book, jobId) {
   return book.phases.filter(p => p.jobId === jobId).sort((a, b) => a.order - b.order);
@@ -1622,10 +1709,10 @@ function matchesFocus(t, focus) { return !focus || t.jobId === focus; }
 
 function openEffort(list) { return list.reduce((n, t) => n + (t.status === 'done' ? 0 : t.effort), 0); }
 
-function weekLoad(book, monday, focus = '') {
+function weekLoad(book, monday, focus = '', personId = 'all') {
   const days = weekDays(monday);
   const end = days[6];
-  const items = activeItems(book).filter(t => t.plannedDay >= monday && t.plannedDay <= end);
+  const items = activeItems(book).filter(t => matchesPerson(t, personId) && t.plannedDay >= monday && t.plannedDay <= end);
   const byDay = Object.fromEntries(days.map(d => [d, []]));
   for (const t of items) byDay[t.plannedDay].push(t);
   const shown = items.filter(t => matchesFocus(t, focus));
@@ -1639,9 +1726,9 @@ function weekLoad(book, monday, focus = '') {
 }
 
 /** Active open work with no planned day, or carried from before this week. Includes blocked tasks with their explanations. */
-function readyToPlan(book, monday, focus = '') {
+function readyToPlan(book, monday, focus = '', personId = 'all') {
   return activeItems(book)
-    .filter(t => t.status !== 'done' && t.kind === 'task' && matchesFocus(t, focus))
+    .filter(t => t.status !== 'done' && t.kind === 'task' && matchesFocus(t, focus) && matchesPerson(t, personId))
     .filter(t => !t.plannedDay || t.plannedDay < monday)
     .sort(byUrgency);
 }
@@ -1650,8 +1737,8 @@ function byUrgency(a, b) {
   return (a.finish || '9999').localeCompare(b.finish || '9999') || (a.start || '9999').localeCompare(b.start || '9999') || a.title.localeCompare(b.title);
 }
 
-function todayList(book, today, focus = '') {
-  const live = activeItems(book).filter(t => matchesFocus(t, focus));
+function todayList(book, today, focus = '', personId = 'all') {
+  const live = activeItems(book).filter(t => matchesFocus(t, focus) && matchesPerson(t, personId));
   const planned = live.filter(t => t.plannedDay === today);
   const carried = live.filter(t => t.status !== 'done' && t.plannedDay && t.plannedDay < today).sort(byUrgency);
   const overdue = live.filter(t => isLate(t, today) && t.plannedDay !== today && !carried.includes(t)).sort(byUrgency);
@@ -1659,19 +1746,19 @@ function todayList(book, today, focus = '') {
 }
 
 /** The live job touched most recently: latest completion or planned day up to today. */
-function lastWorkedJob(book, today) {
+function lastWorkedJob(book, today, personId = 'all') {
   let best = null; let bestDay = '';
-  for (const t of activeItems(book)) {
+  for (const t of activeItems(book).filter(t => matchesPerson(t, personId))) {
     const day = [t.doneOn, t.plannedDay <= today ? t.plannedDay : ''].filter(Boolean).sort().at(-1) || '';
     if (day > bestDay) { bestDay = day; best = t.jobId; }
   }
   return jobOf(book, best) || liveJobs(book).find(j => j.status === 'active' && j.notes.restart.trim()) || null;
 }
 
-function upcomingMilestones(book, today, days = 21, focus = '') {
+function upcomingMilestones(book, today, days = 21, focus = '', personId = 'all') {
   const end = addDays(today, days);
   return activeItems(book)
-    .filter(t => t.kind === 'milestone' && t.status !== 'done' && t.finish && t.finish <= end && matchesFocus(t, focus))
+    .filter(t => t.kind === 'milestone' && t.status !== 'done' && t.finish && t.finish <= end && matchesFocus(t, focus) && matchesPerson(t, personId))
     .sort(byUrgency);
 }
 
@@ -1732,7 +1819,7 @@ function addJob(book, fields = {}, phaseTitles = []) {
 }
 
 function addItem(book, fields) {
-  const item = newItem(fields);
+  const item = newItem({ assigneeId: book.selfId, ...fields });
   if (item.kind === 'milestone') item.start = item.finish;
   book.items.push(item);
   return item;
@@ -1835,8 +1922,24 @@ function captureBaseline(book, today) {
   for (const t of book.items) if (!t.archived) t.baseline = t.start || t.finish ? { start: t.start, finish: t.finish } : null;
 }
 
-function setCapacity(book, monday, minutes) {
-  book.weeks[monday] = { notes: '', ...book.weeks[monday], capacity: minutes };
+function setCapacity(book, monday, minutes, personId = book.selfId) {
+  if (!book.people.some(p => p.id === personId)) throw new Error('Choose a person before setting capacity.');
+  const week = { notes: '', capacity: book.people.find(p => p.id === book.selfId).capacity, ...book.weeks[monday] };
+  week.people = { ...week.people, [personId]: minutes };
+  if (personId === book.selfId) week.capacity = minutes;
+  book.weeks[monday] = week;
+}
+
+function addPerson(book, name) {
+  const person = { id: uid(), name: name.trim(), capacity: DEFAULT_CAPACITY };
+  book.people.push(person);
+  return person;
+}
+
+function patchPerson(book, id, patch) {
+  const person = book.people.find(p => p.id === id);
+  if (!person) throw new Error('That person no longer exists.');
+  Object.assign(person, patch);
 }
 
 function setWeekNotes(book, monday, notes, defaultCapacity) {
@@ -1916,6 +2019,7 @@ function itemRow(t, { actions = null, showJob = true, showPhase = false, dense =
       h('button', { class: 'row-title', onclick: () => openDrawer('item', t.id) }, t.title),
       h('div', { class: 'row-meta' },
         showJob ? jobTag(job) : null,
+        chip(personName(book, t.assigneeId), 'muted', 'Assignee'),
         phase ? h('span', { class: 'muted' }, phase) : null,
         t.status === 'doing' ? chip('Doing', 'accent') : null,
         dueChip(t),
@@ -1991,6 +2095,7 @@ function quickAdd(text, defaults = {}) {
     jobId, phaseId: book.phases.some(p => p.id === defaults.phaseId && p.jobId === jobId) ? defaults.phaseId : '', title: q.title, kind: q.kind,
     effort: q.effort ?? 0, plannedDay: q.kind === 'milestone' ? '' : q.plannedDay || defaults.plannedDay || '', finish,
     start: defaults.start || '',
+    assigneeId: defaults.assigneeId ?? book.selfId,
   }));
   if (item) {
     const job = jobOf(store.book, item.jobId);
@@ -2001,10 +2106,10 @@ function quickAdd(text, defaults = {}) {
 }
 
 /** Structured creation keeps destination and work day visible in the task editor. */
-function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.book)[0]?.id, phaseId = '', plannedDay = '') {
+function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.book)[0]?.id, phaseId = '', plannedDay = '', assigneeId = store.book.selfId) {
   if (!jobId) jobId = createJob('Inbox')?.id;
   if (!jobId) return;
-  const item = act('New task', d => addItem(d, { jobId, phaseId, plannedDay, title: 'Untitled task' }));
+  const item = act('New task', d => addItem(d, { jobId, phaseId, plannedDay, assigneeId, title: 'Untitled task' }));
   if (item) openDrawer('item', item.id, 'title');
   return item;
 }
@@ -2291,6 +2396,9 @@ function unlink() { file.handle = null; file.name = ''; file.state = 'none'; fil
 function resetView() {
   ui.focus = ''; ui.drawer = null; ui.notesJob = ''; ui.week = mondayOf(todayIso());
   ui.quickJob = ''; ui.quickPhase = ''; ui.addingIn = ''; ui.collapsedPhases.clear();
+  ui.workPerson = ''; ui.assignments = { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' }; ui.assignmentWeek = mondayOf(todayIso());
+  ui.assignmentFiltersOpen = false;
+  ui.quickAssignee = '';
 }
 
 // ── Recovery copy ──
@@ -2329,11 +2437,16 @@ async function restoreSession() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(RECOVERY_KEY) || 'null'); } catch { saved = null; }
   if (!saved?.book) return false;
-  let book;
-  try { book = decodeBook(JSON.stringify(saved.book)).book; } catch { return false; }
-  store.replace(book, { dirty: !!saved.dirty });
+  let book; let upgradedFrom;
+  try { ({ book, upgradedFrom } = decodeBook(JSON.stringify(saved.book))); } catch { return false; }
+  store.replace(book, { dirty: !!saved.dirty || !!upgradedFrom });
   file.name = saved.fileName || '';
   if (saved.dirty) file.restoredAt = new Date(saved.at);
+  if (upgradedFrom) {
+    file.name = ''; file.handle = null; file.state = 'none';
+    notify(`Recovered a version ${upgradedFrom} book and upgraded it for assignments. Save a new copy; the original file is untouched.`, { kind: 'warn', timeout: 12000 });
+    return true;
+  }
   const handle = await idbGet('lastFile');
   if (handle && handle.name === saved.fileName) {
     file.handle = handle;
@@ -2667,6 +2780,46 @@ function guideButton(label = 'Read the beginner’s guide') {
   return h('button', { class: 'link guide-open', onclick: showGuide }, label);
 }
 
+// ── ui/people.js ──
+function workPersonId() {
+  return ['all', 'unassigned'].includes(ui.workPerson) || store.book.people.some(p => p.id === ui.workPerson) ? ui.workPerson : store.book.selfId;
+}
+
+function personSelect(value, onChange, { id = '', label = 'Assignee', all = true } = {}) {
+  return h('label', { class: 'person-filter' }, label, h('select', { id: id || null, 'aria-label': label, onchange: e => onChange(e.target.value) },
+    all ? h('option', { value: 'all', selected: value === 'all' }, 'All people') : null,
+    h('option', { value: all ? 'unassigned' : '', selected: value === (all ? 'unassigned' : '') }, 'Unassigned'),
+    store.book.people.map(p => h('option', { value: p.id, selected: value === p.id }, `${p.name}${p.id === store.book.selfId ? ' (My work)' : ''}`))));
+}
+
+function showPeople() {
+  const content = h('div', { class: 'people-manager' });
+  const refresh = () => {
+    content.replaceChildren(h('p', { class: 'muted' }, 'People belong to this planning book. Rename Me to your name. Assign one responsible person per task; contacts stay separate. Weekly capacity can be overridden in Week.'));
+    for (const p of store.book.people) {
+      const name = h('input', { value: p.name, 'aria-label': `Name for ${p.name}`, maxlength: 200,
+        onchange: e => { act('Rename person', d => patchPerson(d, p.id, { name: e.target.value.trim() })); refresh(); } });
+      const capacity = h('input', { value: fmtEffort(p.capacity) || '0h', 'aria-label': `Default weekly capacity for ${p.name}`,
+        onchange: e => {
+          const minutes = parseEffort(e.target.value);
+          if (minutes === null || minutes > 10080) { notify('Use hours or minutes, up to 168h per week.', { kind: 'warn' }); refresh(); return; }
+          act('Default capacity', d => patchPerson(d, p.id, { capacity: minutes })); refresh();
+        } });
+      content.append(h('div', { class: 'person-editor' }, h('label', null, p.id === store.book.selfId ? 'Name (My work)' : 'Name', name), h('label', null, 'Default available / week', capacity)));
+    }
+    const input = h('input', { id: 'new-person-name', placeholder: 'e.g. David', maxlength: 200, 'aria-label': 'New person name' });
+    const add = () => {
+      if (!input.value.trim()) { input.focus(); return; }
+      const p = act('Add person', d => addPerson(d, input.value));
+      if (p) { refresh(); document.getElementById('new-person-name')?.focus(); }
+    };
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); add(); } });
+    content.append(h('div', { class: 'phase-add-control' }, input, btn('Add person', add, { kind: 'primary', iconName: 'plus' })));
+  };
+  refresh();
+  showModal('People & capacity', content);
+}
+
 // ── ui/drawer.js ──
 // Side panel editor for items and jobs. Every field saves as you go — there is no
 // "Keep changes" step; undo (Ctrl+Z outside a text field) reverts mistakes.
@@ -2774,6 +2927,9 @@ function itemEditor(t) {
       field('Phase (optional group)', h('select', { id: 'd-phase', onchange: e => set('Change phase', { phaseId: e.target.value }) },
         h('option', { value: '' }, 'No phase'), phasesOf(book, t.jobId).map(p => h('option', { value: p.id, selected: p.id === t.phaseId }, p.title))), { id: 'd-phase' })),
 
+    h('div', { class: 'field' }, personSelect(t.assigneeId, value => set('Assign task', { assigneeId: value }), { id: 'd-assignee', all: false }),
+      btn('People & capacity', showPeople, { kind: 'sm ghost' })),
+
     h('div', { class: 'fields two' },
       isMs ? null : field('Forecast start', dateInput('start', t.start), { id: 'd-start' }),
       field(isMs ? 'Milestone date' : 'Forecast finish', dateInput('finish', t.finish), { id: 'd-finish', hint: isMs ? '' : 'Expected finish, not a fixed deadline. Moving the timeline changes this date.' })),
@@ -2798,7 +2954,7 @@ function itemEditor(t) {
       depSelect,
       neededBy.length ? h('p', { class: 'field-hint' }, 'Needed by: ', neededBy.map((x, i) => [i ? ', ' : '', h('button', { class: 'link', onclick: () => openDrawer('item', x.id) }, x.title)])) : null),
 
-    field('Owner / contact', liveText('d-owner', t.owner, typed('owner', 'Edit owner'), { maxlength: 200, placeholder: 'Optional' }), { id: 'd-owner' }),
+    field('Contacts / consulted', liveText('d-owner', t.owner, typed('owner', 'Edit contacts'), { maxlength: 200, placeholder: 'Optional: suppliers, reviewers, contacts' }), { id: 'd-owner', hint: 'Separate from the person responsible for completing this task. Existing owner/contact text is kept here.' }),
     field(isMs ? 'Acceptance criteria' : 'Notes', liveText('d-notes', t.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: isMs ? 'What must be true for this to be accepted?' : 'Details, links, acceptance criteria…' }), { id: 'd-notes' }),
     t.doneOn ? h('p', { class: 'field-hint' }, `Completed ${fmtDate(t.doneOn)}.`) : null,
   ];
@@ -2896,10 +3052,12 @@ function renderToday() {
   const book = store.book;
   if (!liveJobs(book).length) return welcome();
   const day = today();
-  const { planned, carried, overdue } = todayList(book, day, ui.focus);
+  const personId = workPersonId();
+  const { planned, carried, overdue } = todayList(book, day, ui.focus, personId);
   const open = planned.filter(t => t.status !== 'done');
-  const load = weekLoad(book, mondayOf(day));
-  const capacity = book.weeks[mondayOf(day)]?.capacity ?? DEFAULT_CAPACITY;
+  const load = weekLoad(book, mondayOf(day), '', personId);
+  const capacity = personCapacity(book, mondayOf(day), personId);
+  const unassigned = personId === 'all' ? weekLoad(book, mondayOf(day), '', 'unassigned').planned : 0;
 
   const sub = open.length
     ? `${open.length} to do · ${fmtHours(openEffort(open))} of work${planned.length - open.length ? ` · ${planned.length - open.length} done` : ''}`
@@ -2917,7 +3075,7 @@ function renderToday() {
 
   const main = h('div', { class: 'today-main' },
     h('section', { class: 'panel' },
-      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today'), btn('Add task for today', () => createTask(undefined, '', day), { kind: 'sm', iconName: 'plus' })),
+      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today'), btn('Add task for today', () => createTask(undefined, '', day, personId === 'unassigned' ? '' : personId === 'all' ? book.selfId : personId), { kind: 'sm', iconName: 'plus' })),
       planned.length
         ? h('div', { class: 'list' }, [...open, ...planned.filter(t => t.status === 'done')].map(t => itemRow(t, { actions: t.status === 'done' ? null : later(t), showPhase: true })))
         : suggestions(book, day)),
@@ -2934,18 +3092,20 @@ function renderToday() {
   const side = h('aside', { class: 'today-side' },
     h('section', { class: 'panel' },
       h('div', { class: 'panel-head' }, h('h2', null, 'This week'), btn('Open week', () => setView('week'), { kind: 'ghost sm' })),
-      meter(load.planned, capacity)),
+      personId === 'unassigned' ? h('p', null, 'Assign a person to compare workload with capacity.') : meter(load.planned - unassigned, capacity),
+      unassigned ? h('p', { class: 'hint' }, `${fmtHours(unassigned)} unassigned; excluded from capacity.`) : null),
     resumeNotes(book, planned, carried, day),
     milestones(book, day));
 
   return h('div', { class: 'view today' },
     h('header', { class: 'page-head' },
-      h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub))),
+      h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub)),
+      personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'today-person', label: 'Show work for' })),
     h('div', { class: 'today-grid' }, main, side));
 }
 
 function suggestions(book, day) {
-  const ready = readyToPlan(book, mondayOf(day), ui.focus).filter(t => !t.blocker && t.deps.every(id => book.items.find(x => x.id === id)?.status === 'done')).slice(0, 5);
+  const ready = readyToPlan(book, mondayOf(day), ui.focus, workPersonId()).filter(t => !t.blocker && t.deps.every(id => book.items.find(x => x.id === id)?.status === 'done')).slice(0, 5);
   if (!ready.length) return emptyState('Nothing planned for today', 'Add a task above, or plan work from the Week view.');
   return h('div', null,
     h('p', { class: 'hint' }, 'Nothing planned for today. Ready to start, most urgent first:'),
@@ -2958,7 +3118,7 @@ function resumeNotes(book, planned, carried, day) {
   let ids = ui.focus ? [ui.focus] : [...new Set(planned.map(t => t.jobId))];
   if (!ids.length) ids = [...new Set(carried.map(t => t.jobId))].slice(0, 2);
   const fallback = !ids.length;
-  if (fallback) ids = [lastWorkedJob(book, day)?.id].filter(Boolean);
+  if (fallback) ids = [lastWorkedJob(book, day, workPersonId())?.id].filter(Boolean);
   const jobs = ids.map(id => jobOf(book, id)).filter(j => j && !j.archived && j.status === 'active');
   if (!jobs.length) return null;
   return h('section', { class: 'panel' },
@@ -2976,7 +3136,7 @@ function resumeNotes(book, planned, carried, day) {
 }
 
 function milestones(book, day) {
-  const list = upcomingMilestones(book, day, 28, ui.focus);
+  const list = upcomingMilestones(book, day, 28, ui.focus, workPersonId());
   if (!list.length) return null;
   return h('section', { class: 'panel' },
     h('div', { class: 'panel-head' }, h('h2', null, 'Milestones ahead')),
@@ -3045,7 +3205,7 @@ function weekCard(t, days) {
     doneToggle(t),
     h('div', { class: 'wcard-body' },
       h('button', { class: 'wcard-title', onclick: () => openDrawer('item', t.id) }, t.title),
-      h('div', { class: 'wcard-meta' }, jobTag(job), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, dueChip(t), readiness(t))),
+      h('div', { class: 'wcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, dueChip(t), readiness(t))),
     iconBtn('more', `Plan “${t.title}” for another day`, e => dayMenu(e.currentTarget, t, days), { class: 'icon-btn wcard-menu' }));
   return makeDraggable(el, t.id);
 }
@@ -3054,18 +3214,21 @@ function renderWeek() {
   const book = store.book;
   if (!liveJobs(book).length) return welcome();
   const monday = ui.week;
-  const load = weekLoad(book, monday, ui.focus);
+  const personId = workPersonId();
+  const load = weekLoad(book, monday, ui.focus, personId);
+  const capacity = personCapacity(book, monday, personId);
+  const unassigned = personId === 'all' ? weekLoad(book, monday, '', 'unassigned').planned : 0;
   const plan = book.weeks[monday] || { capacity: DEFAULT_CAPACITY, notes: '' };
   const isCurrent = monday === mondayOf(today());
-  const ready = readyToPlan(book, monday, ui.focus);
+  const ready = readyToPlan(book, monday, ui.focus, personId);
 
   const capInput = h('input', {
-    id: 'week-capacity', class: 'cap-input', value: fmtEffort(plan.capacity) || '0h', 'aria-label': 'Hours available this week',
-    title: 'Hours you can realistically give this week, across all jobs. E.g. 8h, 6h30, 90m',
+    id: 'week-capacity', class: 'cap-input', value: fmtEffort(capacity) || '0h', disabled: ['all', 'unassigned'].includes(personId), 'aria-label': 'Hours available this week',
+    title: 'Selected person’s available hours across all jobs. Choose an individual to edit. E.g. 8h, 6h30, 90m',
     onchange: e => {
       const min = parseEffort(e.target.value);
-      if (min === null) { notify('Enter hours like 8h, 6h30 or 90m.', { kind: 'warn' }); e.target.value = fmtEffort(plan.capacity); return; }
-      act('Set capacity', d => setCapacity(d, monday, Math.min(min, 7 * 24 * 60)));
+      if (min === null) { notify('Enter hours like 8h, 6h30 or 90m.', { kind: 'warn' }); e.target.value = fmtEffort(capacity); return; }
+      act('Set capacity', d => setCapacity(d, monday, Math.min(min, 7 * 24 * 60), personId));
     },
   });
 
@@ -3082,7 +3245,7 @@ function renderWeek() {
     const total = openEffort(load.byDay[day]);
     const col = h('section', { class: ['day', day === today() && 'is-today', i >= 5 && 'weekend', day < today() && 'is-past'], 'aria-label': `${DAY_LABELS[i]} ${fmtShort(day)}` },
       h('header', null, h('span', { class: 'day-name' }, DAY_LABELS[i]), h('span', { class: 'day-date' }, fmtShort(day)), total ? h('span', { class: 'day-total' }, fmtHours(total)) : null),
-      btn('Add task', () => createTask(undefined, '', day), { kind: 'sm ghost', iconName: 'plus', attrs: { 'aria-label': `Add task for ${day}` } }),
+      btn('Add task', () => createTask(undefined, '', day, personId === 'unassigned' ? '' : personId === 'all' ? book.selfId : personId), { kind: 'sm ghost', iconName: 'plus', attrs: { 'aria-label': `Add task for ${day}` } }),
       h('div', { class: 'day-cards' }, list.length ? list.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'Add a task or drop work here')));
     return makeDropZone(col, id => planOn(id, day));
   });
@@ -3097,15 +3260,16 @@ function renderWeek() {
     h('header', { class: 'page-head' },
       h('div', null, h('p', { class: 'eyebrow' }, isCurrent ? 'This week' : weekOffsetLabel(monday)), h('h1', null, range)),
       h('div', { class: 'page-actions' },
+        personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'week-person', label: 'Show work for' }),
         iconBtn('left', 'Previous week', () => { ui.week = addDays(monday, -7); rerender(); }),
         btn('This week', () => { ui.week = mondayOf(today()); rerender(); }, { disabled: isCurrent, kind: 'sm' }),
         iconBtn('right', 'Next week', () => { ui.week = addDays(monday, 7); rerender(); }))),
     h('div', { class: 'week-summary panel' },
       h('label', { class: 'cap', for: 'week-capacity' }, icon('clock', 16), 'Available', capInput),
-      h('div', { class: 'cap-meter' }, meter(load.planned, plan.capacity)),
+      h('div', { class: 'cap-meter' }, personId === 'unassigned' ? h('p', null, 'Unassigned work has no person capacity.') : meter(load.planned - unassigned, capacity)),
       h('div', { class: 'cap-facts muted' },
         load.unestimated ? h('span', { class: 'warn-text' }, `${load.unestimated} without an estimate · `) : null,
-        `${load.done} done`, ui.focus ? ' · totals include all jobs' : ''),
+        `${load.done} done`, ui.focus ? ' · totals include all jobs for selected person' : '', unassigned ? ` · ${fmtHours(unassigned)} unassigned (excluded from capacity)` : ''),
       notes),
     h('div', { class: 'week-body' }, h('div', { class: 'days' }, columns), tray));
 }
@@ -3478,7 +3642,7 @@ function boardCard(t) {
   const waiting = blocked ? [] : waitingOn(book, t);
   const el = h('article', { class: ['bcard', t.kind === 'milestone' && 'is-ms'], style: { '--job': jobColor(job) }, 'data-item': t.id },
     h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
-    h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
+    h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
     blocked ? h('p', { class: 'bcard-why' }, blockers(book, t).join(' · ')) : null,
     waiting.length ? h('p', { class: 'bcard-after' }, `After ${waiting.map(w => `“${w.title}”`).join(', ')}`) : null,
     h('div', { class: 'bcard-foot' }, dueChip(t), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, t.owner ? h('span', { class: 'muted' }, t.owner) : null));
@@ -3552,10 +3716,95 @@ function earlierLessons(book, current) {
 
 function filled(job) { return NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length; }
 
+// ── core/assignments.js ──
+/** A single selection drives the screen, printout and CSV. Paused jobs are opt-in. */
+function assignmentItems(book, today, { person = 'all', job = '', status = 'open', period = 'all', week = mondayOf(today), paused = false, search = '' } = {}) {
+  const needle = search.trim().toLowerCase();
+  return liveItems(book).filter(t => {
+    const j = jobOf(book, t.jobId);
+    if (!matchesPerson(t, person) || (job && t.jobId !== job) || (!paused && j.status !== 'active')) return false;
+    if (status === 'open' && t.status === 'done') return false;
+    if (status === 'late' && !isLate(t, today)) return false;
+    if (['todo', 'doing', 'blocked', 'done'].includes(status) && boardColumn(book, t, today) !== status) return false;
+    if (period === 'week' && (!t.plannedDay || t.plannedDay < week || t.plannedDay > addDays(week, 6))) return false;
+    if (period === 'unscheduled' && t.plannedDay) return false;
+    return !needle || [t.title, t.notes, j.title, phaseTitle(book, t.phaseId), personName(book, t.assigneeId)].join(' ').toLowerCase().includes(needle);
+  }).sort(byUrgency);
+}
+
+function assignmentGroups(book, items, group, today) {
+  const groups = new Map();
+  for (const t of items) {
+    const label = group === 'status' ? ({ todo: 'To do', doing: 'Doing', blocked: 'Blocked', done: 'Done' }[boardColumn(book, t, today)])
+      : group === 'week' ? (t.plannedDay ? `Week of ${mondayOf(t.plannedDay)}` : 'No work day')
+      : group === 'person' ? personName(book, t.assigneeId) : jobOf(book, t.jobId).title;
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(t);
+  }
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+/** Neutralize spreadsheet formula prefixes as well as quoting commas/newlines. */
+function assignmentCsvCell(value) {
+  let s = String(value ?? '');
+  if (/^[\s]*[=+@-]/.test(s) || /^[\t\r\n]/.test(s)) s = `'${s}`;
+  return `"${s.replaceAll('"', '""')}"`;
+}
+
+function assignmentsCsv(book, items, today) {
+  const rows = [['Assignee', 'Job', 'Job status', 'Phase', 'Task', 'Kind', 'Status', 'Work on', 'Forecast start', 'Forecast finish', 'Effort left (hours)', 'Blockers / prerequisites', 'Contacts', 'Notes']];
+  for (const t of items) rows.push([personName(book, t.assigneeId), jobOf(book, t.jobId).title, jobOf(book, t.jobId).status,
+    phaseTitle(book, t.phaseId), t.title, t.kind, boardColumn(book, t, today), t.plannedDay, t.start, t.finish,
+    t.status === 'done' ? 0 : t.effort / 60, blockers(book, t).join('; '), t.owner, t.notes]);
+  return '\uFEFF' + rows.map(row => row.map(assignmentCsvCell).join(',')).join('\r\n') + '\r\n';
+}
+
+// ── ui/views/assignments.js ──
+function renderAssignments() {
+  const book = store.book;
+  const day = today();
+  const options = { ...ui.assignments, job: ui.focus, week: ui.assignmentWeek };
+  if (!['all', 'unassigned'].includes(options.person) && !book.people.some(p => p.id === options.person)) options.person = ui.assignments.person = 'all';
+  const items = assignmentItems(book, day, options);
+  const title = options.person === 'all' ? 'All assignments' : options.person === 'unassigned' ? 'Unassigned work' : `${personName(book, options.person)}’s assignments`;
+  const change = (key, value) => { ui.assignments[key] = value; rerender(); };
+  const select = (key, label, choices) => h('label', null, label, h('select', { id: `assignment-${key}`, onchange: e => change(key, e.target.value) }, choices.map(([value, text]) => h('option', { value, selected: ui.assignments[key] === value }, text))));
+  const exportCsv = () => {
+    const url = URL.createObjectURL(new Blob([assignmentsCsv(book, items, day)], { type: 'text/csv;charset=utf-8' }));
+    const a = h('a', { href: url, download: `${title.replace(/[^a-z0-9]+/gi, '-')}.csv` });
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  };
+  const load = weekLoad(book, ui.assignmentWeek, '', options.person);
+  const assignedLoad = options.person === 'all' ? weekLoad(book, ui.assignmentWeek, '', 'unassigned').planned : 0;
+  return h('div', { class: 'view assignments' },
+    h('header', { class: 'page-head' }, h('div', null, h('p', { class: 'eyebrow' }, 'People & reports'), h('h1', null, title)),
+      h('div', { class: 'page-actions' }, btn('People & capacity', showPeople, { kind: 'sm' }), btn('Export CSV', exportCsv, { kind: 'sm' }), btn('Print report', () => window.print(), { kind: 'sm', iconName: 'print' }))),
+    h('details', { class: 'assignment-filter-panel panel', open: innerWidth >= 760 || ui.assignmentFiltersOpen,
+      ontoggle: e => { if (innerWidth < 760) ui.assignmentFiltersOpen = e.target.open; } },
+      h('summary', null, `Report filters · ${options.person === 'all' ? 'All people' : personName(book, options.person === 'unassigned' ? '' : options.person)} · ${options.status}`),
+    h('div', { class: 'assignment-filters' },
+      personSelect(options.person, value => change('person', value), { id: 'assignment-person' }),
+      select('status', 'Task status', [['open', 'Open'], ['all', 'All statuses'], ['todo', 'To do'], ['doing', 'Doing'], ['blocked', 'Blocked'], ['late', 'Past forecast finish'], ['done', 'Done']]),
+      select('period', 'Work day', [['all', 'Any work day'], ['week', 'Scheduled in selected week'], ['unscheduled', 'No work day']]),
+      select('group', 'Group by', [['job', 'Job'], ['person', 'Assignee'], ['status', 'Status'], ['week', 'Work week']]),
+      h('label', null, 'Find task / notes', h('input', { id: 'assignment-search', value: options.search, type: 'search', onchange: e => change('search', e.target.value), placeholder: 'Search then Enter' })),
+      h('label', { class: 'toggle' }, h('input', { id: 'assignment-paused', type: 'checkbox', checked: options.paused, onchange: e => change('paused', e.target.checked) }), 'Include paused / completed jobs'))),
+    h('p', { class: 'assignment-scope' }, `${book.name} · ${ui.focus ? `Job: ${book.jobs.find(j => j.id === ui.focus)?.title}` : 'Across all jobs'} · ${options.status} tasks · ${options.period === 'week' ? 'Work scheduled in selected week' : options.period === 'unscheduled' ? 'No work day' : 'All work days'} · ${options.paused ? 'Paused jobs included' : 'Active jobs only'} · Generated ${day}`),
+    h('div', { class: 'assignment-summary panel' }, `${items.length} tasks / milestones · ${fmtHours(openEffort(items))} remaining · ${items.filter(t => isLate(t, day)).length} past forecast finish · ${items.filter(t => isBlocked(book, t, day)).length} blocked · ${items.filter(t => t.kind === 'task' && !t.effort && t.status !== 'done').length} without estimates`),
+    h('section', { class: 'panel assignment-workload' }, h('div', { class: 'panel-head' }, h('h2', null, `Capacity: ${fmtShort(ui.assignmentWeek)}–${fmtShort(addDays(ui.assignmentWeek, 6))}`),
+      h('label', null, 'Week starting', h('input', { id: 'assignment-week', type: 'date', value: ui.assignmentWeek, onchange: e => { if (e.target.value) { ui.assignmentWeek = mondayOf(e.target.value); rerender(); } } }))),
+      options.person === 'unassigned' ? h('p', null, `${fmtHours(load.planned)} of unassigned work; assign a person to compare with availability.`)
+        : meter(load.planned - assignedLoad, personCapacity(book, ui.assignmentWeek, options.person)),
+      h('p', { class: 'hint' }, `Capacity covers active scheduled work across all jobs, regardless of report filters.${assignedLoad ? ` Unassigned work: ${fmtHours(assignedLoad)} (excluded from people's capacity).` : ''}`)),
+    items.length ? assignmentGroups(book, items, options.group, day).map(([label, list]) => h('section', { class: 'panel assignment-group' }, h('div', { class: 'panel-head' }, h('h2', null, label), h('span', { class: 'muted' }, `${list.length} · ${fmtHours(openEffort(list))} remaining`)),
+      h('div', { class: 'list' }, list.map(t => h('div', { class: 'assignment-entry' }, itemRow(t, { showPhase: true }),
+        h('p', { class: 'assignment-detail muted' }, `${t.plannedDay ? `Work on ${fmtShort(t.plannedDay)}` : 'No work day'}${t.start ? ` · Forecast start ${fmtShort(t.start)}` : ''}`)))))) : h('div', { class: 'empty' }, h('h2', null, 'No assignments match'), h('p', null, 'Choose another person, task status, work week or job. Assign people in the task editor.')));
+}
+
 // ── ui/shell.js ──
 // App frame: sidebar, top bar (quick add + file status), main view and drawer.
 
-const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes };
+const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes, assignments: renderAssignments };
 
 function renderShell(scope = 'all') {
   if (scope === 'status') { renderStatus(); return; }
@@ -3636,16 +3885,20 @@ function renderQuickDestination() {
   ui.quickJob = selected?.id || '';
   const phases = phasesOf(store.book, ui.quickJob);
   if (!phases.some(p => p.id === ui.quickPhase)) ui.quickPhase = '';
+  if (ui.quickAssignee !== 'unassigned' && !store.book.people.some(p => p.id === ui.quickAssignee)) ui.quickAssignee = store.book.selfId;
   fill(document.getElementById('quick-destination'),
     h('label', null, 'Job', h('select', { id: 'quick-job', 'aria-label': 'New task job', onchange: e => { ui.quickJob = e.target.value; ui.quickPhase = ''; renderQuickDestination(); document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
       jobs.length ? jobs.map(j => h('option', { value: j.id, selected: j.id === ui.quickJob }, j.title)) : h('option', { value: '' }, 'New Inbox'))),
     h('label', null, 'Phase', h('select', { id: 'quick-phase', 'aria-label': 'New task phase', onchange: e => { ui.quickPhase = e.target.value; document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
       h('option', { value: '' }, 'No phase (optional)'), phases.map(p => h('option', { value: p.id, selected: p.id === ui.quickPhase }, p.title)))),
+    h('label', null, 'Assignee', h('select', { id: 'quick-assignee', 'aria-label': 'New task assignee', onchange: e => { ui.quickAssignee = e.target.value; document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
+      h('option', { value: 'unassigned', selected: ui.quickAssignee === 'unassigned' }, 'Unassigned'),
+      store.book.people.map(p => h('option', { value: p.id, selected: ui.quickAssignee === p.id }, p.name)))),
     btn('Add task', () => {
       const input = document.getElementById('quick-add');
       if (input.value.trim()) {
-        if (quickAdd(input.value, { jobId: ui.quickJob, phaseId: ui.quickPhase })) { input.value = ''; input.dispatchEvent(new Event('input')); }
-      } else createTask(ui.quickJob, ui.quickPhase);
+        if (quickAdd(input.value, { jobId: ui.quickJob, phaseId: ui.quickPhase, assigneeId: ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee })) { input.value = ''; input.dispatchEvent(new Event('input')); }
+      } else createTask(ui.quickJob, ui.quickPhase, '', ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee);
     }, { kind: 'sm', iconName: 'plus' }));
 }
 
@@ -3685,6 +3938,8 @@ function fileMenu() {
     { label: 'All jobs', run: () => { ui.focus = ''; rerender(); } },
     ...liveJobs(store.book).map(j => ({ label: `Show job: ${j.title}`, run: () => { ui.focus = j.id; ui.quickJob = j.id; ui.quickPhase = ''; rerender(); } })),
     { label: 'New job', icon: 'plus', run: () => createJob() },
+    { label: 'People & capacity', icon: 'people', run: showPeople },
+    { label: 'Assignment reports', icon: 'people', run: () => setView('assignments') },
     { label: 'Beginner’s guide', icon: 'book', run: showGuide },
     { label: 'Shortcuts & help', icon: 'keyboard', run: showHelp },
     { label: 'Appearance', icon: 'palette', run: () => appearanceMenu(document.getElementById('file-menu')) },
@@ -3722,6 +3977,7 @@ function initQuickAdd() {
       job ? h('span', { class: 'job-tag', style: { '--job': jobColor(job) } }, h('span', { class: 'dot' }), job.title) : h('span', { class: 'chip' }, 'New “Inbox” job'),
       q.effort ? h('span', { class: 'chip' }, fmtEffort(q.effort)) : null,
       h('span', { class: 'chip' }, phase?.title || 'No phase'),
+      h('span', { class: 'chip' }, `Assignee: ${personName(store.book, ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee)}`),
       q.plannedDay ? h('span', { class: 'chip accent' }, `Work on ${fmtDate(q.plannedDay)}`) : null,
       q.finish ? h('span', { class: 'chip' }, `${q.kind === 'milestone' ? 'On' : 'Forecast finish'} ${fmtDate(q.finish)}`) : null,
       !q.plannedDay ? h('span', { class: 'chip' }, 'No work day set · use @today or choose a day in Week') : null,
@@ -3735,7 +3991,7 @@ function initQuickAdd() {
   input.addEventListener('keydown', e => {
     if (e.key === 'Escape') { input.value = ''; preview.hidden = true; input.blur(); }
     if (e.key === 'Enter' && input.value.trim()) {
-      const defaults = { jobId: ui.quickJob, phaseId: ui.quickPhase };
+      const defaults = { jobId: ui.quickJob, phaseId: ui.quickPhase, assigneeId: ui.quickAssignee === 'unassigned' ? '' : ui.quickAssignee };
       if (quickAdd(input.value, defaults)) { input.value = ''; update(); }
     }
   });
@@ -3783,7 +4039,7 @@ function showHelp() {
           row(['@tue', '@today'], 'day you’ll work on it (otherwise unscheduled in every view)'), row(['!fri', '!2026-12-01'], 'forecast finish, not a fixed deadline'), row(['*'], 'at the start: a milestone')),
         h('h3', null, 'Keys'),
         h('table', { class: 'keys' },
-          row(['N', '/'], 'Quick add'), row(['1–5'], 'Today, Week, Plan, Board, Notes'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
+          row(['N', '/'], 'Quick add'), row(['1–6'], 'Today, Week, Plan, Board, Notes, Assignments'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
           row([keys('O')], 'Open'), row([keys('Z'), keys(IS_MAC ? 'Shift+Z' : 'Y')], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
           row(['← →'], 'Move a focused bar on the Plan'), row(['Shift+← →'], 'Change its finish'))),
       h('section', null,
