@@ -25,3 +25,9 @@
 - User subsequently requested committing and pushing this feature to main.
 - Rechecked the working tree, patch whitespace and remote branch before staging the implementation, built HTML, documentation and regression tests.
 - Validation remains 38/38 unit tests and 38/38 browser checks. No application changes since those checks. No release requested in this step.
+
+## Release preparation — v3.2.0
+
+- User requested a release. Bumped the application version to 3.2.0, rebuilt the HTML and added release notes with format 4 upgrade instructions.
+- Re-ran validation: 38/38 unit tests and 38/38 real-browser checks passed.
+- Packaged Windows, macOS and standalone HTML downloads. Independently checked ZIP CRCs, matching bundled HTML, version strings and macOS launcher executable permissions.
