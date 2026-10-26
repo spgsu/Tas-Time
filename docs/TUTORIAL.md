@@ -218,7 +218,7 @@ The box at the top of the screen is **quick add**. Press **N** to jump into it, 
 | `#code` | which job | `#sci` |
 | `2h`, `45m`, `1h30` | effort | `1h30` |
 | `@day` | the day you will work on it | `@tue`, `@tomorrow` |
-| `!day` | the due date | `!fri`, `!2026-11-07` |
+| `!day` | expected forecast finish, not a fixed deadline | `!fri`, `!2026-11-07` |
 | `*` at the start | it is a milestone | `*Teacher approves question` |
 
 Examples:
@@ -229,7 +229,9 @@ Examples:
 
 If you mistype a code, the app refuses to add the task and tells you why, so nothing ends up in the wrong place.
 
-**Faster for a whole phase:** open the **Plan** view. Under each phase there is an **Add to Research** line (hover to see it). Click it and type tasks one after another, pressing Enter each time. They go straight into that phase.
+Choose the **Job** and optional **Phase** below quick add before typing, or use **Add task** to open the task editor. Quick add leaves the work day empty unless you include `@day`, in every view. Use **Add task for today** or a day column's **Add task** button to schedule directly. Effort fields require units such as `10h` or `45m`.
+
+**Faster for a whole phase:** open the **Plan** view. Under each phase there is a visible **Add task to Research** line. Click it and type tasks one after another, pressing Enter each time. They go straight into that phase. A phase is an optional group of tasks, not a task itself. Its arrow collapses the tasks. On a phone, Plan shows a readable task list with dates; use **Show timeline** for the Gantt.
 
 ### Estimate effort honestly
 
@@ -264,7 +266,7 @@ Give every task a start and a finish date so you can see the whole job on a cale
 3. **Then fill in the rest**, working backwards from the deadline as in Tool 7.
 4. **Leave a buffer.** Aim to finish 2 to 3 days before the real deadline. Things will go wrong; the buffer is where they go.
 
-To set dates, either click a task and type the **Start** and **Finish**, or, on an undated row, click the calendar where it should start. Then **drag** the bar to move it, or drag its **right edge** to make it longer or shorter. Arrow keys nudge a selected bar by one day.
+To set dates, either click a task and type the **Forecast start** and **Forecast finish**, or, on an undated row, click the calendar where it should start. These are expected dates, not fixed deadlines. Then **drag** the bar to move it, or drag its **right edge** to make it longer or shorter. Arrow keys nudge a selected bar by one day.
 
 **Reading the Plan:** grey lines between bars show prerequisites. A line turns red and dashed if a task is scheduled to start before its prerequisite finishes, so you spot impossible plans at once. The red dotted line is today. Bars turn red when their finish date has passed and they are not done.
 
@@ -336,7 +338,7 @@ Next time you will start in seconds instead of spending 20 minutes remembering w
 ### What the other lists on Today mean
 
 - **Carried over:** tasks you planned for an earlier day but did not finish. Click **Today** on one to move it here, or **Move all to today**. Do not just ignore them; decide.
-- **Past due:** tasks whose finish date has passed. Either finish them now, or re-plan their dates honestly (Step 7).
+- **Past forecast finish:** tasks whose expected finish has passed. Either finish them now, or re-plan their dates honestly (Step 7).
 - **Milestones ahead:** checkpoints coming in the next four weeks, so they never surprise you.
 
 **Adding something new during the day?** Press **N**, type it, press Enter. Add `@today` to put it on today’s list. Capturing it takes 5 seconds and clears your head.
@@ -404,6 +406,8 @@ A job is not finished when the last task is ticked. It is finished when you have
 1. **Tick the final milestone,** *◆ Project handed in*. Tas-Time records the date it was completed.
 2. **Check for leftovers.** On the **Plan**, make sure *Done* is ticked so finished work shows, and look for anything still open. Either finish it, or delete it if it no longer matters.
 3. **Mark the job Complete.** Click the job name, and under **Status** choose **Complete**.
+
+On hold and Complete pause the job's tasks in Today and Week. Plan, Board and Notes keep them accessible. Completing with unfinished tasks asks for confirmation; those tasks are kept. Set the job back to Active to resume daily planning. Use **Edit job** in the filter banner, or click the job title in Plan. On phones, the **⋯** menu includes job selection, New job, help and appearance.
 4. **Archive it.** In the job panel, click the archive icon. The job disappears from your daily views but nothing is lost: on the Plan, tick **Archived** to see it again, and restore it from its panel at any time.
 
 ### Hold a short retrospective

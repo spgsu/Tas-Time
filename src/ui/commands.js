@@ -9,7 +9,7 @@ export const STANDARD_PHASES = ['Scope', 'Plan', 'Execute', 'Review & accept'];
 
 export function createJob(title = '') {
   const job = act('New job', d => addJob(d, { title: title || 'Untitled job' }));
-  if (job) { ui.focus = ''; openDrawer('job', job.id, 'title'); }
+  if (job) { ui.focus = job.id; ui.quickJob = job.id; ui.quickPhase = ''; openDrawer('job', job.id, 'title'); }
   return job;
 }
 
@@ -34,14 +34,24 @@ export function quickAdd(text, defaults = {}) {
   if (!jobId) jobId = act('New job', d => addJob(d, { title: 'Inbox', code: 'INBOX' }))?.id;
   const finish = q.finish || (q.kind === 'milestone' ? q.plannedDay || today() : '');
   const item = act('Add task', d => addItem(d, {
-    jobId, phaseId: defaults.phaseId && !q.jobId ? defaults.phaseId : '', title: q.title, kind: q.kind,
+    jobId, phaseId: book.phases.some(p => p.id === defaults.phaseId && p.jobId === jobId) ? defaults.phaseId : '', title: q.title, kind: q.kind,
     effort: q.effort ?? 0, plannedDay: q.kind === 'milestone' ? '' : q.plannedDay || defaults.plannedDay || '', finish,
     start: defaults.start || '',
   }));
   if (item) {
     const job = jobOf(store.book, item.jobId);
-    notify(`Added “${item.title}” to ${job.code || job.title}`, { action: { label: 'Open', run: () => openDrawer('item', item.id) } });
+    const phase = store.book.phases.find(p => p.id === item.phaseId);
+    notify(`Added task “${item.title}” to ${job.title} / ${phase?.title || 'Tasks without a phase'}${item.plannedDay ? ` · Work on ${item.plannedDay}` : ' · No work day set'}`, { action: { label: 'Open', run: () => openDrawer('item', item.id) } });
   }
+  return item;
+}
+
+/** Structured creation keeps destination and work day visible in the task editor. */
+export function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.book)[0]?.id, phaseId = '', plannedDay = '') {
+  if (!jobId) jobId = createJob('Inbox')?.id;
+  if (!jobId) return;
+  const item = act('New task', d => addItem(d, { jobId, phaseId, plannedDay, title: 'Untitled task' }));
+  if (item) openDrawer('item', item.id, 'title');
   return item;
 }
 

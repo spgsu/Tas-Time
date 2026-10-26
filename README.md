@@ -70,10 +70,16 @@ Write method section #phd 2h @tue !fri
 | `#job` | which job, by code or name | `#phd`, `#kitchen` |
 | `2h`, `45m`, `1h30` | effort | |
 | `@day` | the day you will work on it | `@today`, `@tue`, `@2026-11-02` |
-| `!day` | due date | `!fri`, `!2026-11-27` |
+| `!day` | forecast finish (expected date, not a fixed deadline) | `!fri`, `!2026-11-27` |
 | `*` at the start | it is a milestone | `*Supervisor signs off !2026-11-30` |
 
 Days are `today`, `tomorrow`, a weekday name or a date written `YYYY-MM-DD`. A line with an unknown job or day is refused, and your text is kept so you can fix it. Press **?** in the app for every shortcut.
+
+Choose **Job** and optional **Phase** beside quick add, or click **Add task** to open the task editor. Phases group tasks; they are not tasks themselves. In Plan, **Add task to…** stays visible under every group. Use the arrow beside a phase to collapse its tasks. On phones, Plan opens as a readable task list; **Show timeline** switches to the Gantt.
+
+Quick add behaves the same in every view: tasks have no work day unless you include `@day`. For a specific day, use **Add task for today** or **Add task** in a Week day column. Always include effort units (`10h`, `45m`); bare numbers are not accepted in effort fields. One work day receives the whole remaining estimate; split work into smaller tasks for separate sessions.
+
+**On hold** and **Complete** pause a job's tasks in Today and Week without deleting them. Find them in Plan, Board or Notes and set the job to **Active** to restore daily planning. Completing a job with unfinished tasks asks for confirmation.
 
 ### Planning rules
 
@@ -84,7 +90,7 @@ Days are `today`, `tomorrow`, a weekday name or a date written `YYYY-MM-DD`. A l
 
 ### Calendar export
 
-**⋯ → Export to calendar (.ics)** saves planned work days, milestones and, optionally, due dates as a calendar file for Google Calendar or Outlook. Events are all-day and marked as free time, so they never block meetings. Export is one-way: import into a separate *Tas-Time* calendar, and to refresh, delete it and import a new file.
+**⋯ → Export to calendar (.ics)** saves planned work days, milestones and, optionally, forecast finish dates as a calendar file for Google Calendar or Outlook. Events are all-day and marked as free time, so they never block meetings. Export is one-way: import into a separate *Tas-Time* calendar, and to refresh, delete it and import a new file.
 
 ### Appearance
 

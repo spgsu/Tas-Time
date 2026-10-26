@@ -2,7 +2,7 @@
 // Human input: effort durations and the one-line quick-add syntax.
 import { parseDayWord, todayIso } from './dates.js';
 
-/** "1h30", "1h 30m", "90m", "1.5h", "1.5" (hours), "45" (minutes if ≥ 10). Returns minutes or null. */
+/** Explicit units avoid confusing hours with minutes. Returns minutes or null. */
 export function parseEffort(input) {
   const s = String(input).trim().toLowerCase().replace(/\s+/g, '');
   if (s === '') return 0;
@@ -12,12 +12,6 @@ export function parseEffort(input) {
   if (m) return Number(m[1]);
   m = s.match(/^(\d+(?:\.\d+)?)d$/);
   if (m) return Math.round(Number(m[1]) * 8 * 60);
-  m = s.match(/^(\d+(?:\.\d+)?)$/);
-  if (m) {
-    const n = Number(m[1]);
-    // Bare small numbers read as hours ("2" = 2h); larger whole numbers as minutes ("45").
-    return n < 10 ? Math.round(n * 60) : Math.round(n);
-  }
   return null;
 }
 
@@ -40,7 +34,7 @@ const EFFORT_TOKEN = /^\d+(?:\.\d+)?h(?:\d+m?)?$|^\d+(?:m|min|mins|d)$/i;
 /**
  * Quick add: "Draft literature review #phd 2h @tue !fri"
  *   #code   job (matches code or title start)   2h / 30m / 1h30   effort
- *   @day    plan to work on it that day          !day              due (finish) date
+ *   @day    plan to work on it that day          !day              forecast finish
  *   *       leading star marks a milestone
  */
 export function parseQuickAdd(input, jobs, today = todayIso()) {
@@ -51,7 +45,7 @@ export function parseQuickAdd(input, jobs, today = todayIso()) {
     if (tok.length > 1 && tok[0] === '#') {
       out.jobHint = tok.slice(1);
       const job = matchJob(jobs, out.jobHint);
-      if (job) out.jobId = job.id; else out.errors.push(`No job matches “${tok}”`);
+      if (job) out.jobId = job.id; else out.errors.push(`No unique job matches “${tok}”. Choose a job or use its full code`);
     } else if (tok.length > 1 && (tok[0] === '@' || tok[0] === '!')) {
       const day = parseDayWord(tok.slice(1), today);
       if (!day) { out.errors.push(`Unrecognised day “${tok}”`); continue; }
@@ -68,8 +62,8 @@ export function parseQuickAdd(input, jobs, today = todayIso()) {
 export function matchJob(jobs, hint) {
   const h = hint.toLowerCase();
   const live = jobs.filter(j => !j.archived);
-  return live.find(j => j.code.toLowerCase() === h)
-    || live.find(j => j.code.toLowerCase().startsWith(h))
-    || live.find(j => j.title.toLowerCase().startsWith(h))
-    || live.find(j => j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
+  const exact = live.filter(j => j.code.toLowerCase() === h || j.title.toLowerCase() === h);
+  if (exact.length) return exact.length === 1 ? exact[0] : undefined;
+  const matches = live.filter(j => j.code.toLowerCase().startsWith(h) || j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
+  return matches.length === 1 ? matches[0] : undefined;
 }

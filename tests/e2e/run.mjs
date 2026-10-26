@@ -15,13 +15,22 @@ mkdirSync(shots, { recursive: true });
 
 const results = [];
 async function check(name, fn) {
-  try { await fn(); results.push([true, name]); } catch (error) { results.push([false, name, error.message.split('\n')[0]]); }
+  console.log(`Checking: ${name}`);
+  try { await fn(); results.push([true, name]); } catch (error) { results.push([false, name, error.message]); }
 }
 
 const page = await launch();
 const ev = expr => page.eval(expr);
 const text = sel => ev(`document.querySelector(${JSON.stringify(sel)})?.textContent ?? null`);
 const count = sel => ev(`document.querySelectorAll(${JSON.stringify(sel)}).length`);
+async function waitForUi(expression, description) {
+  const deadline = Date.now() + 2000;
+  while (Date.now() < deadline) {
+    if (await ev(expression)) return;
+    await page.wait(20);
+  }
+  assert.fail(`Timed out waiting for ${description}`);
+}
 /** The book as the app would save it, captured through a stubbed file picker. */
 const STUB_FS = `(() => {
   window.confirm = () => true; window.prompt = (m, d) => d;
@@ -184,7 +193,7 @@ try {
     assert.ok(await ev(`[...document.querySelectorAll('.col-doing .bcard')].some(c => c.textContent.includes('scope brief'))`));
     await drop('Order timber samples', 'blocked');
     await page.wait(150);
-    assert.equal(await ev('document.activeElement.id'), 'd-blocker');
+    assert.equal(await ev('document.activeElement.id'), 'd-blocker', 'dropping on Blocked focuses its reason');
     await page.type('Supplier closed until Monday');
     await page.key('Escape', { keyCode: 27 });
     await page.wait(100);
@@ -224,7 +233,7 @@ try {
     const writes = await ev('window.__saved.length');
     await nav(1);
     await page.key('n', { keyCode: 78 });
-    await page.type('Autosaved task');
+    await page.type('Autosaved task @today');
     await page.key('Enter', { keyCode: 13 });
     await page.wait(1800);
     assert.equal(await ev('window.__saved.length'), writes + 1);
@@ -344,7 +353,7 @@ try {
     const countText = () => text('.export-count');
     const before = await countText();
     assert.match(before, /^\d+ events? will be exported/);
-    await page.clickText('.check-row', 'Task due dates');
+    await page.clickText('.check-row', 'Task forecast finish dates');
     assert.notEqual(await countText(), before, 'count follows the checkboxes');
     await page.clickText('.modal .btn', 'Download .ics file');
     await page.wait(150);
@@ -354,7 +363,7 @@ try {
     assert.equal(type, 'text/calendar;charset=utf-8');
     assert.match(ics, /^BEGIN:VCALENDAR\r\n/);
     assert.match(ics, /SUMMARY:◆ Contractor chosen\r\n/);
-    assert.match(ics, /SUMMARY:Due: /);
+    assert.match(ics, /SUMMARY:Forecast finish: /);
     assert.equal((ics.match(/BEGIN:VEVENT/g) || []).length, Number((await countText()).match(/\d+/)[0]));
     await page.clickText('.export-help summary', 'How to import');
     await page.screenshot(join(shots, 'x1-calendar-export.png'), { full: false });
@@ -472,6 +481,127 @@ try {
     assert.match(macKeys, /⌘S ⇧⌘S/);
     assert.match(macKeys, /⌘Z ⇧⌘Z/);
     assert.doesNotMatch(macKeys, /Ctrl/);
+  });
+
+  await check('UX: create a job, phase and task without quick-add syntax', async () => {
+    await fileMenu('New book');
+    await nav(3);
+    await page.clickText('.welcome .btn', 'Create your first job');
+    await page.type('Kitchen UX');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(100);
+    await ev('document.getElementById("d-phases").focus(); true');
+    await page.type('Preparation');
+    await page.clickText('.phase-add-control .btn', 'Add phase');
+    assert.equal(await count('.phase-list li'), 1);
+    await page.clickText('.phase-list .btn', 'Add task');
+    assert.equal(await ev('document.activeElement.id'), 'd-title');
+    await page.type('Measure kitchen');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(600);
+    const b = await recoveryBook();
+    const t = b.items.find(t => t.title === 'Measure kitchen');
+    assert.equal(t.phaseId, b.phases[0].id);
+    assert.equal(t.jobId, b.jobs[0].id);
+    assert.equal(t.plannedDay, '');
+    assert.match(await text('.drawer'), /Forecast finish/);
+    await page.key('Escape', { keyCode: 27 });
+    assert.match(await text('.focus-banner'), /Showing: Kitchen UX/);
+    assert.equal(await ev('getComputedStyle(document.querySelector(".plan-scroll .add-inline")).opacity'), '1');
+    await page.click('.plan-scroll .phase-toggle');
+    assert.equal(await count('.plan-scroll .prow-item'), 0);
+    await page.click('.plan-scroll .phase-toggle');
+    assert.equal(await count('.plan-scroll .prow-item'), 1);
+  });
+
+  await check('UX: quick add respects selectors, same-job phase and consistent work-day defaults', async () => {
+    const b = await recoveryBook();
+    await ev(`(() => { const e = document.getElementById('quick-phase'); e.value = ${JSON.stringify(b.phases[0].id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    await nav(1);
+    await quickAdd('Measure again #kitchen 10h');
+    await page.wait(600);
+    let t = (await recoveryBook()).items.find(t => t.title === 'Measure again');
+    assert.equal(t.phaseId, b.phases[0].id);
+    assert.equal(t.plannedDay, '', 'Today does not silently schedule global quick add');
+    assert.equal(t.effort, 600);
+    await ev('document.getElementById("quick-add").focus(); true');
+    await page.type('Button-created task');
+    await page.clickText('#quick-destination .btn', 'Add task');
+    await page.wait(600);
+    assert.ok((await recoveryBook()).items.some(t => t.title === 'Button-created task'));
+    await nav(2);
+    await page.click('[aria-label="Next week"]');
+    const buttonDay = await ev('document.querySelector(".day .btn").getAttribute("aria-label").slice(-10)');
+    await page.click('.day .btn');
+    await page.type('Next week task');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(600);
+    t = (await recoveryBook()).items.find(t => t.title === 'Next week task');
+    assert.equal(t.plannedDay, buttonDay);
+    await page.key('Escape', { keyCode: 27 });
+    await nav(1);
+    await page.clickText('.today .panel-head .btn', 'Add task for today');
+    await page.type('Today task');
+    await page.key('Tab', { keyCode: 9 });
+    await page.wait(600);
+    assert.equal((await recoveryBook()).items.find(t => t.title === 'Today task').plannedDay, today);
+    await page.key('Escape', { keyCode: 27 });
+  });
+
+  await check('UX: pausing and completing a job preserve tasks and explain their visibility', async () => {
+    await page.clickText('.focus-banner .btn', 'Edit job');
+    await page.clickText('.drawer [role="radio"]', 'On hold');
+    assert.equal(await count('.today-main .row-item'), 0);
+    assert.match(await text('.focus-banner'), /On hold/);
+    await page.clickText('.drawer [role="radio"]', 'Active');
+    assert.ok(await count('.today-main .row-item') > 0);
+    await ev('window.__confirmText = ""; window.confirm = m => { window.__confirmText = m; return false; }; true');
+    await page.clickText('.drawer [role="radio"]', 'Complete');
+    assert.match(await ev('window.__confirmText'), /unfinished task/);
+    assert.equal(await ev('document.querySelector(".drawer [role=radio][aria-checked=true]").textContent'), 'Active');
+    await ev('window.confirm = () => true; true');
+    await page.clickText('.drawer [role="radio"]', 'Complete');
+    assert.equal(await count('.today-main .row-item'), 0);
+    await page.clickText('.drawer [role="radio"]', 'Active');
+    await page.key('Escape', { keyCode: 27 });
+  });
+
+  await check('UX: blocked moves explain rejection and Resolve blocker clears the constraint', async () => {
+    await nav(4);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      await page.clickText('.bcard-title', 'Today task');
+      await ev('document.getElementById("d-blocker").focus(); true');
+      await page.type('Awaiting access');
+      await page.key('Escape', { keyCode: 27 });
+      await ev(`(() => { const card = [...document.querySelectorAll('.col-blocked .bcard')].find(c => c.textContent.includes('Today task')); const dt = new DataTransfer(); dt.setData('application/x-tas-time-item', card.dataset.item); document.querySelector('.col-todo').dispatchEvent(new DragEvent('drop', { dataTransfer: dt, bubbles: true })); return true; })()`);
+      assert.match(await text('.toasts'), /Still blocked/);
+      await page.clickText('.col-blocked .btn', 'Resolve blocker');
+      await waitForUi('document.activeElement.id === "d-blocker"', 'Resolve blocker to focus its reason');
+      await ev('document.getElementById("d-blocker").select(); true');
+      await page.key('Backspace', { keyCode: 8 });
+      await waitForUi('document.getElementById("d-blocker")?.value === ""', 'the reason to be cleared');
+      await page.key('Escape', { keyCode: 27 });
+      await waitForUi('document.querySelectorAll(".col-blocked .bcard").length === 0', 'the resolved card to leave Blocked');
+    }
+  });
+
+  await check('UX: phone Plan shows readable task dates and mobile controls remain available', async () => {
+    await page.size(390, 844);
+    await nav(3);
+    assert.equal(await ev('getComputedStyle(document.querySelector(".plan-list")).display'), 'block');
+    assert.equal(await ev('getComputedStyle(document.querySelector(".plan-scroll")).display'), 'none');
+    assert.match(await text('.plan-list'), /Measure kitchen/);
+    assert.match(await text('.plan-list'), /Forecast:/);
+    assert.notEqual(await ev('getComputedStyle(document.querySelector(".status-text")).display'), 'none');
+    await page.clickText('.mobile-plan-toggle', 'Show timeline');
+    assert.notEqual(await ev('getComputedStyle(document.querySelector(".plan-scroll")).display'), 'none');
+    await page.clickText('.mobile-plan-toggle', 'Show task list');
+    await page.click('#file-menu');
+    assert.match(await text('.menu'), /Beginner’s guide/);
+    assert.match(await text('.menu'), /Appearance/);
+    assert.match(await text('.menu'), /New job/);
+    await page.key('Escape', { keyCode: 27 });
+    await page.size(1440, 900);
   });
 
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));

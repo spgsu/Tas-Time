@@ -8,7 +8,7 @@ import { isHidden, jobOf, phaseTitle } from './query.js';
 export const ICS_KINDS = {
   planned: 'Planned work days',
   milestones: 'Milestones',
-  due: 'Task due dates',
+  due: 'Task forecast finish dates',
 };
 
 /** Events the export would contain, before formatting. Exposed for the dialog's live count. */
@@ -25,7 +25,7 @@ export function calendarEvents(book, { focus = '', include = { planned: true, mi
       out.push({ ...base, kind: 'milestone', date: t.finish, summary: `◆ ${t.title}` });
     }
     if (include.due && t.kind === 'task' && t.finish) {
-      out.push({ ...base, kind: 'due', date: t.finish, summary: `Due: ${t.title}` });
+      out.push({ ...base, kind: 'due', date: t.finish, summary: `Forecast finish: ${t.title}` });
     }
   }
   return out.sort((a, b) => a.date.localeCompare(b.date) || a.summary.localeCompare(b.summary));

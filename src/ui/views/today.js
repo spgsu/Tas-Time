@@ -7,7 +7,7 @@ import { jobOf, lastWorkedJob, liveJobs, openEffort, readyToPlan, todayList, upc
 import { patchItem, setNote } from '../../core/ops.js';
 import { DEFAULT_CAPACITY } from '../../core/model.js';
 import { act, notify, setView, store, today, ui } from '../state.js';
-import { undo } from '../commands.js';
+import { createTask, undo } from '../commands.js';
 import { btn, emptyState, itemRow, jobColor, jobTag, meter } from '../components.js';
 import { welcome } from './welcome.js';
 
@@ -40,7 +40,7 @@ export function renderToday() {
 
   const main = h('div', { class: 'today-main' },
     h('section', { class: 'panel' },
-      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today')),
+      h('div', { class: 'panel-head' }, h('h2', null, 'Planned for today'), btn('Add task for today', () => createTask(undefined, '', day), { kind: 'sm', iconName: 'plus' })),
       planned.length
         ? h('div', { class: 'list' }, [...open, ...planned.filter(t => t.status === 'done')].map(t => itemRow(t, { actions: t.status === 'done' ? null : later(t), showPhase: true })))
         : suggestions(book, day)),
@@ -51,7 +51,7 @@ export function renderToday() {
         btn('Move all to today', () => act('Carry over', d => { for (const t of carried) patchItem(d, t.id, { plannedDay: day }, day); }), { kind: 'sm' })),
       h('div', { class: 'list' }, carried.map(t => itemRow(t, { actions: bringIn(t), showPhase: true })))) : null,
     overdue.length ? h('section', { class: 'panel' },
-      h('div', { class: 'panel-head' }, h('h2', null, 'Past due'), h('span', { class: 'muted' }, 'Forecast finish has passed — finish, re-plan, or move the date')),
+      h('div', { class: 'panel-head' }, h('h2', null, 'Past forecast finish'), h('span', { class: 'muted' }, 'Expected finish has passed — finish or update the forecast')),
       h('div', { class: 'list' }, overdue.map(t => itemRow(t, { actions: bringIn(t), showPhase: true })))) : null);
 
   const side = h('aside', { class: 'today-side' },
@@ -82,7 +82,7 @@ function resumeNotes(book, planned, carried, day) {
   if (!ids.length) ids = [...new Set(carried.map(t => t.jobId))].slice(0, 2);
   const fallback = !ids.length;
   if (fallback) ids = [lastWorkedJob(book, day)?.id].filter(Boolean);
-  const jobs = ids.map(id => jobOf(book, id)).filter(j => j && !j.archived);
+  const jobs = ids.map(id => jobOf(book, id)).filter(j => j && !j.archived && j.status === 'active');
   if (!jobs.length) return null;
   return h('section', { class: 'panel' },
     h('div', { class: 'panel-head' }, h('h2', null, 'Resume where you left off'), fallback ? h('span', { class: 'muted' }, 'last job you worked on') : null),

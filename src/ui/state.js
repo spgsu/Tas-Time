@@ -26,6 +26,10 @@ export const ui = {
   planShowArchived: false,
   boardAllDone: false,
   addingIn: '',         // phase key with an open inline-add row in Plan
+  collapsedPhases: new Set(),
+  planMobileTimeline: false,
+  quickJob: '',
+  quickPhase: '',
 };
 
 export function today() { return todayIso(); }
@@ -52,10 +56,13 @@ export function setView(view) {
 export function setFocus(jobId) {
   ui.focus = ui.focus === jobId ? '' : jobId;
   if (ui.focus) ui.notesJob = ui.focus;
+  ui.quickJob = ui.focus;
+  ui.quickPhase = '';
   rerender();
 }
 
 export function openDrawer(type, id, focusField = '') {
+  if (type === 'job') { ui.quickJob = id; ui.quickPhase = ''; }
   ui.drawer = { type, id, focusField };
   rerender();
 }

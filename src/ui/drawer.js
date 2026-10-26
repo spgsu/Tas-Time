@@ -9,7 +9,7 @@ import { blockers, dateConflicts, dependents, itemOf, jobOf, liveJobs, phasesOf,
 import { addDep, addPhase, deletePhase, duplicateItem, movePhase, patchItem, patchJob, removeDep, renamePhase } from '../core/ops.js';
 import { act, closeDrawer, openDrawer, rerender, setView, store, today, ui } from './state.js';
 import { btn, chip, iconBtn, jobColor, segmented } from './components.js';
-import { STANDARD_PHASES, removeItem, removeJob } from './commands.js';
+import { STANDARD_PHASES, createTask, removeItem, removeJob } from './commands.js';
 
 let typedSinceRender = false;
 
@@ -69,6 +69,7 @@ function itemEditor(t) {
 
   const effortInput = h('input', {
     id: 'd-effort', value: fmtEffort(t.effort), placeholder: 'e.g. 2h, 45m, 1h30', autocomplete: 'off',
+    oninput: e => e.target.setCustomValidity(''),
     onchange: e => {
       const min = parseEffort(e.target.value);
       if (min === null) { e.target.setCustomValidity('Use hours and minutes, like 2h, 45m or 1h30.'); e.target.reportValidity(); return; }
@@ -100,6 +101,7 @@ function itemEditor(t) {
         iconBtn('trash', 'Delete', () => removeItem(t.id)),
         iconBtn('x', 'Close (Esc)', closeDrawer))),
     liveText('d-title', t.title, typed('title', 'Rename'), { class: 'drawer-title', 'aria-label': 'Title', maxlength: 500, placeholder: 'Task name' }),
+    h('p', { class: 'field-hint' }, `Job: ${job.title} → ${book.phases.find(p => p.id === t.phaseId)?.title || 'No phase'} → ${isMs ? 'Milestone' : 'Task'}. Changes save automatically.`),
     h('div', { class: 'drawer-row' },
       segmented([['task', 'Task'], ['milestone', '◆ Milestone']], t.kind, k => set('Change kind', { kind: k, finish: t.finish || t.start || today() }), 'Kind'),
       segmented([['todo', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status, st => set(st === 'done' ? 'Complete' : 'Change status', { status: st }), 'Status')),
@@ -109,16 +111,16 @@ function itemEditor(t) {
     h('div', { class: 'fields two' },
       field('Job', h('select', { id: 'd-job', onchange: e => set('Move to job', { jobId: e.target.value, phaseId: '' }) },
         liveJobs(book).map(j => h('option', { value: j.id, selected: j.id === t.jobId }, j.title))), { id: 'd-job' }),
-      field('Phase', h('select', { id: 'd-phase', onchange: e => set('Change phase', { phaseId: e.target.value }) },
+      field('Phase (optional group)', h('select', { id: 'd-phase', onchange: e => set('Change phase', { phaseId: e.target.value }) },
         h('option', { value: '' }, 'No phase'), phasesOf(book, t.jobId).map(p => h('option', { value: p.id, selected: p.id === t.phaseId }, p.title))), { id: 'd-phase' })),
 
     h('div', { class: 'fields two' },
-      isMs ? null : field('Start', dateInput('start', t.start), { id: 'd-start' }),
-      field(isMs ? 'Date' : 'Finish', dateInput('finish', t.finish), { id: 'd-finish', hint: t.finish && t.status !== 'done' ? relDay(t.finish) : '' })),
+      isMs ? null : field('Forecast start', dateInput('start', t.start), { id: 'd-start' }),
+      field(isMs ? 'Milestone date' : 'Forecast finish', dateInput('finish', t.finish), { id: 'd-finish', hint: isMs ? '' : 'Expected finish, not a fixed deadline. Moving the timeline changes this date.' })),
     t.baseline?.finish ? h('p', { class: ['field-hint', s > 0 ? 'danger' : ''] }, `Baseline ${fmtShort(t.baseline.start || t.baseline.finish)}${t.baseline.start && t.baseline.start !== t.baseline.finish ? ` – ${fmtShort(t.baseline.finish)}` : ''}${s ? ` · ${s > 0 ? `${s} days later` : `${-s} days earlier`}` : ' · on baseline'}`) : null,
 
     h('div', { class: 'fields two' },
-      field('Effort left', effortInput, { id: 'd-effort', hint: 'Your own working time, not calendar time.' }),
+      field('Effort left', effortInput, { id: 'd-effort', hint: 'Use units: 10h or 45m. Your working time, not calendar duration. A work day receives the whole estimate; split tasks that need several work sessions.' }),
       field('Work on', h('input', { id: 'd-plannedDay', type: 'date', value: t.plannedDay, onchange: e => set('Plan day', { plannedDay: e.target.value }) }), { id: 'd-plannedDay', hint: t.plannedDay ? relDay(t.plannedDay) : 'Day you intend to do it' })),
 
     field('Waiting on / constraint', liveText('d-blocker', t.blocker, typed('blocker', 'Edit constraint'), { multiline: true, rows: 1, placeholder: 'e.g. Supervisor feedback, access to the lab, a delivery…' }),
@@ -148,15 +150,25 @@ function jobEditor(job) {
   const typed = (key, label) => value => act(label, dd => patchJob(dd, job.id, { [key]: value }), { key: `job-${key}:${job.id}`, quiet: true });
   const phases = phasesOf(book, job.id);
   const count = id => book.items.filter(t => t.phaseId === id && !t.archived).length;
+  const changeJobStatus = status => {
+    const open = book.items.filter(t => t.jobId === job.id && !t.archived && t.status !== 'done').length;
+    if (status === 'done' && open && !confirm(`Complete this job with ${open} unfinished task${open === 1 ? '' : 's'}? They will be kept in Plan and Board, but removed from Today and Week until you reactivate the job.`)) return;
+    set('Job status', { status });
+  };
 
   const newPhase = h('input', {
-    id: 'd-phases', placeholder: 'Add a phase — Enter', autocomplete: 'off',
+    id: 'd-phases', placeholder: 'New phase name', autocomplete: 'off',
     onkeydown: e => {
-      if (e.key !== 'Enter' || !e.target.value.trim()) return;
-      act('Add phase', dd => addPhase(dd, job.id, e.target.value.trim()));
-      ui.drawer.focusField = 'phases';
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      submitPhase();
     },
   });
+  const submitPhase = () => {
+    if (!newPhase.value.trim()) { newPhase.focus(); return; }
+    ui.drawer.focusField = 'phases';
+    act('Add phase', dd => addPhase(dd, job.id, newPhase.value.trim()));
+  };
 
   return [
     h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
@@ -167,23 +179,26 @@ function jobEditor(job) {
         iconBtn('trash', 'Delete job', () => removeJob(job.id)),
         iconBtn('x', 'Close (Esc)', closeDrawer))),
     liveText('d-title', job.title, typed('title', 'Rename job'), { class: 'drawer-title', 'aria-label': 'Job name', maxlength: 500, placeholder: 'Job name' }),
+    h('p', { class: 'field-hint' }, 'Job → optional phases → tasks. A phase groups tasks; add the actual work with Add task. Changes save automatically.'),
+    btn('Add task without a phase', () => createTask(job.id), { kind: 'primary', iconName: 'plus' }),
     field('Outcome', liveText('d-outcome', job.outcome, typed('outcome', 'Edit outcome'), { multiline: true, rows: 2, placeholder: 'What will exist when this job is done?' }), { id: 'd-outcome' }),
     h('div', { class: 'fields two' },
       field('Short code', liveText('d-code', job.code, typed('code', 'Edit code'), { maxlength: 40, placeholder: 'e.g. PHD — used with # in quick add' }), { id: 'd-code' }),
-      field('Status', segmented(Object.entries(JOB_STATUS), job.status, st => set('Job status', { status: st }), 'Job status'))),
+      field('Status', segmented(Object.entries(JOB_STATUS), job.status, changeJobStatus, 'Job status'), { hint: 'On hold and Complete pause all tasks in Today and Week. Plan, Board and Notes keep them accessible. Active restores them.' })),
     field('Colour', h('div', { class: 'swatches', role: 'radiogroup', 'aria-label': 'Job colour' }, Object.entries(COLORS).map(([key, c]) => h('button', {
       role: 'radio', 'aria-checked': String(job.color === key), 'aria-label': c.label, title: c.label,
       class: ['swatch', job.color === key && 'on'], style: { '--sw': c.hex }, onclick: () => set('Job colour', { color: key }),
     })))),
-    h('div', { class: 'field' }, h('label', { for: 'd-phases' }, 'Phases'),
+    h('div', { class: 'field' }, h('label', { for: 'd-phases' }, 'Phases — optional task groups'),
       phases.length ? h('ol', { class: 'phase-list' }, phases.map((p, i) => h('li', null,
         h('input', { id: `d-phase-${p.id}`, value: p.title, 'aria-label': `Phase ${i + 1} name`, onchange: e => act('Rename phase', dd => renamePhase(dd, p.id, e.target.value.trim() || p.title)) }),
-        h('span', { class: 'muted' }, String(count(p.id))),
+        h('span', { class: 'muted' }, `${count(p.id)} tasks`),
+        btn('Add task', () => createTask(job.id, p.id), { kind: 'sm', iconName: 'plus' }),
         iconBtn('left', 'Move earlier', () => act('Reorder phases', dd => movePhase(dd, p.id, -1)), { class: 'icon-btn sm up', disabled: i === 0 || null }),
         iconBtn('right', 'Move later', () => act('Reorder phases', dd => movePhase(dd, p.id, 1)), { class: 'icon-btn sm down', disabled: i === phases.length - 1 || null }),
         iconBtn('x', `Remove phase ${p.title}`, () => act('Remove phase', dd => deletePhase(dd, p.id)), { class: 'icon-btn sm', title: count(p.id) ? 'Remove phase (its tasks stay in the job, unphased)' : 'Remove phase' }))))
         : btn(`Add standard phases: ${STANDARD_PHASES.join(' · ')}`, () => act('Add phases', dd => STANDARD_PHASES.forEach(p => addPhase(dd, job.id, p))), { kind: 'sm ghost', iconName: 'plus' }),
-      newPhase),
+      h('div', { class: 'phase-add-control' }, newPhase, btn('Add phase', submitPhase, { kind: 'sm', iconName: 'plus' }))),
     h('p', { class: 'field-hint' }, `${NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length} of ${NOTE_PAGES.length} notebook pages written.`),
   ];
 }

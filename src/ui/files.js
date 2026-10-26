@@ -225,6 +225,7 @@ function unlink() { file.handle = null; file.name = ''; file.state = 'none'; fil
 
 function resetView() {
   ui.focus = ''; ui.drawer = null; ui.notesJob = ''; ui.week = mondayOf(todayIso());
+  ui.quickJob = ''; ui.quickPhase = ''; ui.addingIn = ''; ui.collapsedPhases.clear();
 }
 
 // ── Recovery copy ──

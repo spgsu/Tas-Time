@@ -8,10 +8,10 @@ import { blockers, dateConflicts, isBlocked, isLate, itemOf, jobSummary, liveJob
 import { captureBaseline, patchItem, shiftItem } from '../../core/ops.js';
 import { act, openDrawer, rerender, setFocus, store, today, ui, notify } from '../state.js';
 import { btn, chip, doneToggle, iconBtn, jobColor, segmented } from '../components.js';
-import { createJob, quickAdd } from '../commands.js';
+import { createJob, createTask, quickAdd } from '../commands.js';
 import { welcome } from './welcome.js';
 
-const ROW = { job: 46, phase: 32, item: 36, add: 34 };
+const ROW = { job: 46, phase: 42, item: 36, add: 34 };
 const HEADER = 52;
 
 export const planScroll = { toToday: true };
@@ -44,8 +44,9 @@ export function renderPlan() {
     h('label', { class: 'toggle' }, h('input', { type: 'checkbox', checked: ui.planShowArchived, onchange: e => { ui.planShowArchived = e.target.checked; rerender(); } }), 'Archived'),
     h('span', { class: 'spacer' }),
     btn('Today', () => { planScroll.toToday = true; rerender(); }, { kind: 'sm ghost', iconName: 'today' }),
+    btn(ui.planMobileTimeline ? 'Show task list' : 'Show timeline', () => { ui.planMobileTimeline = !ui.planMobileTimeline; rerender(); }, { kind: 'sm mobile-plan-toggle' }),
     btn(book.baselineDate ? `Baseline ${fmtShort(book.baselineDate)}` : 'Set baseline', baselineCommand, {
-      kind: 'sm', iconName: 'flag', title: 'A baseline freezes current dates so you can see slippage later.',
+      kind: 'sm', iconName: 'flag', title: 'Freezes forecast dates across all unarchived tasks in the book, including other jobs.',
     }),
     btn('Job', () => createJob(), { kind: 'sm', iconName: 'plus' }));
 
@@ -59,12 +60,12 @@ export function renderPlan() {
   const push = (el, height) => { grid.append(el); y += height; };
   // An inline "add" row closes each phase group (and each job that has no groups yet).
   let group = null; let job = null; let jobHasGroup = false;
-  const closeGroup = () => { if (group && !group.job.archived) push(addRow(group.job, group.phase), ROW.add); group = null; };
+  const closeGroup = () => { if (group && !group.job.archived && !ui.collapsedPhases.has(addKey(group.job, group.phase))) push(addRow(group.job, group.phase), ROW.add); group = null; };
   const closeJob = () => { closeGroup(); if (job && !jobHasGroup && !job.archived) push(addRow(job, null), ROW.add); };
   for (const row of rows) {
     if (row.type === 'job') { closeJob(); job = row.job; jobHasGroup = false; push(jobRow(row.job), ROW.job); }
     else if (row.type === 'phase') { closeGroup(); group = row; jobHasGroup = true; push(phaseRow(row), ROW.phase); }
-    else { positions.set(row.item.id, y + ROW.item / 2); push(itemRowPlan(row.item, range), ROW.item); }
+    else if (!group || !ui.collapsedPhases.has(addKey(group.job, group.phase))) { positions.set(row.item.id, y + ROW.item / 2); push(itemRowPlan(row.item, range), ROW.item); }
   }
   closeJob();
   grid.append(overlay(rows, positions, range, y));
@@ -75,8 +76,10 @@ export function renderPlan() {
     requestAnimationFrame(() => { scroller.scrollLeft = Math.max(0, diffDays(range.start, today()) * range.px - 7 * range.px); });
   }
 
-  return h('div', { class: 'view plan' },
+  return h('div', { class: ['view plan', ui.planMobileTimeline && 'mobile-timeline'] },
     h('header', { class: 'page-head' }, h('div', null, h('p', { class: 'eyebrow' }, 'Programme'), h('h1', null, 'Plan')), toolbar),
+    h('p', { class: 'hint' }, 'Job → Phase → Task. Phases are optional groups. Forecast dates are expected dates, not fixed deadlines.'),
+    mobilePlanList(rows),
     rows.length ? scroller : h('p', { class: 'muted' }, 'No jobs match.'),
     h('p', { class: 'legend' },
       h('span', { class: 'lg-bar' }), 'Forecast', h('span', { class: 'lg-base' }), 'Baseline', h('span', { class: 'lg-ms' }), 'Milestone',
@@ -86,7 +89,7 @@ export function renderPlan() {
 
 function baselineCommand() {
   const book = store.book;
-  if (book.baselineDate && !confirm(`Replace the baseline from ${book.baselineDate} with today’s forecast dates?`)) return;
+  if (!confirm(`${book.baselineDate ? `Replace the baseline from ${book.baselineDate}` : 'Set a baseline'} for ALL unarchived tasks in this book, including jobs outside the current filter? This freezes today’s forecast dates for comparison.`)) return;
   act('Set baseline', d => captureBaseline(d, today()));
   notify('Baseline set. Slippage is now measured from today’s forecast.');
 }
@@ -119,24 +122,55 @@ function jobRow(job) {
       h('button', { class: 'job-title', onclick: () => openDrawer('job', job.id) }, job.title || 'Untitled job'),
       job.code ? chip(job.code) : null,
       job.archived ? chip('Archived', 'muted') : null,
+      job.status !== 'active' ? chip(job.status === 'hold' ? 'On hold' : 'Complete', 'muted') : null,
       h('span', { class: 'job-facts muted' }, `${s.done}/${s.total}`, s.late ? h('span', { class: 'danger' }, ` · ${s.late} late`) : null),
       iconBtn('focus', ui.focus === job.id ? 'Show all jobs' : `Focus on ${job.title}`, () => setFocus(job.id), { class: ['icon-btn', 'sm', ui.focus === job.id && 'on'] })),
     h('div', { class: 'pt' }));
 }
 
 function phaseRow({ phase, job }) {
+  const key = addKey(job, phase);
+  const collapsed = ui.collapsedPhases.has(key);
+  const count = store.book.items.filter(t => t.jobId === job.id && t.phaseId === (phase?.id || '') && (ui.planShowArchived || !t.archived) && (ui.planShowDone || t.status !== 'done')).length;
   return h('div', { class: 'prow prow-phase', style: { height: `${ROW.phase}px` } },
-    h('div', { class: 'pl' }, h('button', { class: 'phase-title', title: 'Edit phases', onclick: () => openDrawer('job', job.id, 'phases') }, phase ? phase.title : 'No phase')),
+    h('div', { class: 'pl' },
+      h('button', { class: 'phase-toggle', 'aria-expanded': String(!collapsed), 'aria-label': `${collapsed ? 'Expand' : 'Collapse'} ${phase?.title || 'Tasks without a phase'}`, onclick: () => { if (collapsed) ui.collapsedPhases.delete(key); else ui.collapsedPhases.add(key); rerender(); } }, collapsed ? '▸' : '▾'),
+      h('button', { class: 'phase-title', title: 'Edit phases', onclick: () => openDrawer('job', job.id, 'phases') }, phase ? `Phase: ${phase.title}` : 'Tasks without a phase'),
+      h('span', { class: 'muted' }, `${count}`),
+      !job.archived ? iconBtn('plus', `Add task to ${phase?.title || job.title}`, () => createTask(job.id, phase?.id || ''), { class: 'icon-btn sm' }) : null),
     h('div', { class: 'pt' }));
 }
 
 function addKey(job, phase) { return `${job.id}/${phase?.id || ''}`; }
 
+function mobilePlanList(rows) {
+  let groupKey = '';
+  return h('div', { class: 'plan-list' }, rows.map(row => {
+    if (row.type === 'job') {
+      groupKey = '';
+      return h('section', { class: 'mobile-job-head' },
+        h('strong', null, `Job: ${row.job.title}`),
+        btn('Edit job / phases', () => openDrawer('job', row.job.id), { kind: 'sm' }),
+        !row.job.archived ? btn('Add task', () => createTask(row.job.id), { kind: 'sm', iconName: 'plus' }) : null);
+    }
+    if (row.type === 'phase') {
+      groupKey = addKey(row.job, row.phase);
+      return phaseRow(row);
+    }
+    if (ui.collapsedPhases.has(groupKey)) return null;
+    const t = row.item;
+    return h('div', { class: 'mobile-plan-task' }, doneToggle(t), h('div', null,
+      h('button', { class: 'link', onclick: () => openDrawer('item', t.id) }, `${t.kind === 'milestone' ? '◆ Milestone: ' : 'Task: '}${t.title}`),
+      h('p', { class: 'muted' }, `Forecast: ${t.start ? fmtShort(t.start) : 'No start'} → ${t.finish ? fmtShort(t.finish) : 'No finish'}`),
+      h('p', { class: 'muted' }, `${fmtEffort(t.effort) || 'No effort estimate'} · ${t.plannedDay ? `Work on ${fmtShort(t.plannedDay)}` : 'No work day'}`)));
+  }));
+}
+
 function addRow(job, phase) {
   const key = addKey(job, phase);
   if (ui.addingIn !== key) {
     return h('div', { class: 'prow prow-add', style: { height: `${ROW.add}px` } },
-      h('div', { class: 'pl' }, h('button', { class: 'add-inline', onclick: () => { ui.addingIn = key; rerender(); } }, icon('plus', 14), phase ? `Add to ${phase.title}` : 'Add task')),
+      h('div', { class: 'pl' }, h('button', { class: 'add-inline', onclick: () => { ui.addingIn = key; rerender(); } }, icon('plus', 14), phase ? `Add task to ${phase.title}` : 'Add task without a phase')),
       h('div', { class: 'pt' }));
   }
   const input = h('input', {

@@ -20,7 +20,7 @@ export function welcome() {
         btn('Explore an example', () => loadExample(today()), { kind: 'ghost lg' })),
       h('p', { class: 'guide-link' }, 'Never planned your time before? ', guideButton(), ' first — about an hour, start to finish.'),
       h('ol', { class: 'steps' },
-        step('1', 'Jobs and phases', 'A job is an outcome — a chapter, a refit, a project. Phases give it shape.'),
+        step('1', 'Job → Phase → Task', 'A job is your project. Optional phases group its tasks. Example: Kitchen refit → Preparation → Measure kitchen. Use Add task to enter actual work.'),
         step('2', 'Plan', 'Give tasks dates and prerequisites. Drag bars on the programme to re-forecast.'),
         step('3', 'Week & Today', 'Set the hours you really have, then pick what fits. Leave a resume note when you stop.')),
       h('p', { class: 'fine' }, 'Nothing leaves this computer. No account, server or internet connection is used.')));

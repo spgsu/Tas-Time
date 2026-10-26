@@ -18,12 +18,12 @@ export function jobTag(job, { full = false } = {}) {
 
 export function chip(text, kind = '', title = '') { return h('span', { class: ['chip', kind], title: title || null }, text); }
 
-/** Due-date chip that turns red once late and amber within two days. */
+/** Forecast-finish chip that turns red once late and amber within two days. */
 export function dueChip(t) {
   if (!t.finish || t.status === 'done') return null;
   const late = isLate(t, today());
   const soon = !late && t.finish <= addDays(today(), 2);
-  const label = t.kind === 'milestone' ? `◆ ${fmtDate(t.finish)}` : `Due ${relDay(t.finish)}`;
+  const label = t.kind === 'milestone' ? `◆ ${fmtDate(t.finish)}` : `Forecast finish ${relDay(t.finish)}`;
   return chip(label, late ? 'danger' : soon ? 'warn' : '', fmtDate(t.finish));
 }
 

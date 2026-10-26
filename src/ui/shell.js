@@ -3,10 +3,10 @@
 import { appMark, fill, h, icon } from './dom.js';
 import { fmtEffort, parseQuickAdd } from '../core/parse.js';
 import { fmtDate } from '../core/dates.js';
-import { jobSummary, liveJobs } from '../core/query.js';
-import { APP_VERSION, IS_MAC, VIEWS, keys, closeDrawer, rerender, setFocus, setView, store, today, ui } from './state.js';
+import { jobSummary, liveJobs, phasesOf } from '../core/query.js';
+import { APP_VERSION, IS_MAC, VIEWS, keys, closeDrawer, openDrawer, rerender, setFocus, setView, store, today, ui } from './state.js';
 import { btn, iconBtn, jobColor } from './components.js';
-import { createJob, quickAdd, redo, undo } from './commands.js';
+import { createJob, createTask, quickAdd, redo, undo } from './commands.js';
 import { canLinkFiles, file, loadExample, newBlankBook, openFile, prefs, reconnect, save, setPref } from './files.js';
 import { showMenu, showModal } from './overlay.js';
 import { appearanceMenu } from './appearance.js';
@@ -33,8 +33,15 @@ export function renderShell(scope = 'all') {
 
   fill(document.getElementById('sidebar'), sidebar());
   renderStatus();
+  renderQuickDestination();
   const main = document.getElementById('main');
   fill(main, RENDER[ui.view]());
+  const focusedJob = store.book.jobs.find(j => j.id === ui.focus);
+  if (focusedJob) main.prepend(h('div', { class: 'focus-banner' },
+    h('strong', null, `Showing: ${focusedJob.title}`),
+    btn('All jobs', () => setFocus(ui.focus), { kind: 'sm' }),
+    btn('Edit job', () => openJobEditor(focusedJob.id), { kind: 'sm' }),
+    focusedJob.status !== 'active' ? h('span', null, `${focusedJob.status === 'hold' ? 'On hold' : 'Complete'} · Tasks are paused in Today and Week. Reactivate in Edit job.`) : null));
   main.scrollTop = pageY;
   const drawer = renderDrawer();
   fill(document.getElementById('drawer-host'), drawer);
@@ -65,6 +72,7 @@ function sidebar() {
       class: ['nav-item', ui.view === v.id && 'on'], 'aria-current': ui.view === v.id ? 'page' : null, onclick: () => setView(v.id),
     }, icon(v.icon, 18), h('span', null, v.label), h('kbd', null, v.key)))),
     h('div', { class: 'jobs-head' }, h('span', null, 'Jobs'), iconBtn('plus', 'New job', () => createJob(), { class: 'icon-btn sm' })),
+    btn('All jobs', () => { ui.focus = ''; rerender(); }, { kind: 'sm ghost' }),
     h('ul', { class: 'jobs' }, jobs.map(j => {
       const s = jobSummary(book, j, today());
       return h('li', null, h('button', {
@@ -72,6 +80,7 @@ function sidebar() {
         title: ui.focus === j.id ? 'Showing only this job — click to show all' : `Show only ${j.title}`,
         onclick: () => setFocus(j.id),
       }, h('span', { class: 'dot' }), h('span', { class: 'job-name' }, j.title || 'Untitled job'),
+      j.status !== 'active' ? h('span', { class: 'chip' }, j.status === 'hold' ? 'On hold' : 'Complete') : null,
       s.late ? h('span', { class: 'late-dot', title: `${s.late} late` }) : null,
       h('span', { class: 'badge', title: `${s.open} open` }, String(s.open))));
     })),
@@ -81,6 +90,27 @@ function sidebar() {
       h('button', { class: 'foot-link', id: 'appearance', 'aria-haspopup': 'menu', onclick: e => appearanceMenu(e.currentTarget) }, icon('palette', 16), 'Appearance'),
       h('button', { class: 'foot-link', onclick: showHelp }, icon('keyboard', 16), 'Shortcuts & help')),
   ];
+}
+
+function openJobEditor(id) { openDrawer('job', id); }
+
+function renderQuickDestination() {
+  const jobs = liveJobs(store.book);
+  const selected = jobs.find(j => j.id === ui.quickJob) || jobs.find(j => j.id === ui.focus) || jobs[0];
+  ui.quickJob = selected?.id || '';
+  const phases = phasesOf(store.book, ui.quickJob);
+  if (!phases.some(p => p.id === ui.quickPhase)) ui.quickPhase = '';
+  fill(document.getElementById('quick-destination'),
+    h('label', null, 'Job', h('select', { id: 'quick-job', 'aria-label': 'New task job', onchange: e => { ui.quickJob = e.target.value; ui.quickPhase = ''; renderQuickDestination(); document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
+      jobs.length ? jobs.map(j => h('option', { value: j.id, selected: j.id === ui.quickJob }, j.title)) : h('option', { value: '' }, 'New Inbox'))),
+    h('label', null, 'Phase', h('select', { id: 'quick-phase', 'aria-label': 'New task phase', onchange: e => { ui.quickPhase = e.target.value; document.getElementById('quick-add').dispatchEvent(new Event('input')); } },
+      h('option', { value: '' }, 'No phase (optional)'), phases.map(p => h('option', { value: p.id, selected: p.id === ui.quickPhase }, p.title)))),
+    btn('Add task', () => {
+      const input = document.getElementById('quick-add');
+      if (input.value.trim()) {
+        if (quickAdd(input.value, { jobId: ui.quickJob, phaseId: ui.quickPhase })) { input.value = ''; input.dispatchEvent(new Event('input')); }
+      } else createTask(ui.quickJob, ui.quickPhase);
+    }, { kind: 'sm', iconName: 'plus' }));
 }
 
 function renameBook() {
@@ -115,6 +145,14 @@ export function renderStatus() {
 function fileMenu() {
   const p = prefs();
   return [
+    { heading: 'Navigate & help' },
+    { label: 'All jobs', run: () => { ui.focus = ''; rerender(); } },
+    ...liveJobs(store.book).map(j => ({ label: `Show job: ${j.title}`, run: () => { ui.focus = j.id; ui.quickJob = j.id; ui.quickPhase = ''; rerender(); } })),
+    { label: 'New job', icon: 'plus', run: () => createJob() },
+    { label: 'Beginner’s guide', icon: 'book', run: showGuide },
+    { label: 'Shortcuts & help', icon: 'keyboard', run: showHelp },
+    { label: 'Appearance', icon: 'palette', run: () => appearanceMenu(document.getElementById('file-menu')) },
+    'separator',
     { label: 'Save', icon: 'save', hint: keys('S'), run: () => save() },
     { label: 'Save as…', icon: 'copy', hint: keys('Shift+S'), run: () => save({ saveAs: true }) },
     { label: 'Open…', icon: 'open', hint: keys('O'), run: openFile },
@@ -141,13 +179,16 @@ export function initQuickAdd() {
     const v = input.value.trim();
     if (!v) { preview.hidden = true; return; }
     const q = parseQuickAdd(v, store.book.jobs, today());
-    const job = store.book.jobs.find(j => j.id === (q.jobId || ui.focus)) || liveJobs(store.book)[0];
+    const job = store.book.jobs.find(j => j.id === (q.jobId || ui.quickJob || ui.focus)) || liveJobs(store.book)[0];
+    const phase = store.book.phases.find(p => p.id === ui.quickPhase && p.jobId === job?.id);
     fill(preview,
       h('span', { class: 'qp-title' }, q.kind === 'milestone' ? '◆ ' : '', q.title || '…'),
       job ? h('span', { class: 'job-tag', style: { '--job': jobColor(job) } }, h('span', { class: 'dot' }), job.title) : h('span', { class: 'chip' }, 'New “Inbox” job'),
       q.effort ? h('span', { class: 'chip' }, fmtEffort(q.effort)) : null,
+      h('span', { class: 'chip' }, phase?.title || 'No phase'),
       q.plannedDay ? h('span', { class: 'chip accent' }, `Work on ${fmtDate(q.plannedDay)}`) : null,
-      q.finish ? h('span', { class: 'chip' }, `${q.kind === 'milestone' ? 'On' : 'Due'} ${fmtDate(q.finish)}`) : null,
+      q.finish ? h('span', { class: 'chip' }, `${q.kind === 'milestone' ? 'On' : 'Forecast finish'} ${fmtDate(q.finish)}`) : null,
+      !q.plannedDay ? h('span', { class: 'chip' }, 'No work day set · use @today or choose a day in Week') : null,
       q.errors.map(e => h('span', { class: 'chip danger' }, e)),
       h('span', { class: 'qp-help' }, h('kbd', null, 'Enter'), ' add'));
     preview.hidden = false;
@@ -158,7 +199,7 @@ export function initQuickAdd() {
   input.addEventListener('keydown', e => {
     if (e.key === 'Escape') { input.value = ''; preview.hidden = true; input.blur(); }
     if (e.key === 'Enter' && input.value.trim()) {
-      const defaults = ui.view === 'today' ? { plannedDay: today() } : {};
+      const defaults = { jobId: ui.quickJob, phaseId: ui.quickPhase };
       if (quickAdd(input.value, defaults)) { input.value = ''; update(); }
     }
   });
@@ -203,7 +244,7 @@ export function showHelp() {
         h('p', null, 'Type a task in the box at the top and press Enter. Add any of:'),
         h('table', { class: 'keys' },
           row(['#phd'], 'job, by code or name'), row(['2h', '45m', '1h30'], 'effort'),
-          row(['@tue', '@today'], 'day you’ll work on it'), row(['!fri', '!2026-12-01'], 'due date'), row(['*'], 'at the start: a milestone')),
+          row(['@tue', '@today'], 'day you’ll work on it (otherwise unscheduled in every view)'), row(['!fri', '!2026-12-01'], 'forecast finish, not a fixed deadline'), row(['*'], 'at the start: a milestone')),
         h('h3', null, 'Keys'),
         h('table', { class: 'keys' },
           row(['N', '/'], 'Quick add'), row(['1–5'], 'Today, Week, Plan, Board, Notes'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),

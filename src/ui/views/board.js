@@ -20,7 +20,7 @@ function moveTo(id, column) {
   if (!t || boardColumn(store.book, t, today()) === column) return;
   if (column === 'blocked') { openDrawer('item', id, 'blocker'); notify('Record what this is waiting for.'); return; }
   const reasons = blockers(store.book, t);
-  if (reasons.length && column !== 'todo') {
+  if (reasons.length) {
     notify(`Still blocked: ${reasons.join('; ')}. Clear it in the task first.`, { kind: 'warn', action: { label: 'Open', run: () => openDrawer('item', id, 'blocker') } });
     return;
   }
@@ -62,5 +62,6 @@ function boardCard(t) {
     blocked ? h('p', { class: 'bcard-why' }, blockers(book, t).join(' · ')) : null,
     waiting.length ? h('p', { class: 'bcard-after' }, `After ${waiting.map(w => `“${w.title}”`).join(', ')}`) : null,
     h('div', { class: 'bcard-foot' }, dueChip(t), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, t.owner ? h('span', { class: 'muted' }, t.owner) : null));
+  if (blocked) el.append(btn('Resolve blocker', () => openDrawer('item', t.id, t.blocker.trim() ? 'blocker' : 'deps'), { kind: 'sm' }));
   return makeDraggable(el, t.id);
 }

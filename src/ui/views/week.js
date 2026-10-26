@@ -11,6 +11,7 @@ import { btn, doneToggle, dueChip, iconBtn, jobColor, jobTag, meter, readiness }
 import { makeDraggable, makeDropZone } from '../dnd.js';
 import { showMenu } from '../overlay.js';
 import { welcome } from './welcome.js';
+import { createTask } from '../commands.js';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -72,14 +73,15 @@ export function renderWeek() {
     const total = openEffort(load.byDay[day]);
     const col = h('section', { class: ['day', day === today() && 'is-today', i >= 5 && 'weekend', day < today() && 'is-past'], 'aria-label': `${DAY_LABELS[i]} ${fmtShort(day)}` },
       h('header', null, h('span', { class: 'day-name' }, DAY_LABELS[i]), h('span', { class: 'day-date' }, fmtShort(day)), total ? h('span', { class: 'day-total' }, fmtHours(total)) : null),
-      h('div', { class: 'day-cards' }, list.length ? list.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'Drop work here')));
+      btn('Add task', () => createTask(undefined, '', day), { kind: 'sm ghost', iconName: 'plus', attrs: { 'aria-label': `Add task for ${day}` } }),
+      h('div', { class: 'day-cards' }, list.length ? list.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'Add a task or drop work here')));
     return makeDropZone(col, id => planOn(id, day));
   });
 
   const tray = makeDropZone(h('aside', { class: 'tray', 'aria-label': 'Unplanned work' },
     h('header', null, h('h2', null, 'Unplanned'), h('span', { class: 'muted' }, `${ready.length}`)),
-    h('p', { class: 'hint' }, 'Open tasks with no day this week, most urgent first. Drag onto a day, or use ⋯.'),
-    h('div', { class: 'tray-cards' }, ready.length ? ready.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'Everything open is planned.'))), id => planOn(id, ''));
+    h('p', { class: 'hint' }, 'Active tasks without a work day, plus unfinished work from earlier weeks. Tasks scheduled for future weeks stay there. Drag onto a day, or use ⋯.'),
+    h('div', { class: 'tray-cards' }, ready.length ? ready.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'No unscheduled or carried-over tasks. Check other weeks or paused jobs in Plan.'))), id => planOn(id, ''));
 
   const range = `${fmtShort(monday)} – ${fmtShort(addDays(monday, 6))} ${addDays(monday, 6).slice(0, 4)}`;
   return h('div', { class: 'view week' },

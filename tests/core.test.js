@@ -37,9 +37,10 @@ test('dates: validity, week maths and parsing words', () => {
 });
 
 test('effort parsing and formatting', () => {
-  const cases = { '2h': 120, '1h30': 90, '1h 30m': 90, '1.5h': 90, '90m': 90, '45': 45, '1.5': 90, '2': 120, '1d': 480, '': 0 };
+  const cases = { '2h': 120, '1h30': 90, '1h 30m': 90, '1.5h': 90, '90m': 90, '1d': 480, '': 0 };
   for (const [input, min] of Object.entries(cases)) assert.equal(parseEffort(input), min, input);
   assert.equal(parseEffort('soon'), null);
+  for (const bare of ['9', '10', '45', '1.5']) assert.equal(parseEffort(bare), null, 'units are required');
   assert.equal(fmtEffort(0), '');
   assert.equal(fmtEffort(45), '45m');
   assert.equal(fmtEffort(90), '1h 30m');

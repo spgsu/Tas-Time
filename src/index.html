@@ -21,10 +21,11 @@
     <header class="topbar">
       <div class="quick">
         <svg class="icon quick-icon" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        <input id="quick-add" type="text" autocomplete="off" spellcheck="false" aria-label="Quick add a task" placeholder="Add a task…   #job  2h  @tue  !fri">
+        <input id="quick-add" type="text" autocomplete="off" spellcheck="false" aria-label="Quick add a task" placeholder="Task name… Enter to add · 2h @tue !fri optional">
         <kbd class="quick-kbd">N</kbd>
         <div id="quick-preview" class="quick-preview" hidden></div>
       </div>
+      <div id="quick-destination" class="quick-destination"></div>
       <div id="file-status" class="file-status"></div>
     </header>
     <div id="banner"></div>
