@@ -20,9 +20,10 @@ import { renderPlan } from './views/plan.js';
 import { renderBoard } from './views/board.js';
 import { renderNotes } from './views/notes.js';
 import { renderAssignments } from './views/assignments.js';
+import { renderLookahead } from './views/lookahead.js';
 import { showPeople } from './people.js';
 
-const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes, assignments: renderAssignments };
+const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes, assignments: renderAssignments, lookahead: renderLookahead };
 
 export function renderShell(scope = 'all') {
   if (scope === 'status') { renderStatus(); return; }
@@ -258,7 +259,7 @@ export function showHelp() {
           row(['@tue', '@today'], 'day you’ll work on it (otherwise unscheduled in every view)'), row(['!fri', '!2026-12-01'], 'forecast finish, not a fixed deadline'), row(['*'], 'at the start: a milestone')),
         h('h3', null, 'Keys'),
         h('table', { class: 'keys' },
-          row(['N', '/'], 'Quick add'), row(['1–6'], 'Today, Week, Plan, Board, Notes, Assignments'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
+          row(['N', '/'], 'Quick add'), row(['1–7'], 'Today, Week, Plan, Board, Notes, Assignments, Lookahead'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
           row([keys('O')], 'Open'), row([keys('Z'), keys(IS_MAC ? 'Shift+Z' : 'Y')], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
           row(['← →'], 'Move a focused bar on the Plan'), row(['Shift+← →'], 'Change its finish'))),
       h('section', null,

@@ -825,6 +825,62 @@ try {
     await fileMenu('Recovery copy & backups: off');
   });
 
+  const tab = label => page.clickText('.lookahead .tabs button', label);
+  const setField = (id, value) => ev(`(() => { const el = document.getElementById(${JSON.stringify(id)}); el.value = ${JSON.stringify(value)}; el.dispatchEvent(new Event('change')); return true; })()`);
+  await check('last planner: a logged RFI holds up lookahead work until cleared from Ball in court', async () => {
+    await fileMenu('New book');
+    await quickAdd('Issue ceiling plan @today');
+    await quickAdd('Write door spec @today');
+    await quickAdd(`Coordinate MEP @${addDays(today, 7)}`);
+    await nav(7);
+    await tab('Lookahead');
+    assert.equal(await count('.lookahead-row.is-ready'), 3, 'all three are ready before any constraint');
+    await ev(`document.querySelector('[aria-label="Add constraint to Coordinate MEP"]').click(); true`);
+    await page.wait(150);
+    assert.equal(await ev('document.activeElement.id'), 'd-subject', 'the new entry opens with its subject focused');
+    await page.type('Duct route above corridor');
+    await setField('d-type', 'rfi');
+    await ev('document.getElementById("d-ball").focus(); true');
+    await page.type('MEP engineer');
+    await setField('d-due', addDays(today, 10));
+    await page.key('Escape', { keyCode: 27 });
+    await page.wait(150);
+    const held = await text('[data-lookahead].is-constrained');
+    assert.match(held, /Coordinate MEP/);
+    assert.match(held, /RFI-001/);
+    assert.match(held, /Ball: MEP engineer/);
+    assert.match(held, /Due after the work needs it/);
+    await page.screenshot(join(shots, 'l1-lookahead.png'), { full: false });
+    await tab('Ball in court');
+    assert.match(await text('.ball-group h2'), /MEP engineer/);
+    await page.screenshot(join(shots, 'l2-ball-in-court.png'), { full: false });
+    await ev(`document.querySelector('[aria-label="Mark cleared: RFI-001 Duct route above corridor"]').click(); true`);
+    await page.wait(600);
+    const book = await recoveryBook();
+    assert.deepEqual(book.log.map(e => [e.number, e.type, e.ball, e.status, e.clearedOn]), [['RFI-001', 'rfi', 'MEP engineer', 'cleared', today]]);
+    assert.equal(await count('.ball-group'), 0, 'cleared entries leave the list');
+    await tab('Lookahead');
+    assert.equal(await count('.lookahead-row.is-constrained'), 0);
+  });
+
+  await check('last planner: commit the week in Week, complete work, PPC reflects it', async () => {
+    await nav(2);
+    await page.click('#week-commit');
+    await page.wait(150);
+    assert.match(await text('.commit-status'), /Committed .*: 2 tasks · PPC 0% so far/);
+    await ev(`(() => { const c = [...document.querySelectorAll('.wcard')].find(x => x.textContent.includes('Issue ceiling plan')); c.querySelector('.tick').click(); return true; })()`);
+    await page.wait(150);
+    assert.match(await text('.commit-status'), /PPC 50% so far/);
+    await nav(7);
+    await tab('PPC');
+    assert.equal(await text('.ppc-stat .ppc-number'), '50%');
+    assert.equal(await count('.ppc-col'), 1);
+    assert.match(await ev('document.querySelector(".ppc-chart").getAttribute("aria-label")'), /50%/);
+    await page.screenshot(join(shots, 'l3-ppc.png'), { full: false });
+    const book = await recoveryBook();
+    assert.equal(Object.values(book.weeks).find(w => w.commitment).commitment.items.length, 2);
+  });
+
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));
 
   // Visual checks at other sizes and themes.
@@ -836,7 +892,7 @@ try {
     await page.screenshot(join(shots, `m${n}-${v}-phone.png`), { full: false });
   }
   await check('no horizontal page overflow at phone width', async () => {
-    for (const n of [1, 2, 3, 4, 5, 6]) {
+    for (const n of [1, 2, 3, 4, 5, 6, 7]) {
       await nav(n);
       const over = await ev('document.documentElement.scrollWidth - document.documentElement.clientWidth');
       assert.ok(over <= 0, `view ${n} overflows by ${over}px`);

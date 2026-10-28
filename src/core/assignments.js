@@ -30,7 +30,7 @@ export function assignmentGroups(book, items, group, today) {
 }
 
 /** Neutralize spreadsheet formula prefixes as well as quoting commas/newlines. */
-function assignmentCsvCell(value) {
+export function assignmentCsvCell(value) {
   let s = String(value ?? '');
   if (/^[\s]*[=+@-]/.test(s) || /^[\t\r\n]/.test(s)) s = `'${s}`;
   return `"${s.replaceAll('"', '""')}"`;
