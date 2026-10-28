@@ -5,9 +5,9 @@ import { h } from '../dom.js';
 import { addDays } from '../../core/dates.js';
 import { fmtEffort } from '../../core/parse.js';
 import { blockers, boardColumn, byUrgency, isBlocked, jobOf, liveItems, liveJobs, personName, phaseTitle, waitingOn } from '../../core/query.js';
-import { patchItem } from '../../core/ops.js';
 import { STATUS } from '../../core/model.js';
-import { act, openDrawer, rerender, store, today, ui, notify } from '../state.js';
+import { openDrawer, rerender, store, today, ui, notify } from '../state.js';
+import { setItemStatus } from '../commands.js';
 import { btn, dueChip, jobColor, jobTag } from '../components.js';
 import { makeDraggable, makeDropZone } from '../dnd.js';
 import { welcome } from './welcome.js';
@@ -24,7 +24,7 @@ function moveTo(id, column) {
     notify(`Still blocked: ${reasons.join('; ')}. Clear it in the task first.`, { kind: 'warn', action: { label: 'Open', run: () => openDrawer('item', id, 'blocker') } });
     return;
   }
-  act(`Move to ${STATUS[column]}`, d => patchItem(d, id, { status: column }, today()));
+  setItemStatus(id, column, `Move to ${STATUS[column]}`);
 }
 
 export function renderBoard() {

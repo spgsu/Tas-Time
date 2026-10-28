@@ -751,6 +751,80 @@ try {
     assert.ok((await recoveryBook()).items.some(i => i.title === 'Only in recovery'), 'the edit is still in the recovery copy');
   });
 
+  const rowTick = title => ev(`(() => { const r = [...document.querySelectorAll('.today-main .row-item')].find(x => x.querySelector('.row-title').textContent === ${JSON.stringify(title)}); r.querySelector('.tick').click(); return true; })()`);
+  const toastText = () => ev(`[...document.querySelectorAll('.toast')].map(t => t.textContent).join(' | ')`);
+  await check('repeating task with a checklist: chips, completion creates next week’s copy with steps cleared', async () => {
+    await fileMenu('New book');
+    await nav(1);
+    await quickAdd('Weekly review 1h @today');
+    await page.clickText('.today-main .row-title', 'Weekly review');
+    await ev(`(() => { const s = document.getElementById('d-repeat'); s.value = 'week'; s.dispatchEvent(new Event('change')); return true; })()`);
+    for (const step of ['Collect notes', 'Plan next week']) {
+      await ev('document.getElementById("d-step-new").focus(); true');
+      await page.type(step);
+      await page.key('Enter', { keyCode: 13 });
+    }
+    await ev('document.querySelector(".checklist input[type=checkbox]").click(); true');
+    assert.match(await text('#drawer'), /Checklist · 1 of 2 done/);
+    assert.match(await text('#drawer'), /Every week\. When you mark it done/);
+    await ev('document.getElementById("d-repeat").scrollIntoView({ block: "start" }); true');
+    await page.screenshot(join(shots, 'r1-repeat-checklist.png'), { full: false });
+    await page.key('Escape', { keyCode: 27 });
+    const meta = await text('.today-main .row-item .row-meta');
+    assert.match(meta, /1\/2 steps/);
+    assert.match(meta, /↻ Every week/);
+    await rowTick('Weekly review');
+    assert.match(await toastText(), /Every week: next “Weekly review” to work on/);
+    await page.wait(600);
+    const copies = (await recoveryBook()).items.filter(i => i.title === 'Weekly review');
+    assert.deepEqual(copies.map(i => [i.status, i.plannedDay, !!i.repeat, i.checklist.map(c => c.done)]),
+      [['done', today, false, [true, false]], ['todo', addDays(today, 7), true, [false, false]]]);
+  });
+
+  await check('finish the day: lists done work, moves or unplans each open task in one undoable step', async () => {
+    await quickAdd('Write intro @today');
+    await quickAdd('Fix figures @today');
+    await page.click('#finish-day');
+    await page.wait(150);
+    const dialogText = await text('dialog.modal');
+    assert.match(dialogText, /Done today · 1/);
+    assert.match(dialogText, /Still open · 2/);
+    await page.screenshot(join(shots, 'r2-finish-day.png'), { full: false });
+    await ev(`(() => { const r = [...document.querySelectorAll('.finish-row')].find(x => x.textContent.includes('Fix figures')); [...r.querySelectorAll('button')].find(b => b.textContent === 'Unplan').click(); return true; })()`);
+    await page.click('#finish-day-apply');
+    await page.wait(600);
+    assert.match(await toastText(), /Day finished: 1 moved to tomorrow, 1 unplanned/);
+    const day = title => recoveryBook().then(b => b.items.find(i => i.title === title).plannedDay);
+    assert.equal(await day('Write intro'), addDays(today, 1));
+    assert.equal(await day('Fix figures'), '');
+    assert.equal(await day('Weekly review'), today, 'done work is not moved');
+    await page.clickText('.toast-action', 'Undo');
+    await page.wait(600);
+    assert.deepEqual([await day('Write intro'), await day('Fix figures')], [today, today]);
+  });
+
+  const backupKeys = () => ev(`new Promise(resolve => { const q = indexedDB.open('tas-time', 1); q.onsuccess = () => { const g = q.result.transaction('kv').objectStore('kv').getAllKeys(); g.onsuccess = () => resolve(g.result.filter(k => String(k).startsWith('backups:')).length); }; })`);
+  await check('backups: kept in the browser, restore is undoable, turning recovery off deletes them', async () => {
+    assert.ok(await backupKeys() >= 1, 'a backup of this book exists');
+    await quickAdd('Mistake task @today');
+    await page.wait(600);
+    await fileMenu('Backups…');
+    await page.wait(300);
+    assert.ok(await count('.backup-list li') >= 1, 'listed in the dialog');
+    await page.screenshot(join(shots, 'r3-backups.png'), { full: false });
+    await ev(`[...document.querySelectorAll('.backup-list li')].at(-1).querySelector('.btn.primary').click(); true`);
+    await page.wait(600);
+    assert.equal(await count('dialog.modal'), 0, 'dialog closes after restoring');
+    assert.ok(!(await recoveryBook()).items.some(i => i.title === 'Mistake task'), 'the older version is back');
+    await page.clickText('.toast-action', 'Undo');
+    await page.wait(600);
+    assert.ok((await recoveryBook()).items.some(i => i.title === 'Mistake task'), 'undo returns to the newer version');
+    await fileMenu('Recovery copy & backups: on');
+    await page.wait(300);
+    assert.equal(await backupKeys(), 0);
+    await fileMenu('Recovery copy & backups: off');
+  });
+
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));
 
   // Visual checks at other sizes and themes.

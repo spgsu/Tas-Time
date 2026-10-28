@@ -99,6 +99,15 @@ Books from older app versions upgrade to **format 4**. Their existing tasks rema
 - **Planning a day never moves programme dates.** The Plan is the forecast; the Week is what you commit to.
 - **Mistakes are undoable.** Ctrl+Z (⌘Z) outside a text box reverts any change to the book, including deletes.
 
+### Routine work and checklists
+
+- **Repeating tasks.** In a task editor, set **Repeats** to every N days, weeks or months. When you mark it done, the next one is created with its dates moved on by that interval from the task's own schedule, so finishing early or late keeps the rhythm. Occurrences already in the past are skipped. Only the next occurrence exists at any time, so Plan and Week stay uncluttered. A repeating task with no dates gets a work day one interval after you complete it.
+- **Checklists.** Add small steps inside a task. They have no dates or effort, never block completing the task, and show as *2/5 steps* on the task. A repeating task's next occurrence starts with its steps unticked.
+
+### Finish the day
+
+**Finish the day** in Today shows what you completed, then lets you choose for each unfinished task planned for today or carried over: **Tomorrow**, **Unplan** (back to the unplanned list in Week) or **Leave**. It also shows the resume notes of the jobs you worked on. Nothing moves until you press **Finish the day**, it never changes forecast dates, and Ctrl+Z undoes the whole review.
+
 ### Calendar export
 
 **⋯ → Export to calendar (.ics)** saves planned work days, milestones and, optionally, forecast finish dates as a calendar file for Google Calendar or Outlook. Events are all-day and marked as free time, so they never block meetings. Export is one-way: import into a separate *Tas-Time* calendar, and to refresh, delete it and import a new file.
@@ -111,7 +120,8 @@ Books from older app versions upgrade to **format 4**. Their existing tasks rema
 
 - **One file.** Your planning book is a JSON file at a location you choose. Back it up by copying it, or with **⋯ → Save as…**.
 - **Autosave.** After the first save, Edge and Chrome write every change to that file. After restarting the browser, it may ask you to **Reconnect** once.
-- **Recovery copy.** The browser also keeps a copy of unsaved work, so closing the window by accident loses nothing. Turn it off in the **⋯** menu on a shared computer.
+- **Recovery copy.** The browser also keeps a copy of unsaved work, so closing the window by accident loses nothing. If a linked file is missing recent edits (for example while it waits for **Reconnect**), closing asks first. Turn the recovery copy off in the **⋯** menu on a shared computer; that also deletes the backups below.
+- **Backups.** The browser keeps the last 10 versions of each book: one when you open it, then at most every 15 minutes while you work. **⋯ → Backups…** lists them to **Restore** (undoable) or **Download**. They live in this browser only, not beside your file.
 - **Resume where you left off.** With recovery enabled, reopening Tas-Time in the same browser and from the same location restores your last book and file link, view, selected job, week, notes page, filters and open task or job panel. The browser may require **Reconnect** to resume saving to the linked file.
 - **Older books.** Files from earlier Tas-Time versions open and are upgraded. The original file is never overwritten; you choose where to save the new version.
 - **Work and personal.** Keep separate books in separate environments. Tas-Time cannot enforce an employer's rules, so check that running a local HTML file is allowed at work.

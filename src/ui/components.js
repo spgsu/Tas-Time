@@ -4,9 +4,9 @@ import { h, icon } from './dom.js';
 import { COLORS } from '../core/model.js';
 import { blockers, isBlocked, isLate, jobOf, personName, phaseTitle, waitingOn } from '../core/query.js';
 import { addDays, fmtDate, relDay } from '../core/dates.js';
-import { fmtEffort, fmtHours } from '../core/parse.js';
-import { act, openDrawer, store, today } from './state.js';
-import { setStatus } from '../core/ops.js';
+import { fmtEffort, fmtHours, fmtRepeat } from '../core/parse.js';
+import { openDrawer, store, today } from './state.js';
+import { setItemStatus } from './commands.js';
 
 export function jobColor(job) { return COLORS[job?.color]?.hex || COLORS.forest.hex; }
 
@@ -52,7 +52,7 @@ export function doneToggle(t) {
     disabled: reasons.length ? true : null,
     onclick: event => {
       event.stopPropagation();
-      act(done ? 'Reopen' : 'Complete', d => setStatus(d, t.id, done ? 'todo' : 'done', today()));
+      setItemStatus(t.id, done ? 'todo' : 'done', done ? 'Reopen' : 'Complete');
     },
   }, icon('check', 14));
 }
@@ -73,9 +73,18 @@ export function itemRow(t, { actions = null, showJob = true, showPhase = false, 
         t.status === 'doing' ? chip('Doing', 'accent') : null,
         dueChip(t),
         readiness(t),
+        stepsChip(t),
+        t.repeat ? chip(`↻ ${fmtRepeat(t.repeat)}`, 'muted', 'Repeats: the next one is created when this is done') : null,
         t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null,
       )),
     actions ? h('div', { class: 'row-actions' }, actions) : null);
+}
+
+/** "2/5 steps" for a task with a checklist. */
+export function stepsChip(t) {
+  if (!t.checklist.length) return null;
+  const done = t.checklist.filter(c => c.done).length;
+  return chip(`${done}/${t.checklist.length} steps`, done === t.checklist.length ? 'muted' : '', t.checklist.map(c => `${c.done ? '✓' : '○'} ${c.text}`).join('\n'));
 }
 
 export function segmented(options, value, onChange, label) {

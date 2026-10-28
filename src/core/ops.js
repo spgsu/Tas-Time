@@ -1,6 +1,6 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // Mutations. Each takes a draft book (already cloned by the store) and edits it in place.
-import { addDays, diffDays } from './dates.js';
+import { addDays, addMonths, diffDays } from './dates.js';
 import { DEFAULT_CAPACITY, newItem, newJob, newPhase, nextColor, uid } from './model.js';
 import { blockers, itemOf, jobOf, phasesOf } from './query.js';
 
@@ -42,7 +42,61 @@ function applyStatus(book, next, previous, today) {
     const reasons = blockers(book, { ...next, status: 'todo' });
     if (reasons.length) throw new Error(`Can’t complete yet: ${reasons.join('; ')}.`);
     next.doneOn = today;
+    if (next.repeat) {
+      // The series moves to the new occurrence, so reopening and re-completing this one never repeats twice.
+      book.items.splice(book.items.findIndex(x => x.id === next.id) + 1, 0, nextOccurrence(next, today));
+      next.repeat = null;
+    }
   } else next.doneOn = '';
+}
+
+function step(iso, { every, unit }) {
+  return unit === 'month' ? addMonths(iso, every) : addDays(iso, unit === 'week' ? every * 7 : every);
+}
+
+/**
+ * The next open copy of a repeating item. Its dates move on by the interval from the item's own
+ * schedule (not from the completion day), skipping occurrences already in the past.
+ * An item with no dates gets a work day one interval after today.
+ */
+export function nextOccurrence(t, today) {
+  const anchor = t.plannedDay || t.start || t.finish;
+  const copy = {
+    ...structuredClone(t), id: uid(), status: 'todo', doneOn: '', baseline: null,
+    checklist: t.checklist.map(c => ({ ...c, id: uid(), done: false })),
+  };
+  if (!anchor) { copy.plannedDay = step(today, t.repeat); return copy; }
+  let n = 0; let day = anchor;
+  do { n++; day = step(anchor, { ...t.repeat, every: t.repeat.every * n }); } while (day <= today && n < 10000);
+  // Each date moves by the same number of steps so months stay on their day (31st → 30th → 31st).
+  for (const k of ['plannedDay', 'start', 'finish']) if (t[k]) copy[k] = step(t[k], { ...t.repeat, every: t.repeat.every * n });
+  return copy;
+}
+
+export function addStep(book, id, text) {
+  const t = itemOf(book, id);
+  const s = { id: uid(), text: text.trim().slice(0, 500), done: false };
+  t.checklist.push(s);
+  return s;
+}
+
+export function patchStep(book, id, stepId, patch) {
+  const s = itemOf(book, id).checklist.find(c => c.id === stepId);
+  if (!s) throw new Error('That checklist step no longer exists.');
+  Object.assign(s, patch);
+}
+
+export function removeStep(book, id, stepId) {
+  const t = itemOf(book, id);
+  t.checklist = t.checklist.filter(c => c.id !== stepId);
+}
+
+export function moveStep(book, id, stepId, delta) {
+  const list = itemOf(book, id).checklist;
+  const i = list.findIndex(c => c.id === stepId);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
 }
 
 export function setStatus(book, id, status, today) { return patchItem(book, id, { status }, today); }

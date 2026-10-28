@@ -67,3 +67,9 @@ export function matchJob(jobs, hint) {
   const matches = live.filter(j => j.code.toLowerCase().startsWith(h) || j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
   return matches.length === 1 ? matches[0] : undefined;
 }
+
+/** "Every week", "Every 2 weeks", "Every month". */
+export function fmtRepeat(repeat) {
+  if (!repeat) return '';
+  return repeat.every === 1 ? `Every ${repeat.unit}` : `Every ${repeat.every} ${repeat.unit}s`;
+}

@@ -5,7 +5,9 @@
 //  1. A linked file (File System Access API, Edge/Chrome): explicit save, then autosave.
 //  2. A recovery copy in this browser's local storage, restored on next launch.
 //  3. Download fallback where neither is available (cannot confirm the write).
+// Separately, rolling backups of each book are kept in this browser's IndexedDB.
 import { decodeBook, encodeBook, newBook } from '../core/model.js';
+import { BACKUP_GAP_MS, withBackup } from '../core/backups.js';
 import { debounce } from './dom.js';
 import { notify, rerender, restoreView, sessionView, store } from './state.js';
 import { exampleBook } from '../core/example.js';
@@ -146,9 +148,9 @@ export async function reconnect() {
   } catch (error) { notify(error.message, { kind: 'error' }); return false; }
 }
 
-function download() {
-  const url = URL.createObjectURL(new Blob([encodeBook(store.book)], { type: 'application/json' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: file.name || suggestedName() });
+function download(raw = encodeBook(store.book), name = file.name || suggestedName()) {
+  const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   notify('Download started. This browser cannot confirm the file was saved — check your Downloads folder.', { kind: 'warn', timeout: 9000 });
@@ -214,6 +216,7 @@ async function loadText(text, name, handle) {
     } else link(handle);
   }
   writeRecovery.flush();
+  backup({ force: true });
   rerender();
   if (!upgradedFrom) notify(`Opened ${name}`);
 }
@@ -247,6 +250,7 @@ let recoveryFailed = false;
 export const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
+    maybeBackup();
     localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book, view: sessionView() }));
     recoveryRevision = store.revision;
     recoveryFailed = false;
@@ -260,6 +264,7 @@ export const writeRecovery = debounce(() => {
 function clearRecovery() {
   recoveryRevision = -1;
   try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
+  backups = backups.catch(() => {}).then(() => idbDeleteWhere(key => typeof key === 'string' && key.startsWith('backups:')));
 }
 
 /**
@@ -289,12 +294,66 @@ export async function restoreSession() {
     notify(`Recovered a version ${upgradedFrom} book and upgraded it for assignments. Save a new copy; the original file is untouched.`, { kind: 'warn', timeout: 12000 });
     return true;
   }
+  backup({ force: true });
   const handle = await idbGet('lastFile');
   if (handle && handle.name === saved.fileName) {
     file.handle = handle;
     file.state = (await ensurePermission(handle, false).catch(() => false)) ? 'linked' : 'reconnect';
   }
   return true;
+}
+
+// ── Rolling backups: up to BACKUP_KEEP versions per book, at least BACKUP_GAP_MS apart ──
+
+const backupKey = id => `backups:${id}`;
+let backups = Promise.resolve();
+let lastBackupTry = { id: '', at: 0 };
+
+/** Newest first: [{ at, name, fileName, tasks, raw }]. Empty when browser storage is unavailable. */
+export async function listBackups(bookId = store.book.id) {
+  await backups.catch(() => {});
+  return readBackups(bookId);
+}
+
+async function readBackups(bookId) {
+  const list = await idbGet(backupKey(bookId));
+  return Array.isArray(list) ? list : [];
+}
+
+/** Keeps a copy of the open book. force: also within BACKUP_GAP_MS (on open, before a restore). */
+export function backup({ force = false } = {}) {
+  const book = store.book;
+  // Backups follow the recovery setting: off on a shared computer means nothing stays in this browser.
+  if (!book.jobs.length || !prefs().recovery) return backups;
+  const entry = { at: new Date().toISOString(), name: book.name, fileName: file.name, tasks: book.items.length, raw: encodeBook(book) };
+  lastBackupTry = { id: book.id, at: Date.now() };
+  backups = backups.catch(() => {}).then(async () => {
+    const next = withBackup(await readBackups(book.id), entry, { force }); // not listBackups: it would wait for this very step
+    if (next) await idbSet(backupKey(book.id), next);
+  });
+  return backups;
+}
+
+/** Cheap enough to call on every recovery write: storage is only read once per gap. */
+function maybeBackup() {
+  if (lastBackupTry.id === store.book.id && Date.now() - lastBackupTry.at < BACKUP_GAP_MS) return;
+  backup();
+}
+
+/** Replaces the open book's content with a backup as one undoable step; the file link stays. */
+export async function restoreBackup(entry) {
+  const { book } = decodeBook(entry.raw);
+  if (book.id !== store.book.id) throw new Error('That backup belongs to a different book.');
+  await backup({ force: true });
+  return store.commit(`Restore backup from ${new Date(entry.at).toLocaleString()}`, draft => {
+    for (const k of Object.keys(draft)) delete draft[k];
+    Object.assign(draft, book);
+  });
+}
+
+export function downloadBackup(entry) {
+  const stamp = entry.at.slice(0, 16).replace('T', '-').replace(':', '');
+  return download(entry.raw, `${(entry.fileName || suggestedName()).replace(/\.json$/i, '')}-backup-${stamp}.json`);
 }
 
 // ── IndexedDB holds the file handle (handles cannot go in localStorage) ──
@@ -311,8 +370,24 @@ function idb() {
 async function idbSet(key, value) {
   try {
     const db = await idb();
-    db.transaction('kv', 'readwrite').objectStore('kv').put(value, key);
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(value, key);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
   } catch { /* storage blocked: linking still works for this session */ }
+}
+
+async function idbDeleteWhere(match) {
+  try {
+    const db = await idb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      const req = tx.objectStore('kv').getAllKeys();
+      req.onsuccess = () => { for (const key of req.result) if (match(key)) tx.objectStore('kv').delete(key); };
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+  } catch { /* storage blocked: nothing stored */ }
 }
 
 async function idbGet(key) {

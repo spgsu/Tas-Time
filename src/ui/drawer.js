@@ -4,12 +4,12 @@
 import { h, icon, autosize } from './dom.js';
 import { COLORS, JOB_STATUS, NOTE_PAGES } from '../core/model.js';
 import { fmtDate, fmtShort, relDay } from '../core/dates.js';
-import { fmtEffort, parseEffort } from '../core/parse.js';
+import { fmtEffort, fmtRepeat, parseEffort } from '../core/parse.js';
 import { blockers, dateConflicts, dependents, itemOf, jobOf, liveJobs, phasesOf, slip } from '../core/query.js';
-import { addDep, addPhase, deletePhase, duplicateItem, movePhase, patchItem, patchJob, removeDep, renamePhase } from '../core/ops.js';
+import { addDep, addPhase, addStep, deletePhase, duplicateItem, movePhase, moveStep, patchItem, patchJob, patchStep, removeDep, removeStep, renamePhase } from '../core/ops.js';
 import { act, closeDrawer, openDrawer, rerender, setView, store, today, ui } from './state.js';
 import { btn, chip, iconBtn, jobColor, segmented } from './components.js';
-import { STANDARD_PHASES, createTask, removeItem, removeJob } from './commands.js';
+import { STANDARD_PHASES, createTask, removeItem, removeJob, setItemStatus } from './commands.js';
 import { personSelect, showPeople } from './people.js';
 
 let typedSinceRender = false;
@@ -105,7 +105,7 @@ function itemEditor(t) {
     h('p', { class: 'field-hint' }, `Job: ${job.title} → ${book.phases.find(p => p.id === t.phaseId)?.title || 'No phase'} → ${isMs ? 'Milestone' : 'Task'}. Changes save automatically.`),
     h('div', { class: 'drawer-row' },
       segmented([['task', 'Task'], ['milestone', '◆ Milestone']], t.kind, k => set('Change kind', { kind: k, finish: t.finish || t.start || today() }), 'Kind'),
-      segmented([['todo', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status, st => set(st === 'done' ? 'Complete' : 'Change status', { status: st }), 'Status')),
+      segmented([['todo', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status, st => setItemStatus(t.id, st), 'Status')),
     reasons.length ? h('div', { class: 'notice warn' }, icon('alert', 16), h('div', null, h('strong', null, 'Blocked'), h('ul', null, reasons.map(r => h('li', null, r))))) : null,
     conflicts.length ? h('div', { class: 'notice danger' }, icon('alert', 16), h('div', null, `Starts before ${conflicts.map(c => `“${c.title}”`).join(', ')} is forecast to finish (${conflicts.map(c => fmtShort(c.finish)).join(', ')}).`)) : null,
 
@@ -127,6 +127,8 @@ function itemEditor(t) {
       field('Effort left', effortInput, { id: 'd-effort', hint: 'Use units: 10h or 45m. Your working time, not calendar duration. A work day receives the whole estimate; split tasks that need several work sessions.' }),
       field('Work on', h('input', { id: 'd-plannedDay', type: 'date', value: t.plannedDay, onchange: e => set('Plan day', { plannedDay: e.target.value }) }), { id: 'd-plannedDay', hint: t.plannedDay ? relDay(t.plannedDay) : 'Day you intend to do it' })),
 
+    repeatField(t, set),
+
     field('Waiting on / constraint', liveText('d-blocker', t.blocker, typed('blocker', 'Edit constraint'), { multiline: true, rows: 1, placeholder: 'e.g. Supervisor feedback, access to the lab, a delivery…' }),
       { id: 'd-blocker', hint: 'Anything written here marks the task as blocked until you clear it.' }),
 
@@ -143,9 +145,46 @@ function itemEditor(t) {
       neededBy.length ? h('p', { class: 'field-hint' }, 'Needed by: ', neededBy.map((x, i) => [i ? ', ' : '', h('button', { class: 'link', onclick: () => openDrawer('item', x.id) }, x.title)])) : null),
 
     field('Contacts / consulted', liveText('d-owner', t.owner, typed('owner', 'Edit contacts'), { maxlength: 200, placeholder: 'Optional: suppliers, reviewers, contacts' }), { id: 'd-owner', hint: 'Separate from the person responsible for completing this task. Existing owner/contact text is kept here.' }),
+    checklist(t),
     field(isMs ? 'Acceptance criteria' : 'Notes', liveText('d-notes', t.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: isMs ? 'What must be true for this to be accepted?' : 'Details, links, acceptance criteria…' }), { id: 'd-notes' }),
     t.doneOn ? h('p', { class: 'field-hint' }, `Completed ${fmtDate(t.doneOn)}.`) : null,
   ];
+}
+
+function repeatField(t, set) {
+  const r = t.repeat;
+  const every = h('input', {
+    id: 'd-repeat-every', type: 'number', min: 1, max: 99, value: r?.every || 1, disabled: !r || null, 'aria-label': 'Repeat every',
+    onchange: e => {
+      const n = Math.round(Number(e.target.value));
+      if (n >= 1 && n <= 99) set('Change repeat', { repeat: { ...r, every: n } }); else e.target.value = r.every;
+    },
+  });
+  const unit = h('select', { id: 'd-repeat', onchange: e => set(e.target.value ? 'Repeat task' : 'Stop repeating', { repeat: e.target.value ? { every: r?.every || 1, unit: e.target.value } : null }) },
+    [['', 'Does not repeat'], ['day', 'Day(s)'], ['week', 'Week(s)'], ['month', 'Month(s)']].map(([v, label]) => h('option', { value: v, selected: (r?.unit || '') === v }, label)));
+  return field('Repeats', h('div', { class: 'repeat-control' }, r ? h('span', { class: 'muted' }, 'Every') : null, r ? every : null, unit), {
+    id: 'd-repeat',
+    hint: r ? `${fmtRepeat(r)}. When you mark it done, the next one is created ${r.every === 1 ? `one ${r.unit}` : `${r.every} ${r.unit}s`} after this one’s dates (skipping any already past), with its checklist cleared.` : 'For routine work: the next one is created when you mark this done.',
+  });
+}
+
+function checklist(t) {
+  const steps = t.checklist;
+  const add = () => {
+    if (!input.value.trim()) { input.focus(); return; }
+    ui.drawer.focusField = 'step-new';
+    act('Add step', dd => addStep(dd, t.id, input.value));
+  };
+  const input = h('input', { id: 'd-step-new', placeholder: 'Add a step', maxlength: 500, autocomplete: 'off', onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); add(); } } });
+  const done = steps.filter(c => c.done).length;
+  return h('div', { class: 'field' }, h('label', { for: 'd-step-new' }, steps.length ? `Checklist · ${done} of ${steps.length} done` : 'Checklist'),
+    steps.length ? h('ul', { class: 'checklist' }, steps.map((c, i) => h('li', { class: c.done ? 'is-done' : null },
+      h('input', { type: 'checkbox', checked: c.done, 'aria-label': `Step done: ${c.text}`, onchange: e => act(e.target.checked ? 'Tick step' : 'Untick step', dd => patchStep(dd, t.id, c.id, { done: e.target.checked })) }),
+      liveText(`d-step-${c.id}`, c.text, value => act('Edit step', dd => patchStep(dd, t.id, c.id, { text: value.slice(0, 500) }), { key: `step:${c.id}`, quiet: true }), { 'aria-label': `Step ${i + 1}`, maxlength: 500 }),
+      iconBtn('left', 'Move up', () => act('Reorder steps', dd => moveStep(dd, t.id, c.id, -1)), { class: 'icon-btn sm up', disabled: i === 0 || null }),
+      iconBtn('x', `Remove step ${c.text}`, () => act('Remove step', dd => removeStep(dd, t.id, c.id)), { class: 'icon-btn sm' })))) : null,
+    h('div', { class: 'phase-add-control' }, input, btn('Add', add, { kind: 'sm', iconName: 'plus' })),
+    h('p', { class: 'field-hint' }, 'Small steps inside this task. They have no dates or effort of their own and never block completing the task.'));
 }
 
 function jobEditor(job) {
