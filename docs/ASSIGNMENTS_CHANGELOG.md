@@ -38,3 +38,9 @@
 - Write access is requested when a file is opened. The recovery copy is flushed on pagehide and when the window is hidden.
 - Launchers switch to Chrome when an Edge `ClearBrowsingDataOnExit` policy would wipe the recovery copy on every exit.
 - Validation: 40/40 unit tests and 41/41 real-browser checks passed, including the relaunch-restore check.
+
+## Release — v3.2.2
+
+- Closing warns while a linked file lacks the latest edits (e.g. waiting on Reconnect), even when the recovery copy holds them. An up-to-date file closes quietly.
+- The e2e harness accepts leave prompts. The guide scroll check waits for the pane to move before treating the scroll as settled.
+- Validation: 41/41 unit tests. Browser checks pass apart from an existing intermittent guide-scroll failure in headless Edge, which also occurs without this change.
