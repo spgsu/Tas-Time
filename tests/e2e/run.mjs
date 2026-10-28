@@ -881,6 +881,86 @@ try {
     assert.equal(Object.values(book.weeks).find(w => w.commitment).commitment.items.length, 2);
   });
 
+  // A file on a shared disk whose timestamp moves on every write, like a real file system.
+  const SHARED_FS = `(() => {
+    window.__disk = { raw: '', modified: 1000 };
+    const name = 'shared.json';
+    window.showSaveFilePicker = async () => ({ name,
+      queryPermission: async () => 'granted', requestPermission: async () => 'granted',
+      getFile: async () => ({ name, lastModified: window.__disk.modified, text: async () => window.__disk.raw }),
+      createWritable: async () => { let buf = ''; return { write: async s => { buf += s; }, close: async () => { window.__disk.raw = buf; window.__disk.modified += 10; } }; } });
+    return true;
+  })()`;
+  const editDisk = name => ev(`(() => { const b = JSON.parse(window.__disk.raw); b.name = ${JSON.stringify(name)}; window.__disk.raw = JSON.stringify(b); window.__disk.modified += 1000; return true; })()`);
+  const diskBook = async () => JSON.parse(await ev('window.__disk.raw'));
+  await check('hardening: a file saved elsewhere is never overwritten; choosing its version resumes autosave', async () => {
+    await fileMenu('New book');
+    await ev(SHARED_FS);
+    await quickAdd('Shared task @today');
+    await fileMenu('Save as…');
+    await page.wait(300);
+    assert.equal((await diskBook()).items.length, 1);
+    await editDisk('Saved on the other PC');
+    await quickAdd('Local task @today');
+    await page.wait(1700);
+    assert.match(await text('#file-status .status'), /shared\.json changed elsewhere/);
+    assert.equal((await diskBook()).name, 'Saved on the other PC', 'autosave did not overwrite');
+    assert.equal((await diskBook()).items.length, 1);
+    await page.click('#file-status .status');
+    await page.wait(150);
+    assert.match(await text('dialog.modal'), /changed elsewhere/);
+    await page.click('#conflict-file');
+    await page.wait(400);
+    assert.equal(await text('.book-name'), 'Saved on the other PC');
+    assert.match(await text('#file-status .status'), /Saved · shared\.json/);
+    await quickAdd('After choosing');
+    await page.wait(1700);
+    assert.deepEqual([(await diskBook()).name, (await diskBook()).items.map(i => i.title)], ['Saved on the other PC', ['Shared task', 'After choosing']]);
+  });
+
+  await check('hardening: coming back to the window picks up a newer file when nothing is unsaved', async () => {
+    await editDisk('Renamed while away');
+    await ev(`document.dispatchEvent(new Event('visibilitychange')); true`);
+    await page.wait(400);
+    assert.equal(await text('.book-name'), 'Renamed while away');
+    assert.match(await toastText(), /Loaded the newer version of shared\.json/);
+    await ev(STUB_FS);
+  });
+
+  await check('hardening: hostile text in titles and log entries stays text', async () => {
+    const payload = '<img src=x onerror="window.__pwned=1"><script>window.__pwned=2</script>';
+    await quickAdd(`${payload} @today`);
+    await nav(1);
+    assert.equal(await count('img[onerror], #main script'), 0);
+    assert.ok((await text('.today-main')).includes('<img src=x onerror='), 'shown literally');
+    await nav(7);
+    await tab('Ball in court');
+    await page.click('#log-new');
+    await page.wait(150);
+    await page.type(payload);
+    await page.key('Escape', { keyCode: 27 });
+    await page.wait(150);
+    assert.equal(await count('img[onerror], #main script'), 0);
+    assert.equal(await ev('window.__pwned ?? null'), null);
+  });
+
+  await check('hardening: a drawing error in one view shows a recovery panel instead of a blank app', async () => {
+    await tab('Lookahead');
+    await ev(`window.__flatMap = Array.prototype.flatMap; Array.prototype.flatMap = function () { throw new Error('injected failure'); }; true`);
+    await nav(1); await nav(7);
+    const panel = await text('#main [role=alert]');
+    await ev('Array.prototype.flatMap = window.__flatMap; true');
+    assert.match(panel, /Something went wrong drawing the lookahead view/);
+    assert.match(panel, /injected failure/);
+    assert.ok(await count('.nav-item') === 7, 'the rest of the app still works');
+    await page.clickText('#main [role=alert] .btn', 'Go to Today');
+    assert.match(await ev('document.querySelector(".nav-item.on").textContent'), /Today/);
+    await nav(7);
+    assert.equal(await count('#main [role=alert]'), 0, 'the view draws again once the fault is gone');
+    // The injected failure is expected in the console; any other error still fails the next check.
+    for (let i = page.errors.length - 1; i >= 0; i--) if (/injected failure/.test(page.errors[i])) page.errors.splice(i, 1);
+  });
+
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));
 
   // Visual checks at other sizes and themes.

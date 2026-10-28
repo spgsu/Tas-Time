@@ -841,3 +841,5 @@ h1, h2, h3, p { margin: 0; }
   .log-lines, .lookahead-row .field-hint { margin-left: 0; }
   .reason-row { grid-template-columns: 1fr 60px 28px; }
 }
+.conflict-choices { display: grid; gap: 14px; margin-top: 16px; }
+.conflict-choices .field-hint { margin-top: 4px; }

@@ -9,11 +9,17 @@ const FULL_WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', '
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// Validation checks every date in the book on every edit; a book reuses few distinct dates.
+const knownDates = new Set();
+
 export function isIsoDate(value) {
+  if (knownDates.has(value)) return true;
   if (typeof value !== 'string' || !ISO_RE.test(value)) return false;
   const [y, m, d] = value.split('-').map(Number);
   if (y < 1900 || y > 2200) return false;
-  return new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10) === value;
+  const ok = new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10) === value;
+  if (ok && knownDates.size < 100000) knownDates.add(value);
+  return ok;
 }
 
 export function todayIso(now = new Date()) {
