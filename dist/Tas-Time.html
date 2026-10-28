@@ -2473,10 +2473,13 @@ function clearRecovery() {
   try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
 }
 
-/** Closing is safe only when the current edits reached a file or recovery storage. */
+/**
+ * Closing is safe only when the current edits reached a file or recovery storage.
+ * A linked file that is behind (e.g. waiting on Reconnect) also warns, so it never goes stale unnoticed.
+ */
 function beforeUnload(event) {
   writeRecovery.flush();
-  if (store.dirty && (!prefs().recovery || recoveryRevision !== store.revision)) {
+  if (store.dirty && (file.handle || !prefs().recovery || recoveryRevision !== store.revision)) {
     event.preventDefault(); event.returnValue = '';
   }
 }

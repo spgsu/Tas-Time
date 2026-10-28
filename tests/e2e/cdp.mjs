@@ -35,9 +35,15 @@ export async function launch({ width = 1440, height = 900 } = {}) {
   let seq = 0;
   const pending = new Map();
   const errors = [];
+  const leaveWarnings = [];
   ws.onmessage = e => {
     const m = JSON.parse(e.data);
     if (m.id && pending.has(m.id)) { pending.get(m.id)(m); pending.delete(m.id); return; }
+    // A "Leave site?" prompt blocks the page until answered: record it and leave, as a user closing would.
+    if (m.method === 'Page.javascriptDialogOpening' && m.params.type === 'beforeunload') {
+      leaveWarnings.push(m.params.url);
+      send('Page.handleJavaScriptDialog', { accept: true }).catch(() => {});
+    }
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text);
     if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value ?? a.description).join(' '));
   };
@@ -51,6 +57,7 @@ export async function launch({ width = 1440, height = 900 } = {}) {
 
   const page = {
     errors,
+    leaveWarnings,
     send,
     async size(w, h) { await send('Emulation.setDeviceMetricsOverride', { width: w, height: h, deviceScaleFactor: 1, mobile: false }); },
     async goto(url) { await send('Page.navigate', { url }); await wait(900); },
