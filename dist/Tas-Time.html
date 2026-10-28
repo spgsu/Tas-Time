@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="generator" content="Tas-Time 3.2.0">
+<meta name="generator" content="Tas-Time 3.2.1">
 <meta name="copyright" content="© 2026 Selami Pazarbasi. MIT License.">
 <title>Tas-Time</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY292ZXIiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzM5ODQ2NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE4NGMzYiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InBhcGVyIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZkZjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlOGVmZGYiLz48L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSIyMjQiIGhlaWdodD0iMjI0IiByeD0iNTIiIGZpbGw9InVybCgjY292ZXIpIi8+CiAgPHJlY3QgeD0iNjIiIHk9IjUxIiB3aWR0aD0iMTM5IiBoZWlnaHQ9IjE2NCIgcng9IjE3IiBmaWxsPSIjMTAzZTMxIiBvcGFjaXR5PSIuMyIvPgogIDxyZWN0IHg9IjU2IiB5PSI0NCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSIxNjQiIHJ4PSIxNyIgZmlsbD0idXJsKCNwYXBlcikiLz4KICA8cGF0aCBkPSJNNzkgNDR2MTY0IiBzdHJva2U9IiNkMWRkYzgiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik01MSA3NmgxNm0tMTYgMzZoMTZtLTE2IDM2aDE2bS0xNiAzNmgxNiIgc3Ryb2tlPSIjYWNkMGI1IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9Ijk2IiB5PSI3NiIgd2lkdGg9IjU5IiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iIzM0N2E1OCIvPgogIDxyZWN0IHg9IjExMiIgeT0iMTExIiB3aWR0aD0iNjQiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjMzQ3YTU4Ii8+CiAgPHJlY3QgeD0iMTMyIiB5PSIxNDYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIxNCIgcng9IjciIGZpbGw9IiMzNDdhNTgiLz4KICA8Y2lyY2xlIGN4PSIxNzgiIGN5PSIxOTAiIHI9IjM1IiBmaWxsPSIjZGJhNTRhIi8+CiAgPHBhdGggZD0iTTE3OCAxNzB2MjFsMTMgOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZGY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K">
@@ -1383,7 +1383,7 @@ const VIEWS = [
 
 const store = createStore(newBook());
 
-const ui = {
+function defaultUi() { return {
   view: 'today',
   focus: '',            // job id the views are narrowed to
   week: mondayOf(todayIso()),
@@ -1404,7 +1404,47 @@ const ui = {
   assignmentWeek: mondayOf(todayIso()),
   assignmentFiltersOpen: false,
   assignments: { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' },
-};
+}; }
+
+const ui = defaultUi();
+
+/** JSON-safe view state, stored alongside the book so selections never cross books. */
+function sessionView() {
+  const { addingIn, drawer, collapsedPhases, ...view } = ui;
+  return { ...view, drawer: drawer ? { type: drawer.type, id: drawer.id } : null, collapsedPhases: [...collapsedPhases] };
+}
+
+/** Old or damaged recovery records fall back to valid defaults. */
+function restoreView(saved) {
+  Object.assign(ui, defaultUi());
+  if (!saved || typeof saved !== 'object') return;
+  const choose = (key, choices) => { if (choices.includes(saved[key])) ui[key] = saved[key]; };
+  choose('view', VIEWS.map(v => v.id));
+  choose('notesPage', NOTE_PAGES.map(p => p[0]));
+  choose('planRange', ['6w', '3m', 'all']);
+  for (const key of ['planShowDone', 'planShowArchived', 'boardAllDone', 'planMobileTimeline', 'assignmentFiltersOpen']) {
+    if (typeof saved[key] === 'boolean') ui[key] = saved[key];
+  }
+  for (const key of ['week', 'assignmentWeek']) if (isIsoDate(saved[key])) ui[key] = mondayOf(saved[key]);
+  const jobIds = store.book.jobs.map(j => j.id);
+  for (const key of ['focus', 'notesJob', 'quickJob']) choose(key, jobIds);
+  const peopleIds = store.book.people.map(p => p.id);
+  choose('workPerson', [...peopleIds, 'all', 'unassigned']);
+  choose('quickAssignee', [...peopleIds, 'unassigned']);
+  choose('quickPhase', store.book.phases.filter(p => p.jobId === ui.quickJob).map(p => p.id));
+  if (Array.isArray(saved.collapsedPhases)) ui.collapsedPhases = new Set(saved.collapsedPhases.filter(k => typeof k === 'string'));
+  const drawer = saved.drawer;
+  if (drawer && (drawer.type === 'job' ? jobIds.includes(drawer.id) : drawer.type === 'item' && store.book.items.some(t => t.id === drawer.id))) {
+    ui.drawer = { type: drawer.type, id: drawer.id };
+  }
+  const filters = saved.assignments;
+  if (filters && typeof filters === 'object') {
+    const choices = { person: ['all', 'unassigned', ...peopleIds], status: ['all', 'open', 'todo', 'doing', 'blocked', 'done', 'late'], period: ['all', 'week', 'unscheduled'], group: ['job', 'person', 'status', 'week'] };
+    for (const [key, values] of Object.entries(choices)) if (values.includes(filters[key])) ui.assignments[key] = filters[key];
+    if (typeof filters.paused === 'boolean') ui.assignments.paused = filters.paused;
+    if (typeof filters.search === 'string') ui.assignments.search = filters.search;
+  }
+}
 
 function today() { return todayIso(); }
 
@@ -1456,7 +1496,7 @@ function keys(combo) {
 }
 
 /** Replaced with package.json's version by the build. */
-const APP_VERSION = '3.2.0';
+const APP_VERSION = '3.2.1';
 
 // ── ui/dom.js ──
 // Tiny DOM builder. User text only ever becomes text nodes or attribute values,
@@ -2345,6 +2385,7 @@ async function openFile() {
       const [handle] = await window.showOpenFilePicker({ types: PICKER_TYPES, multiple: false });
       const f = await handle.getFile();
       await loadText(await f.text(), f.name, handle);
+      if (file.handle === handle) await grantWrite(handle);
     } catch (error) {
       if (error.name !== 'AbortError') notify(`Could not open: ${error.message}`, { kind: 'error' });
     }
@@ -2356,6 +2397,18 @@ async function openFile() {
     if (f) { try { await loadText(await f.text(), f.name, null); } catch (error) { notify(`Could not open: ${error.message}`, { kind: 'error' }); } }
   });
   input.click();
+}
+
+/**
+ * The open picker grants read access only. Ask for write access while the click that opened
+ * the file still counts, so autosave works at once instead of stopping at Reconnect.
+ */
+async function grantWrite(handle) {
+  const mine = session;
+  const granted = await ensurePermission(handle, true).catch(() => false);
+  if (granted || mine !== session || file.handle !== handle) return;
+  file.state = 'reconnect';
+  rerender('status');
 }
 
 async function loadText(text, name, handle) {
@@ -2394,11 +2447,7 @@ async function loadExample(today) {
 function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; }
 
 function resetView() {
-  ui.focus = ''; ui.drawer = null; ui.notesJob = ''; ui.week = mondayOf(todayIso());
-  ui.quickJob = ''; ui.quickPhase = ''; ui.addingIn = ''; ui.collapsedPhases.clear();
-  ui.workPerson = ''; ui.assignments = { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' }; ui.assignmentWeek = mondayOf(todayIso());
-  ui.assignmentFiltersOpen = false;
-  ui.quickAssignee = '';
+  restoreView(null);
 }
 
 // ── Recovery copy ──
@@ -2409,7 +2458,7 @@ let recoveryFailed = false;
 const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
-    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book }));
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book, view: sessionView() }));
     recoveryRevision = store.revision;
     recoveryFailed = false;
   } catch {
@@ -2440,6 +2489,7 @@ async function restoreSession() {
   let book; let upgradedFrom;
   try { ({ book, upgradedFrom } = decodeBook(JSON.stringify(saved.book))); } catch { return false; }
   store.replace(book, { dirty: !!saved.dirty || !!upgradedFrom });
+  restoreView(saved.view);
   file.name = saved.fileName || '';
   if (saved.dirty) file.restoredAt = new Date(saved.at);
   if (upgradedFrom) {
@@ -4063,7 +4113,7 @@ async function start() {
   initToasts();
   initQuickAdd();
   initKeys();
-  onRender(renderShell);
+  onRender(scope => { renderShell(scope); writeRecovery(); });
   store.subscribe(reason => {
     // Quiet commits come from text fields being typed in: refresh only the chrome so the caret stays put.
     if (reason === 'quiet' || reason === 'saved') renderStatus(); else renderShell();
@@ -4075,6 +4125,10 @@ async function start() {
 }
 
 window.addEventListener('beforeunload', beforeUnload);
+window.addEventListener('pagehide', () => writeRecovery.flush());
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') writeRecovery.flush();
+});
 
 start();
 
