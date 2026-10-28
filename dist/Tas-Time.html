@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="generator" content="Tas-Time 3.3.0">
+<meta name="generator" content="Tas-Time 3.4.0">
 <meta name="copyright" content="© 2026 Selami Pazarbasi. MIT License.">
 <title>Tas-Time</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY292ZXIiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzM5ODQ2NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE4NGMzYiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InBhcGVyIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZkZjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlOGVmZGYiLz48L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSIyMjQiIGhlaWdodD0iMjI0IiByeD0iNTIiIGZpbGw9InVybCgjY292ZXIpIi8+CiAgPHJlY3QgeD0iNjIiIHk9IjUxIiB3aWR0aD0iMTM5IiBoZWlnaHQ9IjE2NCIgcng9IjE3IiBmaWxsPSIjMTAzZTMxIiBvcGFjaXR5PSIuMyIvPgogIDxyZWN0IHg9IjU2IiB5PSI0NCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSIxNjQiIHJ4PSIxNyIgZmlsbD0idXJsKCNwYXBlcikiLz4KICA8cGF0aCBkPSJNNzkgNDR2MTY0IiBzdHJva2U9IiNkMWRkYzgiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik01MSA3NmgxNm0tMTYgMzZoMTZtLTE2IDM2aDE2bS0xNiAzNmgxNiIgc3Ryb2tlPSIjYWNkMGI1IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9Ijk2IiB5PSI3NiIgd2lkdGg9IjU5IiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iIzM0N2E1OCIvPgogIDxyZWN0IHg9IjExMiIgeT0iMTExIiB3aWR0aD0iNjQiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjMzQ3YTU4Ii8+CiAgPHJlY3QgeD0iMTMyIiB5PSIxNDYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIxNCIgcng9IjciIGZpbGw9IiMzNDdhNTgiLz4KICA8Y2lyY2xlIGN4PSIxNzgiIGN5PSIxOTAiIHI9IjM1IiBmaWxsPSIjZGJhNTRhIi8+CiAgPHBhdGggZD0iTTE3OCAxNzB2MjFsMTMgOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZGY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K">
@@ -801,6 +801,59 @@ h1, h2, h3, p { margin: 0; }
   .assignments .row-title { color: #000; }
 }
 
+/* ── Lookahead (Last Planner) ── */
+.lookahead .panel-tabs { margin-bottom: 16px; padding: 0; }
+.lookahead .panel-tabs .badge { font-size: 11px; padding: 0 6px; border-radius: 9px; background: var(--surface-2); color: var(--ink-2); }
+.lookahead-intro { margin: 0 0 12px; max-width: 80ch; }
+.lookahead-summary { margin-bottom: 16px; }
+.lookahead-summary .danger, .ball-group .danger { color: var(--danger); font-weight: 600; }
+.lookahead-week, .ball-group, .ppc-week { margin-bottom: 14px; }
+.lookahead-row, .ball-entry, .ppc-miss { min-width: 0; }
+.lookahead-row + .lookahead-row { border-top: 1px solid var(--line); }
+.lookahead-row .field-hint { margin: -4px 0 6px 38px; }
+.log-lines { display: grid; gap: 4px; margin: 0 0 8px 38px; }
+.ball-group .log-lines { margin-left: 0; }
+.log-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 5px 8px; border-radius: 6px; background: var(--surface-2); font-size: 13px; }
+.log-line.is-cleared .log-subject { color: var(--muted); text-decoration: line-through; }
+.log-number { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.log-subject { color: var(--ink); text-align: left; flex: 1; min-width: 140px; }
+.ball-entry + .ball-entry { margin-top: 6px; }
+.ball-entry .field-hint { margin: 2px 0 0 8px; }
+.ppc-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.ppc-stat .ppc-number { font: 600 34px/1.1 var(--font-display); margin: 4px 0; font-variant-numeric: tabular-nums; }
+.ppc-stat .btn { margin-top: 8px; }
+.ppc-top > .panel { margin: 0; }
+.ppc-chart { display: flex; align-items: stretch; gap: 2px; height: 200px; overflow-x: auto; overflow-y: hidden; }
+.ppc-col { flex: 1 0 32px; max-width: 56px; display: grid; grid-template-rows: 18px 1fr 22px; justify-items: stretch; }
+.ppc-value { font-size: 12px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; text-align: center; }
+.ppc-track { display: flex; align-items: flex-end; justify-content: center; padding: 0 4px; border-bottom: 1px solid var(--line-strong); }
+.ppc-bar { display: block; width: 100%; max-width: 28px; min-height: 2px; background: var(--accent); border-radius: 4px 4px 0 0; }
+.ppc-col.is-open .ppc-bar { background: var(--accent-soft); outline: 1px dashed var(--accent); outline-offset: -1px; }
+.ppc-col:hover .ppc-bar { filter: brightness(1.1); }
+.ppc-label { font-size: 11px; color: var(--muted); white-space: nowrap; text-align: center; padding-top: 4px; }
+.reason-bars { display: grid; gap: 6px; }
+.reason-row { display: grid; grid-template-columns: minmax(140px, 260px) 1fr 32px; align-items: center; gap: 10px; font-size: 13px; }
+.reason-track { height: 10px; }
+.reason-track span { display: block; height: 100%; min-width: 2px; background: var(--accent); border-radius: 0 4px 4px 0; }
+.reason-row strong { text-align: right; font-variant-numeric: tabular-nums; }
+.ppc-week summary { cursor: pointer; }
+.ppc-week[open] summary { margin-bottom: 8px; }
+.ppc-miss { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ppc-miss .row-item { flex: 1; min-width: 240px; }
+.commit-status { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; grid-column: 1 / -1; font-size: 13px; }
+@media print {
+  .lookahead .lookahead-row .row-actions { display: flex !important; opacity: 1; }
+  .lookahead .row-actions .btn, .lookahead .log-line .btn, .ppc-week select { display: none !important; }
+  .ppc-week { break-inside: avoid; }
+}
+@media (max-width: 760px) {
+  .lookahead .page-actions { flex-wrap: wrap; align-items: flex-end; }
+}
+@media (max-width: 640px) {
+  .log-lines, .lookahead-row .field-hint { margin-left: 0; }
+  .reason-row { grid-template-columns: 1fr 60px 28px; }
+}
+
 </style>
 </head>
 <body>
@@ -1134,6 +1187,26 @@ const COLORS = {
 const DEFAULT_CAPACITY = 10 * 60;
 const REPEAT_UNITS = { day: 'day', week: 'week', month: 'month' };
 const MAX_CHECKLIST = 100;
+/** Constraint log entry types: [label, number prefix]. */
+const LOG_TYPES = {
+  constraint: ['Constraint', 'C'],
+  rfi: ['RFI', 'RFI'],
+  submittal: ['Submittal', 'SUB'],
+  approval: ['Approval', 'APP'],
+  info: ['Information', 'INF'],
+};
+/** Why committed work was not done, after the Last Planner System's usual categories. */
+const MISS_REASONS = {
+  prereq: 'Prerequisite work not done',
+  info: 'Information or RFI not answered',
+  approval: 'Approval or submittal not returned',
+  change: 'Design or scope change',
+  people: 'People or capacity not available',
+  estimate: 'Took longer than planned',
+  priority: 'Priorities changed',
+  external: 'Owner, consultant or other outside party',
+  other: 'Other',
+};
 
 function uid() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -1141,7 +1214,15 @@ function uid() {
 
 function newBook(name = 'My planning book') {
   const self = { id: uid(), name: 'Me', capacity: DEFAULT_CAPACITY };
-  return { format: FORMAT, version: VERSION, id: uid(), name, people: [self], selfId: self.id, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
+  return { format: FORMAT, version: VERSION, id: uid(), name, people: [self], selfId: self.id, jobs: [], phases: [], items: [], log: [], weeks: {}, baselineDate: '' };
+}
+
+/** A constraint, RFI, submittal, approval or information request; open entries block their linked tasks. */
+function newLogEntry(fields = {}) {
+  return {
+    id: uid(), jobId: '', type: 'constraint', number: '', subject: '', ball: '', sent: '', due: '',
+    status: 'open', clearedOn: '', notes: '', itemIds: [], ...fields,
+  };
 }
 
 function newJob(fields = {}) {
@@ -1244,10 +1325,35 @@ function validate(book) {
     for (const d of t.deps) if (!items.has(d) || d === t.id) fail(`"${t.title}" depends on a missing item.`);
   }
   if (findCycle(book.items)) fail('These dependencies form a loop. Remove one of the links.');
+  if (!Array.isArray(book.log) || book.log.length > 20000) fail('The constraint log is invalid.');
+  const logIds = new Set();
+  for (const e of book.log) {
+    if (!e || typeof e !== 'object') fail('A constraint log entry is malformed.');
+    text(e.id, 'Log entry identifier', 200);
+    if (!e.id || logIds.has(e.id)) fail('Constraint log identifiers must be unique.');
+    logIds.add(e.id);
+    if (!jobs.has(e.jobId)) fail('A constraint log entry belongs to a missing job.');
+    if (!LOG_TYPES[e.type]) fail('Invalid constraint log type.');
+    text(e.number, 'Log number', 40); text(e.subject, 'Log subject', 500); text(e.ball, 'Ball in court', 200); text(e.notes, 'Log notes');
+    date(e.sent, 'Sent date'); date(e.due, 'Response due'); date(e.clearedOn, 'Cleared date');
+    if (!['open', 'cleared'].includes(e.status)) fail('Invalid constraint log status.');
+    if (!Array.isArray(e.itemIds) || new Set(e.itemIds).size !== e.itemIds.length) fail('Invalid constraint log links.');
+    for (const id of e.itemIds) if (!items.has(id)) fail(`Log entry “${e.subject}” links to a missing task.`);
+  }
   if (!book.weeks || typeof book.weeks !== 'object' || Array.isArray(book.weeks)) fail('Invalid weekly plans.');
   for (const [key, w] of Object.entries(book.weeks)) {
     if (!isIsoDate(key) || mondayOf(key) !== key) fail('Weekly plans must start on a Monday.');
     whole(w.capacity, 'Weekly capacity', 7 * 24 * 60); text(w.notes, 'Week notes');
+    if (w.commitment !== undefined) {
+      if (!w.commitment || typeof w.commitment !== 'object' || !Array.isArray(w.commitment.items)) fail('Invalid weekly commitment.');
+      date(w.commitment.at, 'Commitment date');
+      if (new Set(w.commitment.items).size !== w.commitment.items.length) fail('Invalid weekly commitment.');
+      for (const id of w.commitment.items) text(id, 'Committed task', 200);
+    }
+    if (w.misses !== undefined) {
+      if (!w.misses || typeof w.misses !== 'object' || Array.isArray(w.misses)) fail('Invalid reasons for missed work.');
+      for (const reason of Object.values(w.misses)) if (!MISS_REASONS[reason]) fail('Invalid reason for missed work.');
+    }
     if (w.people !== undefined) {
       if (!w.people || typeof w.people !== 'object' || Array.isArray(w.people)) fail('Invalid weekly person capacities.');
       for (const [id, minutes] of Object.entries(w.people)) {
@@ -1276,9 +1382,17 @@ function findCycle(items) {
 
 /**
  * Fields added after a book was saved start empty instead of failing validation:
- * notebook pages, and task repeats and checklists (3.3). Older 3.x apps ignore these fields.
+ * notebook pages, task repeats and checklists (3.3), and the constraint log (3.4). Older 3.x apps ignore these fields.
  */
 function addMissingFields(book) {
+  if (book && typeof book === 'object' && book.log === undefined) book.log = [];
+  // An older app may have deleted a linked task or job: drop the dangling link rather than refuse the book.
+  if (Array.isArray(book?.log) && Array.isArray(book.items) && Array.isArray(book.jobs)) {
+    const itemIds = new Set(book.items.map(t => t?.id));
+    const jobIds = new Set(book.jobs.map(j => j?.id));
+    book.log = book.log.filter(e => !e || typeof e !== 'object' || jobIds.has(e.jobId));
+    for (const e of book.log) if (e && Array.isArray(e.itemIds)) e.itemIds = e.itemIds.filter(id => itemIds.has(id));
+  }
   for (const j of Array.isArray(book.jobs) ? book.jobs : []) {
     if (j && j.notes && typeof j.notes === 'object') for (const [k] of NOTE_PAGES) if (j.notes[k] === undefined) j.notes[k] = '';
   }
@@ -1428,6 +1542,7 @@ const VIEWS = [
   { id: 'board', label: 'Board', key: '4', icon: 'board' },
   { id: 'notes', label: 'Notes', key: '5', icon: 'notes' },
   { id: 'assignments', label: 'Assignments', key: '6', icon: 'people' },
+  { id: 'lookahead', label: 'Lookahead', key: '7', icon: 'flag' },
 ];
 
 const store = createStore(newBook());
@@ -1436,7 +1551,7 @@ function defaultUi() { return {
   view: 'today',
   focus: '',            // job id the views are narrowed to
   week: mondayOf(todayIso()),
-  drawer: null,         // { type: 'item' | 'job', id }
+  drawer: null,         // { type: 'item' | 'job' | 'log', id }
   notesJob: '',
   notesPage: 'restart',
   planRange: '6w',      // '6w' | '3m' | 'all'
@@ -1453,6 +1568,9 @@ function defaultUi() { return {
   assignmentWeek: mondayOf(todayIso()),
   assignmentFiltersOpen: false,
   assignments: { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' },
+  lookaheadTab: 'lookahead', // 'lookahead' | 'ball' | 'ppc'
+  lookaheadWeeks: 6,
+  logShowCleared: false,
 }; }
 
 const ui = defaultUi();
@@ -1471,7 +1589,9 @@ function restoreView(saved) {
   choose('view', VIEWS.map(v => v.id));
   choose('notesPage', NOTE_PAGES.map(p => p[0]));
   choose('planRange', ['6w', '3m', 'all']);
-  for (const key of ['planShowDone', 'planShowArchived', 'boardAllDone', 'planMobileTimeline', 'assignmentFiltersOpen']) {
+  choose('lookaheadTab', ['lookahead', 'ball', 'ppc']);
+  choose('lookaheadWeeks', [3, 4, 6]);
+  for (const key of ['planShowDone', 'planShowArchived', 'boardAllDone', 'planMobileTimeline', 'assignmentFiltersOpen', 'logShowCleared']) {
     if (typeof saved[key] === 'boolean') ui[key] = saved[key];
   }
   for (const key of ['week', 'assignmentWeek']) if (isIsoDate(saved[key])) ui[key] = mondayOf(saved[key]);
@@ -1483,7 +1603,8 @@ function restoreView(saved) {
   choose('quickPhase', store.book.phases.filter(p => p.jobId === ui.quickJob).map(p => p.id));
   if (Array.isArray(saved.collapsedPhases)) ui.collapsedPhases = new Set(saved.collapsedPhases.filter(k => typeof k === 'string'));
   const drawer = saved.drawer;
-  if (drawer && (drawer.type === 'job' ? jobIds.includes(drawer.id) : drawer.type === 'item' && store.book.items.some(t => t.id === drawer.id))) {
+  const exists = { job: id => jobIds.includes(id), item: id => store.book.items.some(t => t.id === id), log: id => store.book.log.some(e => e.id === id) };
+  if (drawer && Object.hasOwn(exists, drawer.type) && exists[drawer.type](drawer.id)) {
     ui.drawer = { type: drawer.type, id: drawer.id };
   }
   const filters = saved.assignments;
@@ -1545,7 +1666,7 @@ function keys(combo) {
 }
 
 /** Replaced with package.json's version by the build. */
-const APP_VERSION = '3.3.0';
+const APP_VERSION = '3.4.0';
 
 // ── ui/dom.js ──
 // Tiny DOM builder. User text only ever becomes text nodes or attribute values,
@@ -1754,11 +1875,21 @@ function phasesOf(book, jobId) {
 
 function phaseTitle(book, id) { return book.phases.find(p => p.id === id)?.title || ''; }
 
-/** Reasons an item cannot progress: a recorded constraint or unfinished prerequisites. */
+/** Open constraint log entries (constraints, RFIs, submittals…) holding up this item. */
+function openLogFor(book, t) {
+  return book.log.filter(e => e.status === 'open' && e.itemIds.includes(t.id));
+}
+
+function logLabel(e) {
+  return `${e.number || LOG_TYPES[e.type][0]}: ${e.subject || 'Untitled'}${e.ball ? ` (ball in court: ${e.ball})` : ''}`;
+}
+
+/** Reasons an item cannot progress: a recorded constraint, open log entries or unfinished prerequisites. */
 function blockers(book, t) {
   if (t.status === 'done') return [];
   const out = [];
   if (t.blocker.trim()) out.push(t.blocker.trim());
+  for (const e of openLogFor(book, t)) out.push(logLabel(e));
   for (const id of t.deps) {
     const d = itemOf(book, id);
     if (d && d.status !== 'done') out.push(`Waiting for “${d.title}”`);
@@ -1778,7 +1909,7 @@ function waitingOn(book, t) {
  */
 function isBlocked(book, t, today) {
   if (t.status === 'done') return false;
-  if (t.blocker.trim()) return true;
+  if (t.blocker.trim() || openLogFor(book, t).length) return true;
   if (!waitingOn(book, t).length) return false;
   return t.status === 'doing' || (!!t.start && t.start <= today) || (!!t.plannedDay && t.plannedDay <= today);
 }
@@ -2014,6 +2145,7 @@ function shiftItem(book, id, days) {
 function deleteItem(book, id) {
   book.items = book.items.filter(t => t.id !== id);
   for (const t of book.items) t.deps = t.deps.filter(d => d !== id);
+  for (const e of book.log) e.itemIds = e.itemIds.filter(d => d !== id);
 }
 
 function duplicateItem(book, id) {
@@ -2062,6 +2194,8 @@ function deleteJob(book, id) {
   const gone = new Set(book.items.filter(t => t.jobId === id).map(t => t.id));
   book.items = book.items.filter(t => !gone.has(t.id));
   for (const t of book.items) t.deps = t.deps.filter(d => !gone.has(d));
+  book.log = book.log.filter(e => e.jobId !== id);
+  for (const e of book.log) e.itemIds = e.itemIds.filter(d => !gone.has(d));
   book.phases = book.phases.filter(p => p.jobId !== id);
   book.jobs = book.jobs.filter(j => j.id !== id);
 }
@@ -2323,6 +2457,201 @@ function withBackup(list, entry, { force = false, keep = BACKUP_KEEP } = {}) {
   return [entry, ...list].slice(0, keep);
 }
 
+// ── core/assignments.js ──
+/** A single selection drives the screen, printout and CSV. Paused jobs are opt-in. */
+function assignmentItems(book, today, { person = 'all', job = '', status = 'open', period = 'all', week = mondayOf(today), paused = false, search = '' } = {}) {
+  const needle = search.trim().toLowerCase();
+  return liveItems(book).filter(t => {
+    const j = jobOf(book, t.jobId);
+    if (!matchesPerson(t, person) || (job && t.jobId !== job) || (!paused && j.status !== 'active')) return false;
+    if (status === 'open' && t.status === 'done') return false;
+    if (status === 'late' && !isLate(t, today)) return false;
+    if (['todo', 'doing', 'blocked', 'done'].includes(status) && boardColumn(book, t, today) !== status) return false;
+    if (period === 'week' && (!t.plannedDay || t.plannedDay < week || t.plannedDay > addDays(week, 6))) return false;
+    if (period === 'unscheduled' && t.plannedDay) return false;
+    return !needle || [t.title, t.notes, j.title, phaseTitle(book, t.phaseId), personName(book, t.assigneeId)].join(' ').toLowerCase().includes(needle);
+  }).sort(byUrgency);
+}
+
+function assignmentGroups(book, items, group, today) {
+  const groups = new Map();
+  for (const t of items) {
+    const label = group === 'status' ? ({ todo: 'To do', doing: 'Doing', blocked: 'Blocked', done: 'Done' }[boardColumn(book, t, today)])
+      : group === 'week' ? (t.plannedDay ? `Week of ${mondayOf(t.plannedDay)}` : 'No work day')
+      : group === 'person' ? personName(book, t.assigneeId) : jobOf(book, t.jobId).title;
+    if (!groups.has(label)) groups.set(label, []);
+    groups.get(label).push(t);
+  }
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
+}
+
+/** Neutralize spreadsheet formula prefixes as well as quoting commas/newlines. */
+function assignmentCsvCell(value) {
+  let s = String(value ?? '');
+  if (/^[\s]*[=+@-]/.test(s) || /^[\t\r\n]/.test(s)) s = `'${s}`;
+  return `"${s.replaceAll('"', '""')}"`;
+}
+
+function assignmentsCsv(book, items, today) {
+  const rows = [['Assignee', 'Job', 'Job status', 'Phase', 'Task', 'Kind', 'Status', 'Work on', 'Forecast start', 'Forecast finish', 'Effort left (hours)', 'Blockers / prerequisites', 'Contacts', 'Notes']];
+  for (const t of items) rows.push([personName(book, t.assigneeId), jobOf(book, t.jobId).title, jobOf(book, t.jobId).status,
+    phaseTitle(book, t.phaseId), t.title, t.kind, boardColumn(book, t, today), t.plannedDay, t.start, t.finish,
+    t.status === 'done' ? 0 : t.effort / 60, blockers(book, t).join('; '), t.owner, t.notes]);
+  return '\uFEFF' + rows.map(row => row.map(assignmentCsvCell).join(',')).join('\r\n') + '\r\n';
+}
+
+// ── core/lastplanner.js ──
+// Last Planner: lookahead readiness, the constraint log (ball in court) and Percent Plan Complete.
+// Constraints, RFIs and submittals are log entries linked to tasks; an open entry blocks them.
+
+// ── Log entries ──
+
+/** Next free number for this job and type: RFI-001, RFI-002… */
+function nextNumber(book, jobId, type) {
+  const prefix = LOG_TYPES[type][1];
+  const re = new RegExp(`^${prefix}-(\\d+)$`);
+  const used = book.log.filter(e => e.jobId === jobId).map(e => Number(re.exec(e.number)?.[1] || 0));
+  return `${prefix}-${String(Math.max(0, ...used) + 1).padStart(3, '0')}`;
+}
+
+function addLogEntry(book, fields) {
+  const type = fields.type || 'constraint';
+  const entry = newLogEntry({ ...fields, type, number: fields.number ?? nextNumber(book, fields.jobId, type) });
+  book.log.push(entry);
+  return entry;
+}
+
+function logEntry(book, id) { return book.log.find(e => e.id === id); }
+
+function patchLogEntry(book, id, patch, today) {
+  const e = logEntry(book, id);
+  if (!e) throw new Error('That log entry no longer exists.');
+  // A new type gets that type's next number, unless the number was typed in another form by hand.
+  const automatic = new RegExp(`^${LOG_TYPES[e.type][1]}-\\d+$`).test(e.number) || !e.number;
+  if (patch.type && patch.type !== e.type && !('number' in patch) && automatic) {
+    patch = { ...patch, number: nextNumber(book, e.jobId, patch.type) };
+  }
+  Object.assign(e, patch);
+  if ('status' in patch) e.clearedOn = e.status === 'cleared' ? (e.clearedOn || today) : '';
+  return e;
+}
+
+function deleteLogEntry(book, id) { book.log = book.log.filter(e => e.id !== id); }
+
+function linkLog(book, id, itemId) {
+  const e = logEntry(book, id);
+  if (!e.itemIds.includes(itemId)) e.itemIds.push(itemId);
+}
+
+function unlinkLog(book, id, itemId) {
+  const e = logEntry(book, id);
+  e.itemIds = e.itemIds.filter(x => x !== itemId);
+}
+
+/** Organisations and people already used as ball in court, plus the book's people. */
+function parties(book) {
+  return [...new Set([...book.log.map(e => e.ball.trim()), ...book.people.map(p => p.name)].filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+function isOverdue(e, today) { return e.status === 'open' && !!e.due && e.due < today; }
+
+/** The day a task needs its constraints cleared: when work is meant to begin. */
+function neededBy(t) { return t.start || t.plannedDay || t.finish || ''; }
+
+/** Open entries grouped by who must act, most urgent group first. */
+function ballInCourt(book, today, { focus = '', showCleared = false } = {}) {
+  const entries = book.log.filter(e => (showCleared || e.status === 'open') && (!focus || e.jobId === focus) && !jobOf(book, e.jobId)?.archived);
+  const groups = new Map();
+  for (const e of entries) {
+    const key = e.ball.trim() || 'No one named';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(e);
+  }
+  const byDue = (a, b) => (a.status === b.status ? 0 : a.status === 'open' ? -1 : 1) || (a.due || '9999').localeCompare(b.due || '9999') || a.number.localeCompare(b.number);
+  return [...groups.entries()].map(([party, list]) => ({ party, entries: list.sort(byDue), overdue: list.filter(e => isOverdue(e, today)).length }))
+    .sort((a, b) => b.overdue - a.overdue || (a.entries[0].due || '9999').localeCompare(b.entries[0].due || '9999') || a.party.localeCompare(b.party));
+}
+
+function logCsv(book, entries, today) {
+  const rows = [['Number', 'Type', 'Job', 'Subject', 'Ball in court', 'Sent', 'Response due', 'Status', 'Cleared', 'Days overdue', 'Linked tasks', 'Notes']];
+  for (const e of entries) rows.push([e.number, LOG_TYPES[e.type][0], jobOf(book, e.jobId)?.title, e.subject, e.ball, e.sent, e.due,
+    e.status === 'open' ? 'Open' : 'Cleared', e.clearedOn, isOverdue(e, today) ? diffDays(e.due, today) : '',
+    e.itemIds.map(id => itemOf(book, id)?.title).filter(Boolean).join('; '), e.notes]);
+  return '﻿' + rows.map(row => row.map(assignmentCsvCell).join(',')).join('\r\n') + '\r\n';
+}
+
+// ── Lookahead ──
+
+/**
+ * Open tasks and milestones scheduled in the next `weeks` weeks, grouped by week. A task is placed by its
+ * work day, else its forecast start, else its finish; anything earlier and still open counts in this week.
+ * Ready means nothing stands in the way: no constraint text, open log entry or unfinished prerequisite.
+ */
+function lookahead(book, today, weeks = 6, { focus = '', person = 'all' } = {}) {
+  const first = mondayOf(today);
+  const end = addDays(first, weeks * 7 - 1);
+  const buckets = Array.from({ length: weeks }, (_, i) => ({ monday: addDays(first, i * 7), rows: [] }));
+  for (const t of activeItems(book)) {
+    if (t.status === 'done' || !matchesFocus(t, focus) || !matchesPerson(t, person)) continue;
+    const day = t.plannedDay || t.start || t.finish;
+    if (!day || day > end) continue;
+    const index = day < first ? 0 : Math.floor(diffDays(first, day) / 7);
+    const need = neededBy(t);
+    const constraints = openLogFor(book, t).map(e => ({ entry: e, overdue: isOverdue(e, today), tooLate: !!e.due && !!need && e.due > need }));
+    buckets[index].rows.push({ item: t, earlier: day < first, constraints, reasons: blockers(book, t), ready: !blockers(book, t).length });
+  }
+  for (const b of buckets) b.rows.sort((x, y) => Number(x.ready) - Number(y.ready) || byUrgency(x.item, y.item));
+  return buckets;
+}
+
+// ── Weekly commitment and Percent Plan Complete ──
+
+/** The tasks planned for the week, as a promise PPC is measured against. Replaces an earlier commitment. */
+function commitWeek(book, monday, today) {
+  const end = addDays(monday, 6);
+  const items = activeItems(book).filter(t => t.kind === 'task' && t.plannedDay >= monday && t.plannedDay <= end).map(t => t.id);
+  const self = book.people.find(p => p.id === book.selfId);
+  book.weeks[monday] = { capacity: self?.capacity ?? DEFAULT_CAPACITY, notes: '', ...book.weeks[monday], commitment: { at: today, items } };
+  return items;
+}
+
+function setMissReason(book, monday, itemId, reason) {
+  const week = book.weeks[monday];
+  const misses = { ...week.misses };
+  if (reason) misses[itemId] = reason; else delete misses[itemId];
+  week.misses = misses;
+}
+
+/**
+ * PPC for one committed week: committed tasks completed by the week's Sunday, out of those still in the book.
+ * Before the week ends the figure is provisional. Returns null for a week without a commitment.
+ */
+function ppcWeek(book, monday, today, { person = 'all' } = {}) {
+  const week = book.weeks[monday];
+  if (!week?.commitment) return null;
+  const end = addDays(monday, 6);
+  const committed = week.commitment.items.map(id => itemOf(book, id)).filter(t => t && matchesPerson(t, person));
+  const done = committed.filter(t => t.status === 'done' && t.doneOn && t.doneOn <= end);
+  const missed = committed.filter(t => !done.includes(t));
+  return {
+    monday, committedOn: week.commitment.at, committed, done, missed, closed: today > end,
+    ppc: committed.length ? Math.round((done.length / committed.length) * 100) : null,
+    reasons: Object.fromEntries(missed.map(t => [t.id, week.misses?.[t.id] || ''])),
+  };
+}
+
+/** Committed weeks up to this one, oldest first, with reason counts across closed weeks. */
+function ppcHistory(book, today, { person = 'all', limit = 12 } = {}) {
+  const current = mondayOf(today);
+  const weeks = Object.keys(book.weeks).filter(m => m <= current && book.weeks[m].commitment).sort().slice(-limit)
+    .map(m => ppcWeek(book, m, today, { person }));
+  const reasons = {};
+  for (const w of weeks) if (w.closed) for (const r of Object.values(w.reasons)) reasons[r || 'unrecorded'] = (reasons[r || 'unrecorded'] || 0) + 1;
+  const closed = weeks.filter(w => w.closed && w.ppc !== null);
+  const average = closed.length ? Math.round(closed.reduce((n, w) => n + w.ppc, 0) / closed.length) : null;
+  return { weeks, reasons, average };
+}
+
 // ── core/example.js ──
 // Synthetic example book, dated relative to today so it always looks current.
 
@@ -2345,6 +2674,7 @@ function exampleBook(today) {
   const justify = addItem(book, { jobId: phd.id, phaseId: p2.id, title: 'Write method justification', start: d(4), finish: d(11), effort: 240, deps: [compare.id] });
   const limits = addItem(book, { jobId: phd.id, phaseId: p2.id, title: 'Limitations table', start: d(4), finish: d(7), effort: 90, plannedDay: d(1), deps: [compare.id] });
   const draft = addItem(book, { jobId: phd.id, phaseId: p3.id, title: 'Full chapter draft', start: d(12), finish: d(24), effort: 600, deps: [justify.id, limits.id] });
+  addLogEntry(book, { jobId: phd.id, type: 'info', subject: 'Is a sample of 40 enough for method B?', ball: 'Supervisor', sent: d(-2), due: d(10), itemIds: [draft.id] });
   addItem(book, { jobId: phd.id, phaseId: p3.id, title: 'Supervisor accepts draft', kind: 'milestone', finish: d(31), deps: [draft.id], notes: 'Acceptance: supervisor confirms the method and its limitations are addressed.' });
 
   addItem(book, { jobId: home.id, phaseId: h1.id, title: 'Measure and photograph kitchen', start: d(-4), finish: d(-1), effort: 60, plannedDay: d(-1) });
@@ -2352,7 +2682,9 @@ function exampleBook(today) {
   const quotes = addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Get three quotes', start: d(3), finish: d(17), effort: 120, deps: [brief.id], blocker: '' });
   addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Second contractor site visit', start: d(5), finish: d(5), effort: 60, blocker: 'Contractor to confirm a date' });
   const choose = addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Contractor chosen', kind: 'milestone', finish: d(20), deps: [quotes.id] });
-  addItem(book, { jobId: home.id, phaseId: h3.id, title: 'Works on site', start: d(35), finish: d(48), effort: 120, deps: [choose.id] });
+  const works = addItem(book, { jobId: home.id, phaseId: h3.id, title: 'Works on site', start: d(35), finish: d(48), effort: 120, deps: [choose.id] });
+  addLogEntry(book, { jobId: home.id, type: 'approval', subject: 'Landlord consent for the works', ball: 'Landlord', sent: d(-12), due: d(-2), itemIds: [works.id] });
+  addLogEntry(book, { jobId: home.id, type: 'rfi', subject: 'Keep or move the gas supply?', ball: 'Me', sent: d(-6), due: d(-3), status: 'cleared', clearedOn: d(-3), itemIds: [brief.id] });
 
   captureBaseline(book, d(-7));
   // Show some slippage against the baseline.
@@ -3131,8 +3463,200 @@ function showPeople() {
   showModal('People & capacity', content);
 }
 
+// ── ui/views/welcome.js ──
+// First-run screen, shown whenever the open book has no jobs.
+
+function welcome() {
+  const step = (n, title, body) => h('li', null, h('span', { class: 'step-n' }, n), h('div', null, h('strong', null, title), h('p', null, body)));
+  return h('div', { class: 'view welcome' },
+    h('div', { class: 'welcome-card' },
+      h('p', { class: 'eyebrow' }, 'Tas-Time'),
+      h('h1', null, 'From the long view to today’s next step.'),
+      h('p', { class: 'lead' }, 'Plan jobs in phases like a construction programme, then commit to a realistic week and a focused day. Everything stays in one file that you control.'),
+      h('div', { class: 'welcome-actions' },
+        btn('Create your first job', () => createJob(), { kind: 'primary lg', iconName: 'plus' }),
+        btn('Open a planning book', openFile, { kind: 'lg', iconName: 'open' }),
+        btn('Explore an example', () => loadExample(today()), { kind: 'ghost lg' })),
+      h('p', { class: 'guide-link' }, 'Never planned your time before? ', guideButton(), ' first — about an hour, start to finish.'),
+      h('ol', { class: 'steps' },
+        step('1', 'Job → Phase → Task', 'A job is your project. Optional phases group its tasks. Example: Kitchen refit → Preparation → Measure kitchen. Use Add task to enter actual work.'),
+        step('2', 'Plan', 'Give tasks dates and prerequisites. Drag bars on the programme to re-forecast.'),
+        step('3', 'Week & Today', 'Set the hours you really have, then pick what fits. Leave a resume note when you stop.')),
+      h('p', { class: 'fine' }, 'Nothing leaves this computer. No account, server or internet connection is used.')));
+}
+
+// ── ui/views/lookahead.js ──
+// Lookahead (Last Planner): which upcoming work is ready, who holds the ball on each constraint,
+// and how reliably weekly commitments are kept (Percent Plan Complete).
+
+const TABS = [['lookahead', 'Lookahead'], ['ball', 'Ball in court'], ['ppc', 'PPC']];
+
+/** New log entry for a job, optionally holding up a task; opens it for editing. */
+function createLogEntry(jobId, itemId = '', type = 'constraint') {
+  const entry = act(itemId ? 'Add constraint' : 'New log entry', d => addLogEntry(d, { jobId, type, itemIds: itemId ? [itemId] : [] }));
+  if (entry) openDrawer('log', entry.id, 'subject');
+  return entry;
+}
+
+function setLogStatus(entry, status) {
+  return act(status === 'cleared' ? 'Clear constraint' : 'Reopen constraint', d => patchLogEntry(d, entry.id, { status }, today()));
+}
+
+function logDueChip(e, day) {
+  if (!e.due) return e.status === 'open' ? chip('No response date', 'muted') : null;
+  if (e.status !== 'open') return chip(`Cleared ${e.clearedOn ? fmtShort(e.clearedOn) : ''}`.trim(), 'muted');
+  return chip(`Response due ${relDay(e.due, day)}`, isOverdue(e, day) ? 'danger' : e.due <= addDays(day, 2) ? 'warn' : '', fmtDate(e.due));
+}
+
+function entryLine(e, day, { tooLate = false, showJob = false } = {}) {
+  const book = store.book;
+  return h('div', { class: ['log-line', e.status !== 'open' && 'is-cleared'] },
+    h('span', { class: 'log-number' }, e.number || LOG_TYPES[e.type][0]),
+    h('button', { class: 'link log-subject', onclick: () => openDrawer('log', e.id) }, e.subject || 'Untitled'),
+    showJob ? jobTag(jobOf(book, e.jobId)) : null,
+    h('span', { class: 'muted' }, LOG_TYPES[e.type][0]),
+    e.ball ? chip(`Ball: ${e.ball}`, 'accent', 'Ball in court: who has to act next') : chip('No one named', 'muted'),
+    logDueChip(e, day),
+    tooLate ? chip('Due after the work needs it', 'warn', 'The response is due later than this task is meant to start') : null,
+    btn(e.status === 'open' ? 'Cleared' : 'Reopen', () => setLogStatus(e, e.status === 'open' ? 'cleared' : 'open'), { kind: 'sm ghost', iconName: e.status === 'open' ? 'check' : 'undo', attrs: { 'aria-label': `${e.status === 'open' ? 'Mark cleared' : 'Reopen'}: ${e.number} ${e.subject}` } }));
+}
+
+function renderLookahead() {
+  const book = store.book;
+  if (!liveJobs(book).length) return welcome();
+  const tab = ui.lookaheadTab;
+  const openCount = book.log.filter(e => e.status === 'open' && (!ui.focus || e.jobId === ui.focus)).length;
+  const personId = workPersonId();
+  const actions = [];
+  if (tab !== 'ball') actions.push(personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'lookahead-person', label: 'Show work for' }));
+  if (tab === 'lookahead') actions.push(h('label', { class: 'person-filter' }, 'Weeks ahead', h('select', { id: 'lookahead-weeks', onchange: e => { ui.lookaheadWeeks = Number(e.target.value); rerender(); } },
+    [3, 4, 6].map(n => h('option', { value: n, selected: ui.lookaheadWeeks === n }, `${n} weeks`)))));
+  if (tab === 'ball') {
+    actions.push(h('label', { class: 'toggle' }, h('input', { id: 'log-show-cleared', type: 'checkbox', checked: ui.logShowCleared, onchange: e => { ui.logShowCleared = e.target.checked; rerender(); } }), 'Show cleared'),
+      btn('Export CSV', exportLog, { kind: 'sm' }),
+      btn('New entry', () => createLogEntry(ui.focus || liveJobs(book)[0].id), { kind: 'sm primary', iconName: 'plus', attrs: { id: 'log-new' } }));
+  }
+  actions.push(btn('Print', () => window.print(), { kind: 'sm', iconName: 'print' }));
+  const body = tab === 'ball' ? ballView() : tab === 'ppc' ? ppcView(personId) : lookaheadView(personId);
+  return h('div', { class: 'view lookahead' },
+    h('header', { class: 'page-head' },
+      h('div', null, h('p', { class: 'eyebrow' }, 'Last Planner'), h('h1', null, TABS.find(([k]) => k === tab)[1])),
+      h('div', { class: 'page-actions' }, actions)),
+    h('div', { class: 'tabs panel-tabs', role: 'tablist' }, TABS.map(([key, label]) => h('button', {
+      role: 'tab', 'aria-selected': String(tab === key), class: tab === key ? 'on' : null, onclick: () => { ui.lookaheadTab = key; rerender(); },
+    }, label, key === 'ball' && openCount ? h('span', { class: 'badge' }, String(openCount)) : null))),
+    body);
+}
+
+function lookaheadView(personId) {
+  const book = store.book;
+  const day = today();
+  const weeks = lookahead(book, day, ui.lookaheadWeeks, { focus: ui.focus, person: personId });
+  const rows = weeks.flatMap(w => w.rows);
+  const constrained = rows.filter(r => !r.ready);
+  const overdue = new Set(rows.flatMap(r => r.constraints.filter(c => c.overdue).map(c => c.entry.id))).size;
+  return h('div', null,
+    h('p', { class: 'hint lookahead-intro' }, 'Make work ready before it is due: each task needs its constraints cleared — answers, approvals, submittals, prerequisites — before its week arrives. Add a constraint to record what stands in the way and who has to act.'),
+    h('div', { class: 'panel lookahead-summary' },
+      `${rows.length} task${rows.length === 1 ? '' : 's'} in the next ${ui.lookaheadWeeks} weeks · `,
+      h('strong', null, `${rows.length - constrained.length} ready`), ` · ${constrained.length} constrained`,
+      overdue ? h('span', { class: 'danger' }, ` · ${overdue} constraint response${overdue === 1 ? '' : 's'} overdue`) : null),
+    weeks.map((w, i) => h('section', { class: 'panel lookahead-week' },
+      h('div', { class: 'panel-head' },
+        h('h2', null, i === 0 ? 'This week' : `Week of ${fmtShort(w.monday)}`),
+        h('span', { class: 'muted' }, `${fmtShort(w.monday)} – ${fmtShort(addDays(w.monday, 6))} · ${w.rows.filter(r => r.ready).length} of ${w.rows.length} ready`)),
+      w.rows.length ? h('div', { class: 'list' }, w.rows.map(r => h('div', { class: ['lookahead-row', r.ready ? 'is-ready' : 'is-constrained'], 'data-lookahead': r.item.id },
+        itemRow(r.item, { showPhase: true, actions: [
+          r.ready ? chip('Ready', 'accent') : null,
+          btn('Constraint', () => createLogEntry(r.item.jobId, r.item.id), { kind: 'sm ghost', iconName: 'plus', attrs: { 'aria-label': `Add constraint to ${r.item.title}` } })] }),
+        r.earlier ? h('p', { class: 'field-hint' }, 'Scheduled before this week and not finished.') : null,
+        r.constraints.length ? h('div', { class: 'log-lines' }, r.constraints.map(c => entryLine(c.entry, day, { tooLate: c.tooLate }))) : null)))
+        : h('p', { class: 'muted' }, 'Nothing scheduled.'))));
+}
+
+function ballView() {
+  const book = store.book;
+  const day = today();
+  const groups = ballInCourt(book, day, { focus: ui.focus, showCleared: ui.logShowCleared });
+  if (!groups.length) {
+    return emptyState(ui.logShowCleared ? 'No log entries yet' : 'Nothing waiting on anyone',
+      'Log constraints, RFIs, submittals, approvals and information requests. Link them to the tasks they hold up; those tasks stay blocked until the entry is cleared.',
+      btn('New entry', () => createLogEntry(ui.focus || liveJobs(book)[0].id), { kind: 'primary', iconName: 'plus' }));
+  }
+  return h('div', null, groups.map(g => h('section', { class: 'panel ball-group' },
+    h('div', { class: 'panel-head' }, h('h2', null, g.party),
+      h('span', { class: 'muted' }, `${g.entries.filter(e => e.status === 'open').length} open`), g.overdue ? h('span', { class: 'danger' }, ` · ${g.overdue} overdue`) : null),
+    h('div', { class: 'log-lines' }, g.entries.map(e => h('div', { class: 'ball-entry' },
+      entryLine(e, day, { showJob: !ui.focus }),
+      h('p', { class: 'field-hint' }, [e.sent ? `Sent ${fmtShort(e.sent)}` : '', e.itemIds.length ? `Holds up: ${e.itemIds.map(id => itemOf(book, id)?.title).filter(Boolean).join(', ')}` : 'Not linked to a task'].filter(Boolean).join(' · '))))))));
+}
+
+function exportLog() {
+  const book = store.book;
+  const entries = ballInCourt(book, today(), { focus: ui.focus, showCleared: ui.logShowCleared }).flatMap(g => g.entries);
+  const url = URL.createObjectURL(new Blob([logCsv(book, entries, today())], { type: 'text/csv;charset=utf-8' }));
+  const a = h('a', { href: url, download: `${book.name.replace(/[^a-z0-9]+/gi, '-')}-constraint-log.csv` });
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 60000);
+  notify(`Exported ${entries.length} log entr${entries.length === 1 ? 'y' : 'ies'}.`);
+}
+
+/** Commits the current week's plan; usable from Week and from the PPC tab. */
+function commitThisWeek(monday) {
+  const ids = act('Commit week', d => commitWeek(d, monday, today()));
+  if (ids) notify(`Committed ${ids.length} task${ids.length === 1 ? '' : 's'} for the week of ${fmtShort(monday)}. PPC is measured against this list.`);
+  return ids;
+}
+
+function ppcView(personId) {
+  const book = store.book;
+  const day = today();
+  const current = mondayOf(day);
+  const { weeks, reasons, average } = ppcHistory(book, day, { person: personId });
+  const now = ppcWeek(book, current, day, { person: personId });
+  const reasonRows = Object.entries(reasons).sort((a, b) => b[1] - a[1]);
+  const maxReason = Math.max(1, ...reasonRows.map(([, n]) => n));
+  const lastIndex = weeks.length - 1;
+
+  return h('div', null,
+    h('p', { class: 'hint lookahead-intro' }, 'Percent Plan Complete: of the tasks you committed to for a week, how many were done by its Sunday. Commit each week after planning it in Week; recording why work was missed shows what to fix.'),
+    h('div', { class: 'ppc-top' },
+      h('section', { class: 'panel ppc-stat' },
+        h('p', { class: 'eyebrow' }, 'This week'),
+        now ? [h('p', { class: 'ppc-number' }, now.ppc === null ? '—' : `${now.ppc}%`),
+          h('p', { class: 'muted' }, `${now.done.length} of ${now.committed.length} committed tasks done so far · committed ${fmtShort(now.committedOn)}`),
+          btn('Re-commit', () => commitThisWeek(current), { kind: 'sm ghost', title: 'Record the week’s current plan as the commitment' })]
+          : [h('p', { class: 'ppc-number muted' }, '—'), h('p', { class: 'muted' }, 'Not committed yet.'),
+            btn('Commit this week', () => commitThisWeek(current), { kind: 'sm primary', attrs: { id: 'ppc-commit' } })]),
+      h('section', { class: 'panel ppc-stat' },
+        h('p', { class: 'eyebrow' }, 'Average, finished weeks'),
+        h('p', { class: 'ppc-number' }, average === null ? '—' : `${average}%`),
+        h('p', { class: 'muted' }, `${weeks.filter(w => w.closed).length} finished week${weeks.filter(w => w.closed).length === 1 ? '' : 's'} with a commitment`))),
+    weeks.length ? h('section', { class: 'panel' },
+      h('div', { class: 'panel-head' }, h('h2', null, 'PPC by week'), h('span', { class: 'muted' }, 'Lighter bar: this week, still in progress')),
+      h('div', { class: 'ppc-chart', role: 'img', 'aria-label': `PPC by week: ${weeks.map(w => `${fmtShort(w.monday)} ${w.ppc ?? 0}%`).join(', ')}` },
+        weeks.map((w, i) => h('div', { class: ['ppc-col', !w.closed && 'is-open'], title: `Week of ${fmtShort(w.monday)}: ${w.ppc ?? 0}% (${w.done.length} of ${w.committed.length})${w.closed ? '' : ', in progress'}` },
+          h('span', { class: 'ppc-value' }, i === lastIndex ? `${w.ppc ?? 0}%` : ''),
+          h('div', { class: 'ppc-track' }, h('span', { class: 'ppc-bar', style: { height: `${w.ppc ?? 0}%` } })),
+          h('span', { class: 'ppc-label' }, fmtShort(w.monday)))))) : null,
+    reasonRows.length ? h('section', { class: 'panel' },
+      h('div', { class: 'panel-head' }, h('h2', null, 'Why committed work was missed'), h('span', { class: 'muted' }, 'Finished weeks shown above')),
+      h('div', { class: 'reason-bars' }, reasonRows.map(([key, n]) => h('div', { class: 'reason-row' },
+        h('span', null, MISS_REASONS[key] || 'No reason recorded'),
+        h('div', { class: 'reason-track' }, h('span', { style: { width: `${(n / maxReason) * 100}%` } })),
+        h('strong', null, String(n)))))) : null,
+    weeks.length ? [...weeks].reverse().map(w => h('details', { class: 'panel ppc-week', open: w.monday === current || (w.closed && w === weeks.filter(x => x.closed).at(-1)) || null },
+      h('summary', null, h('strong', null, `Week of ${fmtShort(w.monday)}`), ` · ${w.ppc ?? 0}% · ${w.done.length} of ${w.committed.length} done${w.closed ? '' : ' so far'}`),
+      w.missed.length ? h('div', { class: 'list' }, w.missed.map(t => h('div', { class: 'ppc-miss' },
+        itemRow(t, { showPhase: true }),
+        w.closed ? h('label', { class: 'person-filter' }, 'Reason', h('select', { 'aria-label': `Reason “${t.title}” was missed`, onchange: e => act('Record reason', d => setMissReason(d, w.monday, t.id, e.target.value)) },
+          h('option', { value: '' }, 'Choose a reason…'),
+          Object.entries(MISS_REASONS).map(([key, label]) => h('option', { value: key, selected: w.reasons[t.id] === key }, label)))) : null)))
+        : h('p', { class: 'muted' }, w.committed.length ? 'Every committed task was done.' : 'Nothing was committed.')))
+      : emptyState('No committed weeks yet', 'Plan this week in Week, then press Commit this week. PPC compares that list with what gets done.'));
+}
+
 // ── ui/drawer.js ──
-// Side panel editor for items and jobs. Every field saves as you go — there is no
+// Side panel editor for items, jobs and constraint log entries. Every field saves as you go — there is no
 // "Keep changes" step; undo (Ctrl+Z outside a text field) reverts mistakes.
 
 let typedSinceRender = false;
@@ -3157,10 +3681,10 @@ function renderDrawer() {
   typedSinceRender = false;
   const d = ui.drawer;
   if (!d) return null;
-  const record = d.type === 'item' ? itemOf(store.book, d.id) : jobOf(store.book, d.id);
+  const record = d.type === 'item' ? itemOf(store.book, d.id) : d.type === 'log' ? logEntry(store.book, d.id) : jobOf(store.book, d.id);
   if (!record) { ui.drawer = null; return null; }
-  const panel = h('aside', { class: 'drawer', id: 'drawer', 'data-record': d.id, 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
-    d.type === 'item' ? itemEditor(record) : jobEditor(record));
+  const panel = h('aside', { class: 'drawer', id: 'drawer', 'data-record': d.id, 'aria-label': { item: 'Edit task', log: 'Edit log entry', job: 'Edit job' }[d.type], tabindex: '-1' },
+    d.type === 'item' ? itemEditor(record) : d.type === 'log' ? logEditor(record) : jobEditor(record));
   // Text edits commit quietly (without rebuilding the page); refresh once focus leaves the field.
   panel.addEventListener('focusout', () => {
     if (typedSinceRender) {
@@ -3254,6 +3778,7 @@ function itemEditor(t) {
 
     field('Waiting on / constraint', liveText('d-blocker', t.blocker, typed('blocker', 'Edit constraint'), { multiline: true, rows: 1, placeholder: 'e.g. Supervisor feedback, access to the lab, a delivery…' }),
       { id: 'd-blocker', hint: 'Anything written here marks the task as blocked until you clear it.' }),
+    logSection(t),
 
     h('div', { class: 'field' }, h('label', { for: 'd-deps' }, 'Prerequisites'),
       t.deps.length ? h('ul', { class: 'deps' }, t.deps.map(id => {
@@ -3308,6 +3833,70 @@ function checklist(t) {
       iconBtn('x', `Remove step ${c.text}`, () => act('Remove step', dd => removeStep(dd, t.id, c.id)), { class: 'icon-btn sm' })))) : null,
     h('div', { class: 'phase-add-control' }, input, btn('Add', add, { kind: 'sm', iconName: 'plus' })),
     h('p', { class: 'field-hint' }, 'Small steps inside this task. They have no dates or effort of their own and never block completing the task.'));
+}
+
+/** Constraints, RFIs and submittals holding up this task, from the job's log. */
+function logSection(t) {
+  const book = store.book;
+  const linked = book.log.filter(e => e.itemIds.includes(t.id));
+  const others = book.log.filter(e => e.status === 'open' && !e.itemIds.includes(t.id) && e.jobId === t.jobId);
+  return h('div', { class: 'field' }, h('label', { for: 'd-log-link' }, 'Constraints & RFIs'),
+    linked.length ? h('ul', { class: 'deps' }, linked.map(e => h('li', { class: e.status === 'open' ? null : 'is-done' },
+      h('span', { class: ['tick-mini', e.status !== 'open' && 'on'] }, e.status !== 'open' ? icon('check', 12) : null),
+      h('button', { class: 'link', onclick: () => openDrawer('log', e.id) }, `${e.number} ${e.subject || 'Untitled'}`),
+      h('span', { class: isOverdue(e, today()) ? 'danger' : 'muted' }, [e.ball, e.due && e.status === 'open' ? `due ${fmtShort(e.due)}` : ''].filter(Boolean).join(' · ')),
+      iconBtn('x', `Unlink ${e.number}`, () => act('Unlink constraint', dd => unlinkLog(dd, e.id, t.id)), { class: 'icon-btn sm' })))) : null,
+    h('div', { class: 'phase-add-control' },
+      others.length ? h('select', { id: 'd-log-link', 'aria-label': 'Link an open log entry', onchange: e => { if (e.target.value) act('Link constraint', dd => linkLog(dd, e.target.value, t.id)); } },
+        h('option', { value: '' }, 'Link an open entry…'), others.map(e => h('option', { value: e.id }, `${e.number} ${e.subject}`))) : null,
+      btn('New constraint', () => createLogEntry(t.jobId, t.id), { kind: 'sm', iconName: 'plus', attrs: { id: others.length ? null : 'd-log-link' } })),
+    h('p', { class: 'field-hint' }, 'Logged constraints, RFIs and submittals with who has to act. The task is blocked while any is open. See them all in Lookahead → Ball in court.'));
+}
+
+function logEditor(e) {
+  const book = store.book;
+  const set = (label, patch) => act(label, dd => patchLogEntry(dd, e.id, patch, today()));
+  const typed = (key, label) => value => act(label, dd => patchLogEntry(dd, e.id, { [key]: value }, today()), { key: `log-${key}:${e.id}`, quiet: true });
+  const dateInput = (key, label) => h('input', { id: `d-${key}`, type: 'date', value: e[key], min: '1900-01-01', max: '2200-12-31', 'aria-label': label, onchange: ev => set('Change date', { [key]: ev.target.value }) });
+  const linked = e.itemIds.map(id => itemOf(book, id)).filter(Boolean);
+  const candidates = book.items.filter(x => !x.archived && x.status !== 'done' && !e.itemIds.includes(x.id));
+  const job = jobOf(book, e.jobId);
+  return [
+    h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
+      h('div', { class: 'drawer-crumbs' }, h('span', { class: 'dot' }), job.title, chip(LOG_TYPES[e.type][0], 'muted')),
+      h('div', { class: 'drawer-head-actions' },
+        iconBtn('trash', 'Delete entry', () => { if (confirm(`Delete ${e.number}? Linked tasks are no longer held up by it.`)) { act('Delete log entry', dd => deleteLogEntry(dd, e.id)); closeDrawer(); } }),
+        iconBtn('x', 'Close (Esc)', closeDrawer))),
+    liveText('d-subject', e.subject, typed('subject', 'Edit subject'), { class: 'drawer-title', 'aria-label': 'Subject', maxlength: 500, placeholder: 'What is needed, e.g. Confirm slab edge detail at grid C' }),
+    h('p', { class: 'field-hint' }, 'Changes save automatically. Open entries block their linked tasks until marked cleared.'),
+    h('div', { class: 'drawer-row' },
+      segmented([['open', 'Open'], ['cleared', 'Cleared']], e.status, st => setLogStatus(e, st), 'Status'),
+      e.clearedOn ? h('span', { class: 'muted' }, `Cleared ${fmtDate(e.clearedOn)}`) : null),
+    h('div', { class: 'fields two' },
+      field('Type', h('select', { id: 'd-type', onchange: ev => set('Change type', { type: ev.target.value }) },
+        Object.entries(LOG_TYPES).map(([key, [label]]) => h('option', { value: key, selected: key === e.type }, label))), { id: 'd-type' }),
+      field('Number', liveText('d-number', e.number, typed('number', 'Edit number'), { maxlength: 40 }), { id: 'd-number' })),
+    field('Ball in court', h('div', null,
+      liveText('d-ball', e.ball, typed('ball', 'Ball in court'), { maxlength: 200, list: 'd-ball-parties', placeholder: 'Who has to act next: Owner, MEP engineer, GC…', autocomplete: 'off' }),
+      h('datalist', { id: 'd-ball-parties' }, parties(book).map(p => h('option', { value: p })))), { id: 'd-ball', hint: 'Change it when the ball moves, e.g. a submittal returned for revision goes back to the contractor.' }),
+    h('div', { class: 'fields two' },
+      field('Sent / raised', dateInput('sent', 'Sent'), { id: 'd-sent' }),
+      field('Response due', dateInput('due', 'Response due'), { id: 'd-due', hint: e.due ? relDay(e.due) : 'When an answer is needed' })),
+    field('Job', h('select', { id: 'd-log-job', onchange: ev => set('Move entry to job', { jobId: ev.target.value }) },
+      liveJobs(book).map(j => h('option', { value: j.id, selected: j.id === e.jobId }, j.title))), { id: 'd-log-job' }),
+    h('div', { class: 'field' }, h('label', { for: 'd-log-items' }, 'Holds up these tasks'),
+      linked.length ? h('ul', { class: 'deps' }, linked.map(t => h('li', { class: t.status === 'done' ? 'is-done' : null },
+        h('button', { class: 'link', onclick: () => openDrawer('item', t.id) }, t.title),
+        h('span', { class: 'muted' }, t.start ? `starts ${fmtShort(t.start)}` : t.plannedDay ? `work on ${fmtShort(t.plannedDay)}` : ''),
+        iconBtn('x', `Unlink ${t.title}`, () => act('Unlink task', dd => unlinkLog(dd, e.id, t.id)), { class: 'icon-btn sm' })))) : null,
+      h('select', { id: 'd-log-items', 'aria-label': 'Link a task', onchange: ev => { if (ev.target.value) act('Link task', dd => linkLog(dd, e.id, ev.target.value)); } },
+        h('option', { value: '' }, 'Link a task…'),
+        liveJobs(book).map(j => {
+          const opts = candidates.filter(x => x.jobId === j.id);
+          return opts.length ? h('optgroup', { label: j.title }, opts.map(x => h('option', { value: x.id }, x.title))) : null;
+        }))),
+    field('Notes', liveText('d-log-notes', e.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: 'Question asked, answer received, references…' }), { id: 'd-log-notes' }),
+  ];
 }
 
 function jobEditor(job) {
@@ -3367,28 +3956,6 @@ function jobEditor(job) {
       h('div', { class: 'phase-add-control' }, newPhase, btn('Add phase', submitPhase, { kind: 'sm', iconName: 'plus' }))),
     h('p', { class: 'field-hint' }, `${NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length} of ${NOTE_PAGES.length} notebook pages written.`),
   ];
-}
-
-// ── ui/views/welcome.js ──
-// First-run screen, shown whenever the open book has no jobs.
-
-function welcome() {
-  const step = (n, title, body) => h('li', null, h('span', { class: 'step-n' }, n), h('div', null, h('strong', null, title), h('p', null, body)));
-  return h('div', { class: 'view welcome' },
-    h('div', { class: 'welcome-card' },
-      h('p', { class: 'eyebrow' }, 'Tas-Time'),
-      h('h1', null, 'From the long view to today’s next step.'),
-      h('p', { class: 'lead' }, 'Plan jobs in phases like a construction programme, then commit to a realistic week and a focused day. Everything stays in one file that you control.'),
-      h('div', { class: 'welcome-actions' },
-        btn('Create your first job', () => createJob(), { kind: 'primary lg', iconName: 'plus' }),
-        btn('Open a planning book', openFile, { kind: 'lg', iconName: 'open' }),
-        btn('Explore an example', () => loadExample(today()), { kind: 'ghost lg' })),
-      h('p', { class: 'guide-link' }, 'Never planned your time before? ', guideButton(), ' first — about an hour, start to finish.'),
-      h('ol', { class: 'steps' },
-        step('1', 'Job → Phase → Task', 'A job is your project. Optional phases group its tasks. Example: Kitchen refit → Preparation → Measure kitchen. Use Add task to enter actual work.'),
-        step('2', 'Plan', 'Give tasks dates and prerequisites. Drag bars on the programme to re-forecast.'),
-        step('3', 'Week & Today', 'Set the hours you really have, then pick what fits. Leave a resume note when you stop.')),
-      h('p', { class: 'fine' }, 'Nothing leaves this computer. No account, server or internet connection is used.')));
 }
 
 // ── ui/finishday.js ──
@@ -3676,6 +4243,15 @@ function renderWeek() {
     h('div', { class: 'tray-cards' }, ready.length ? ready.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'No unscheduled or carried-over tasks. Check other weeks or paused jobs in Plan.'))), id => planOn(id, ''));
 
   const range = `${fmtShort(monday)} – ${fmtShort(addDays(monday, 6))} ${addDays(monday, 6).slice(0, 4)}`;
+  const ppc = ppcWeek(book, monday, today(), { person: personId });
+  const ended = addDays(monday, 6) < today();
+  const commitment = ppc
+    ? h('div', { class: 'commit-status' }, icon('flag', 16),
+      h('span', null, `Committed ${fmtShort(ppc.committedOn)}: ${ppc.committed.length} task${ppc.committed.length === 1 ? '' : 's'} · PPC ${ppc.ppc ?? 0}%${ended ? '' : ' so far'}`),
+      ended ? btn('Review misses', () => { ui.view = 'lookahead'; ui.lookaheadTab = 'ppc'; rerender(); }, { kind: 'sm ghost' }) : btn('Re-commit', () => commitThisWeek(monday), { kind: 'sm ghost', title: 'Record the current plan as this week’s commitment' }))
+    : ended ? null : h('div', { class: 'commit-status' }, icon('flag', 16),
+      h('span', { class: 'muted' }, 'Planned the week? Commit it to measure Percent Plan Complete.'),
+      btn('Commit this week', () => commitThisWeek(monday), { kind: 'sm', attrs: { id: 'week-commit' } }));
   return h('div', { class: 'view week' },
     h('header', { class: 'page-head' },
       h('div', null, h('p', { class: 'eyebrow' }, isCurrent ? 'This week' : weekOffsetLabel(monday)), h('h1', null, range)),
@@ -3690,7 +4266,7 @@ function renderWeek() {
       h('div', { class: 'cap-facts muted' },
         load.unestimated ? h('span', { class: 'warn-text' }, `${load.unestimated} without an estimate · `) : null,
         `${load.done} done`, ui.focus ? ' · totals include all jobs for selected person' : '', unassigned ? ` · ${fmtHours(unassigned)} unassigned (excluded from capacity)` : ''),
-      notes),
+      notes, commitment),
     h('div', { class: 'week-body' }, h('div', { class: 'days' }, columns), tray));
 }
 
@@ -4136,49 +4712,6 @@ function earlierLessons(book, current) {
 
 function filled(job) { return NOTE_PAGES.filter(([k]) => job.notes[k].trim()).length; }
 
-// ── core/assignments.js ──
-/** A single selection drives the screen, printout and CSV. Paused jobs are opt-in. */
-function assignmentItems(book, today, { person = 'all', job = '', status = 'open', period = 'all', week = mondayOf(today), paused = false, search = '' } = {}) {
-  const needle = search.trim().toLowerCase();
-  return liveItems(book).filter(t => {
-    const j = jobOf(book, t.jobId);
-    if (!matchesPerson(t, person) || (job && t.jobId !== job) || (!paused && j.status !== 'active')) return false;
-    if (status === 'open' && t.status === 'done') return false;
-    if (status === 'late' && !isLate(t, today)) return false;
-    if (['todo', 'doing', 'blocked', 'done'].includes(status) && boardColumn(book, t, today) !== status) return false;
-    if (period === 'week' && (!t.plannedDay || t.plannedDay < week || t.plannedDay > addDays(week, 6))) return false;
-    if (period === 'unscheduled' && t.plannedDay) return false;
-    return !needle || [t.title, t.notes, j.title, phaseTitle(book, t.phaseId), personName(book, t.assigneeId)].join(' ').toLowerCase().includes(needle);
-  }).sort(byUrgency);
-}
-
-function assignmentGroups(book, items, group, today) {
-  const groups = new Map();
-  for (const t of items) {
-    const label = group === 'status' ? ({ todo: 'To do', doing: 'Doing', blocked: 'Blocked', done: 'Done' }[boardColumn(book, t, today)])
-      : group === 'week' ? (t.plannedDay ? `Week of ${mondayOf(t.plannedDay)}` : 'No work day')
-      : group === 'person' ? personName(book, t.assigneeId) : jobOf(book, t.jobId).title;
-    if (!groups.has(label)) groups.set(label, []);
-    groups.get(label).push(t);
-  }
-  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b));
-}
-
-/** Neutralize spreadsheet formula prefixes as well as quoting commas/newlines. */
-function assignmentCsvCell(value) {
-  let s = String(value ?? '');
-  if (/^[\s]*[=+@-]/.test(s) || /^[\t\r\n]/.test(s)) s = `'${s}`;
-  return `"${s.replaceAll('"', '""')}"`;
-}
-
-function assignmentsCsv(book, items, today) {
-  const rows = [['Assignee', 'Job', 'Job status', 'Phase', 'Task', 'Kind', 'Status', 'Work on', 'Forecast start', 'Forecast finish', 'Effort left (hours)', 'Blockers / prerequisites', 'Contacts', 'Notes']];
-  for (const t of items) rows.push([personName(book, t.assigneeId), jobOf(book, t.jobId).title, jobOf(book, t.jobId).status,
-    phaseTitle(book, t.phaseId), t.title, t.kind, boardColumn(book, t, today), t.plannedDay, t.start, t.finish,
-    t.status === 'done' ? 0 : t.effort / 60, blockers(book, t).join('; '), t.owner, t.notes]);
-  return '\uFEFF' + rows.map(row => row.map(assignmentCsvCell).join(',')).join('\r\n') + '\r\n';
-}
-
 // ── ui/views/assignments.js ──
 function renderAssignments() {
   const book = store.book;
@@ -4224,7 +4757,7 @@ function renderAssignments() {
 // ── ui/shell.js ──
 // App frame: sidebar, top bar (quick add + file status), main view and drawer.
 
-const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes, assignments: renderAssignments };
+const RENDER = { today: renderToday, week: renderWeek, plan: renderPlan, board: renderBoard, notes: renderNotes, assignments: renderAssignments, lookahead: renderLookahead };
 
 function renderShell(scope = 'all') {
   if (scope === 'status') { renderStatus(); return; }
@@ -4460,7 +4993,7 @@ function showHelp() {
           row(['@tue', '@today'], 'day you’ll work on it (otherwise unscheduled in every view)'), row(['!fri', '!2026-12-01'], 'forecast finish, not a fixed deadline'), row(['*'], 'at the start: a milestone')),
         h('h3', null, 'Keys'),
         h('table', { class: 'keys' },
-          row(['N', '/'], 'Quick add'), row(['1–6'], 'Today, Week, Plan, Board, Notes, Assignments'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
+          row(['N', '/'], 'Quick add'), row(['1–7'], 'Today, Week, Plan, Board, Notes, Assignments, Lookahead'), row([keys('S')], 'Save'), row([keys('Shift+S')], 'Save as'),
           row([keys('O')], 'Open'), row([keys('Z'), keys(IS_MAC ? 'Shift+Z' : 'Y')], 'Undo / redo'), row(['Esc'], 'Close panel'), row(['[', ']'], 'Previous / next week'),
           row(['← →'], 'Move a focused bar on the Plan'), row(['Shift+← →'], 'Change its finish'))),
       h('section', null,
