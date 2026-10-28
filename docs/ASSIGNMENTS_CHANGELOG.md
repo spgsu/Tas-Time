@@ -50,3 +50,9 @@
 - Repeating tasks (spawn on completion), task checklists, Finish the day review, and rolling browser backups (10 per book, 15-minute gap, tied to the recovery setting).
 - Real-browser checks found and fixed two bugs before release: a backup deadlock (a chain step awaited its own chain) and a missing Finish the day confirmation.
 - Validation: 48/48 unit tests and 45/45 real-browser checks passed. Reviewed screenshots of the task editor, Finish the day and Backups.
+
+## Release — v3.4.0
+
+- Last Planner: constraint log with ball in court (linked to tasks; open entries block them), Lookahead view with Lookahead, Ball in court and PPC tabs, and weekly commitment from Week.
+- Found and fixed before release: 27px phone overflow in Lookahead (grid items not shrinking), PPC chart stray scrollbar and misaligned stat cards, and Ready labels hidden in print.
+- Validation: 56/56 unit tests and 47/47 real-browser checks passed. Reviewed screenshots of all three Lookahead tabs.
