@@ -440,8 +440,9 @@ try {
     assert.equal(info.loaded, 3, 'embedded diagrams render without a network');
     assert.equal(info.online, 0, 'no links leave the app');
     await page.clickText('.guide-toc a', 'Step 9');
-    // Smooth scrolling over ~12,000 px takes a moment: wait until the pane stops moving.
-    const settled = await ev(`new Promise(resolve => { const g = document.querySelector('dialog.guide-modal .guide'); let last = -1; const tick = () => { if (g.scrollTop === last) return resolve(true); last = g.scrollTop; setTimeout(tick, 150); }; setTimeout(tick, 150); })`);
+    // Smooth scrolling over ~12,000 px takes a moment: wait until the pane has moved, then stops moving.
+    // (Still at 0 can mean the scroll has not started yet, not that it finished.)
+    const settled = await ev(`new Promise(resolve => { const g = document.querySelector('dialog.guide-modal .guide'); const end = Date.now() + 5000; let last = -1; const tick = () => { if (g.scrollTop > 0 && g.scrollTop === last) return resolve(true); if (Date.now() > end) return resolve(false); last = g.scrollTop; setTimeout(tick, 150); }; setTimeout(tick, 150); })`);
     assert.ok(settled);
     const offset = await ev(`(() => { const d = document.querySelector('dialog.guide-modal'); const a = [...d.querySelectorAll('.guide-toc a')].find(x => x.textContent.startsWith('Step 9')); return Math.round(d.querySelector('#' + CSS.escape(a.dataset.goto)).getBoundingClientRect().top - d.querySelector('.guide').getBoundingClientRect().top); })()`);
     assert.ok(offset >= 0 && offset < 40, `contents link scrolls to its section (heading ${offset}px below the pane top)`);
@@ -725,6 +726,29 @@ try {
     assert.match(await ev('document.getElementById("note-text").getAttribute("aria-label")'), /Working/);
     assert.equal(await ev('document.getElementById("d-title").value'), title);
     await page.key('Escape', { keyCode: 27 });
+  });
+
+  await check('closing warns only while the linked file is behind', async () => {
+    await quickAdd('Current book');
+    await fileMenu('Save as…');
+    await page.wait(300);
+    await ev(`window.__openText = window.__saved.at(-1).raw; window.__openName = 'current.json'; true`);
+    await page.key('o', { modifiers: 2, keyCode: 79 });
+    await page.wait(300);
+    const before = page.leaveWarnings.length;
+    await page.reload();
+    await ev(STUB_FS);
+    assert.equal(page.leaveWarnings.length, before, 'an up-to-date file closes quietly');
+    await ev(`window.__openText = window.__saved.length ? window.__saved.at(-1).raw : JSON.stringify(${JSON.stringify(await recoveryBook())}); window.__openName = 'behind.json'; window.__openPerm = 'prompt'; window.__openGrant = 'denied'; true`);
+    await page.key('o', { modifiers: 2, keyCode: 79 });
+    await page.wait(300);
+    assert.match(await text('.status'), /Reconnect behind\.json/);
+    await quickAdd('Only in recovery');
+    await page.wait(600);
+    await page.reload();
+    await ev(STUB_FS);
+    assert.equal(page.leaveWarnings.length, before + 1, 'edits the file lacks prompt before leaving');
+    assert.ok((await recoveryBook()).items.some(i => i.title === 'Only in recovery'), 'the edit is still in the recovery copy');
   });
 
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));

@@ -126,6 +126,15 @@ test('disabled recovery warns only for unsaved edits', () => {
   assert.equal(closeAttempt().prevented, false);
 });
 
+test('closing warns while a linked file is behind, even with a recovery copy', () => {
+  Object.assign(file, { handle: diskHandle('book.json'), name: 'book.json', state: 'reconnect' });
+  store.commit('Edit', b => { b.name = 'Only in recovery'; });
+  assert.equal(closeAttempt().prevented, true);
+  assert.equal(JSON.parse(storage.get('tas-time:recovery:v3')).book.name, 'Only in recovery');
+  store.markSaved(store.revision);
+  assert.equal(closeAttempt().prevented, false, 'an up-to-date file closes quietly');
+});
+
 test('closing and reopening restores the file, job, view and planning context without edits', async () => {
   const book = newBook('Session book');
   // Use the real example schema for jobs, phases and tasks.
