@@ -97,10 +97,20 @@ export function autosize(el) {
   el.style.height = `${el.scrollHeight + 2}px`;
 }
 
-export function debounce(fn, ms) {
-  let t;
-  const wrapped = (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-  wrapped.flush = (...args) => { clearTimeout(t); fn(...args); };
-  wrapped.cancel = () => clearTimeout(t);
+/**
+ * Runs fn once calls pause for ms. With maxWait, a steady stream of calls (typing, clicking) still
+ * runs it at least that often instead of postponing it indefinitely.
+ */
+export function debounce(fn, ms, { maxWait = Infinity } = {}) {
+  let t; let first = 0;
+  const run = args => { clearTimeout(t); first = 0; fn(...args); };
+  const wrapped = (...args) => {
+    clearTimeout(t);
+    if (!first) first = Date.now();
+    const wait = Math.min(ms, Math.max(0, first + maxWait - Date.now()));
+    t = setTimeout(() => run(args), wait);
+  };
+  wrapped.flush = (...args) => run(args);
+  wrapped.cancel = () => { clearTimeout(t); first = 0; };
   return wrapped;
 }

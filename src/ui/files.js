@@ -366,7 +366,7 @@ export const writeRecovery = debounce(() => {
     if (!recoveryFailed) notify('Recovery copy could not be saved. Save your book to a file before closing.', { kind: 'warn' });
     recoveryFailed = true;
   }
-}, 400);
+}, 400, { maxWait: 2000 });
 
 function clearRecovery() {
   recoveryRevision = -1;
