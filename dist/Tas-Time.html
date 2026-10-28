@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="generator" content="Tas-Time 3.2.2">
+<meta name="generator" content="Tas-Time 3.3.0">
 <meta name="copyright" content="© 2026 Selami Pazarbasi. MIT License.">
 <title>Tas-Time</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY292ZXIiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzM5ODQ2NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE4NGMzYiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InBhcGVyIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZkZjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlOGVmZGYiLz48L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSIyMjQiIGhlaWdodD0iMjI0IiByeD0iNTIiIGZpbGw9InVybCgjY292ZXIpIi8+CiAgPHJlY3QgeD0iNjIiIHk9IjUxIiB3aWR0aD0iMTM5IiBoZWlnaHQ9IjE2NCIgcng9IjE3IiBmaWxsPSIjMTAzZTMxIiBvcGFjaXR5PSIuMyIvPgogIDxyZWN0IHg9IjU2IiB5PSI0NCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSIxNjQiIHJ4PSIxNyIgZmlsbD0idXJsKCNwYXBlcikiLz4KICA8cGF0aCBkPSJNNzkgNDR2MTY0IiBzdHJva2U9IiNkMWRkYzgiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik01MSA3NmgxNm0tMTYgMzZoMTZtLTE2IDM2aDE2bS0xNiAzNmgxNiIgc3Ryb2tlPSIjYWNkMGI1IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9Ijk2IiB5PSI3NiIgd2lkdGg9IjU5IiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iIzM0N2E1OCIvPgogIDxyZWN0IHg9IjExMiIgeT0iMTExIiB3aWR0aD0iNjQiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjMzQ3YTU4Ii8+CiAgPHJlY3QgeD0iMTMyIiB5PSIxNDYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIxNCIgcng9IjciIGZpbGw9IiMzNDdhNTgiLz4KICA8Y2lyY2xlIGN4PSIxNzgiIGN5PSIxOTAiIHI9IjM1IiBmaWxsPSIjZGJhNTRhIi8+CiAgPHBhdGggZD0iTTE3OCAxNzB2MjFsMTMgOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZGY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K">
@@ -183,6 +183,7 @@ h1, h2, h3, p { margin: 0; }
 .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 22px; flex-wrap: wrap; }
 .page-head h1 { font: 600 28px/1.2 var(--font-display); letter-spacing: -.5px; }
 .page-head .sub { color: var(--muted); margin-top: 4px; max-width: 70ch; }
+.page-head-actions { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
 .page-actions { display: flex; align-items: center; gap: 6px; }
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .9px; text-transform: uppercase; color: var(--accent); margin-bottom: 2px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow-1); }
@@ -426,6 +427,25 @@ h1, h2, h3, p { margin: 0; }
 .deps li.is-done .link { color: var(--muted); text-decoration: line-through; }
 .tick-mini { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--line-strong); display: grid; place-items: center; flex-shrink: 0; }
 .tick-mini.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.checklist { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 4px; }
+.checklist li { display: flex; align-items: center; gap: 6px; padding: 2px 4px 2px 8px; background: var(--surface-2); border-radius: 6px; }
+.checklist li input[type="checkbox"] { width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--accent); }
+.checklist li input:not([type]) { flex: 1; min-width: 0; border-color: transparent; background: transparent; padding: 4px 6px; font-size: 13px; }
+.checklist li.is-done input:not([type]) { color: var(--muted); text-decoration: line-through; }
+.checklist .up .icon { transform: rotate(90deg); }
+.finish-list { display: grid; gap: 6px; margin: 6px 0 4px; }
+.finish-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 6px 8px; border-left: 3px solid var(--job); background: var(--surface-2); border-radius: 6px; }
+.finish-row .finish-title { flex: 1; min-width: 160px; display: grid; gap: 2px; }
+.finish-section + .finish-section { margin-top: 18px; }
+.finish-section h3 { font-size: 14px; margin-bottom: 4px; }
+.finish-done { margin: 4px 0 0; padding-left: 18px; color: var(--ink-2); font-size: 13px; }
+.finish-actions, .backup-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.backup-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.backup-list li { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 10px; background: var(--surface-2); border-radius: 6px; }
+.backup-list li > div { flex: 1; min-width: 160px; display: grid; gap: 2px; }
+.repeat-control { display: flex; align-items: center; gap: 8px; }
+.repeat-control input { width: 64px; }
+.repeat-control select { flex: 1; min-width: 0; }
 .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
 .swatch { width: 26px; height: 26px; border-radius: 7px; background: var(--sw); border: 2px solid transparent; box-shadow: inset 0 0 0 2px var(--surface); }
 .swatch.on { border-color: var(--sw); }
@@ -1029,6 +1049,13 @@ function dayNum(iso) {
 function fromDayNum(n) { return new Date(n * DAY_MS).toISOString().slice(0, 10); }
 function addDays(iso, n) { return fromDayNum(dayNum(iso) + n); }
 function diffDays(a, b) { return dayNum(b) - dayNum(a); }
+/** Same day n months later, clamped to the month's last day (31 Jan + 1 month = 28/29 Feb). */
+function addMonths(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1 + n, 1));
+  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), Math.min(d, last))).toISOString().slice(0, 10);
+}
 function weekday(iso) { return new Date(dayNum(iso) * DAY_MS).getUTCDay(); }
 function mondayOf(iso) { return addDays(iso, -((weekday(iso) + 6) % 7)); }
 
@@ -1105,6 +1132,8 @@ const COLORS = {
   olive: { label: 'Olive', hex: '#6b7a2a' },
 };
 const DEFAULT_CAPACITY = 10 * 60;
+const REPEAT_UNITS = { day: 'day', week: 'week', month: 'month' };
+const MAX_CHECKLIST = 100;
 
 function uid() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -1128,7 +1157,7 @@ function newItem(fields = {}) {
   return {
     id: uid(), jobId: '', phaseId: '', title: '', kind: 'task', status: 'todo',
     start: '', finish: '', effort: 0, plannedDay: '', assigneeId: '', owner: '', blocker: '', deps: [],
-    baseline: null, doneOn: '', notes: '', archived: false, ...fields,
+    baseline: null, doneOn: '', notes: '', archived: false, repeat: null, checklist: [], ...fields,
   };
 }
 
@@ -1199,6 +1228,18 @@ function validate(book) {
       if (typeof t.baseline !== 'object') fail('Invalid baseline.');
       date(t.baseline.start, 'Baseline start'); date(t.baseline.finish, 'Baseline finish');
     }
+    if (t.repeat !== null) {
+      if (!t.repeat || typeof t.repeat !== 'object' || !REPEAT_UNITS[t.repeat.unit]) fail(`"${t.title}" has an invalid repeat.`);
+      if (!Number.isInteger(t.repeat.every) || t.repeat.every < 1 || t.repeat.every > 99) fail(`"${t.title}" must repeat every 1 to 99 ${t.repeat.unit}s.`);
+    }
+    if (!Array.isArray(t.checklist) || t.checklist.length > MAX_CHECKLIST) fail(`"${t.title}" has an invalid checklist (max ${MAX_CHECKLIST} steps).`);
+    const steps = new Set();
+    for (const c of t.checklist) {
+      if (!c || typeof c !== 'object' || typeof c.done !== 'boolean') fail(`A checklist step in "${t.title}" is malformed.`);
+      text(c.id, 'Checklist step identifier', 200); text(c.text, 'Checklist step', 500);
+      if (!c.id || steps.has(c.id)) fail(`Checklist steps in "${t.title}" need unique identifiers.`);
+      steps.add(c.id);
+    }
     if (!Array.isArray(t.deps) || new Set(t.deps).size !== t.deps.length) fail('Invalid dependency list.');
     for (const d of t.deps) if (!items.has(d) || d === t.id) fail(`"${t.title}" depends on a missing item.`);
   }
@@ -1233,10 +1274,18 @@ function findCycle(items) {
   return seen !== items.length;
 }
 
-/** Notebook pages added after a book was saved start empty instead of failing validation. */
-function addMissingNotePages(book) {
+/**
+ * Fields added after a book was saved start empty instead of failing validation:
+ * notebook pages, and task repeats and checklists (3.3). Older 3.x apps ignore these fields.
+ */
+function addMissingFields(book) {
   for (const j of Array.isArray(book.jobs) ? book.jobs : []) {
     if (j && j.notes && typeof j.notes === 'object') for (const [k] of NOTE_PAGES) if (j.notes[k] === undefined) j.notes[k] = '';
+  }
+  for (const t of Array.isArray(book.items) ? book.items : []) {
+    if (!t || typeof t !== 'object') continue;
+    if (t.repeat === undefined) t.repeat = null;
+    if (t.checklist === undefined) t.checklist = [];
   }
   return book;
 }
@@ -1247,10 +1296,10 @@ const V2_JOB_STATUS = { Active: 'active', 'On hold': 'hold', Complete: 'done' };
 /** Upgrades version 1 and 2 books to the current schema without dropping data. */
 function migrate(raw) {
   if (!raw || raw.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
-  if (raw.version === VERSION) return addMissingNotePages(raw);
+  if (raw.version === VERSION) return addMissingFields(raw);
   if (raw.version === 3) {
     const b = newBook();
-    return addMissingNotePages({ ...raw, version: VERSION, people: b.people, selfId: b.selfId,
+    return addMissingFields({ ...raw, version: VERSION, people: b.people, selfId: b.selfId,
       weeks: Object.fromEntries(Object.entries(raw.weeks || {}).map(([day, week]) => [day, { ...week, people: { [b.selfId]: week.capacity } }])),
       items: raw.items.map(t => ({ ...t, assigneeId: b.selfId })) });
   }
@@ -1496,7 +1545,7 @@ function keys(combo) {
 }
 
 /** Replaced with package.json's version by the build. */
-const APP_VERSION = '3.2.2';
+const APP_VERSION = '3.3.0';
 
 // ── ui/dom.js ──
 // Tiny DOM builder. User text only ever becomes text nodes or attribute values,
@@ -1672,6 +1721,12 @@ function matchJob(jobs, hint) {
   if (exact.length) return exact.length === 1 ? exact[0] : undefined;
   const matches = live.filter(j => j.code.toLowerCase().startsWith(h) || j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
   return matches.length === 1 ? matches[0] : undefined;
+}
+
+/** "Every week", "Every 2 weeks", "Every month". */
+function fmtRepeat(repeat) {
+  if (!repeat) return '';
+  return repeat.every === 1 ? `Every ${repeat.unit}` : `Every ${repeat.every} ${repeat.unit}s`;
 }
 
 // ── core/query.js ──
@@ -1889,7 +1944,61 @@ function applyStatus(book, next, previous, today) {
     const reasons = blockers(book, { ...next, status: 'todo' });
     if (reasons.length) throw new Error(`Can’t complete yet: ${reasons.join('; ')}.`);
     next.doneOn = today;
+    if (next.repeat) {
+      // The series moves to the new occurrence, so reopening and re-completing this one never repeats twice.
+      book.items.splice(book.items.findIndex(x => x.id === next.id) + 1, 0, nextOccurrence(next, today));
+      next.repeat = null;
+    }
   } else next.doneOn = '';
+}
+
+function step(iso, { every, unit }) {
+  return unit === 'month' ? addMonths(iso, every) : addDays(iso, unit === 'week' ? every * 7 : every);
+}
+
+/**
+ * The next open copy of a repeating item. Its dates move on by the interval from the item's own
+ * schedule (not from the completion day), skipping occurrences already in the past.
+ * An item with no dates gets a work day one interval after today.
+ */
+function nextOccurrence(t, today) {
+  const anchor = t.plannedDay || t.start || t.finish;
+  const copy = {
+    ...structuredClone(t), id: uid(), status: 'todo', doneOn: '', baseline: null,
+    checklist: t.checklist.map(c => ({ ...c, id: uid(), done: false })),
+  };
+  if (!anchor) { copy.plannedDay = step(today, t.repeat); return copy; }
+  let n = 0; let day = anchor;
+  do { n++; day = step(anchor, { ...t.repeat, every: t.repeat.every * n }); } while (day <= today && n < 10000);
+  // Each date moves by the same number of steps so months stay on their day (31st → 30th → 31st).
+  for (const k of ['plannedDay', 'start', 'finish']) if (t[k]) copy[k] = step(t[k], { ...t.repeat, every: t.repeat.every * n });
+  return copy;
+}
+
+function addStep(book, id, text) {
+  const t = itemOf(book, id);
+  const s = { id: uid(), text: text.trim().slice(0, 500), done: false };
+  t.checklist.push(s);
+  return s;
+}
+
+function patchStep(book, id, stepId, patch) {
+  const s = itemOf(book, id).checklist.find(c => c.id === stepId);
+  if (!s) throw new Error('That checklist step no longer exists.');
+  Object.assign(s, patch);
+}
+
+function removeStep(book, id, stepId) {
+  const t = itemOf(book, id);
+  t.checklist = t.checklist.filter(c => c.id !== stepId);
+}
+
+function moveStep(book, id, stepId, delta) {
+  const list = itemOf(book, id).checklist;
+  const i = list.findIndex(c => c.id === stepId);
+  const j = i + delta;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
 }
 
 function setStatus(book, id, status, today) { return patchItem(book, id, { status }, today); }
@@ -1996,110 +2105,6 @@ function removeDep(book, id, depId) {
   t.deps = t.deps.filter(d => d !== depId);
 }
 
-// ── ui/components.js ──
-// Small building blocks shared by several views.
-
-function jobColor(job) { return COLORS[job?.color]?.hex || COLORS.forest.hex; }
-
-function jobTag(job, { full = false } = {}) {
-  if (!job) return null;
-  return h('span', { class: 'job-tag', style: { '--job': jobColor(job) }, title: job.title },
-    h('span', { class: 'dot' }), full || !job.code ? job.title : job.code);
-}
-
-function chip(text, kind = '', title = '') { return h('span', { class: ['chip', kind], title: title || null }, text); }
-
-/** Forecast-finish chip that turns red once late and amber within two days. */
-function dueChip(t) {
-  if (!t.finish || t.status === 'done') return null;
-  const late = isLate(t, today());
-  const soon = !late && t.finish <= addDays(today(), 2);
-  const label = t.kind === 'milestone' ? `◆ ${fmtDate(t.finish)}` : `Forecast finish ${relDay(t.finish)}`;
-  return chip(label, late ? 'danger' : soon ? 'warn' : '', fmtDate(t.finish));
-}
-
-/** "Blocked: reason" when stuck now; a quiet "After X" when merely waiting on a prerequisite. */
-function readiness(t) {
-  const book = store.book;
-  if (t.status === 'done') return null;
-  if (isBlocked(book, t, today())) {
-    const reasons = blockers(book, t);
-    return chip(`Blocked · ${reasons[0]}`, 'warn', reasons.join('\n'));
-  }
-  const waiting = waitingOn(book, t);
-  return waiting.length ? chip(`After “${waiting[0].title}”${waiting.length > 1 ? ` +${waiting.length - 1}` : ''}`, 'muted', waiting.map(w => w.title).join('\n')) : null;
-}
-
-/** Round completion checkbox. Disabled with an explanation while blocked. */
-function doneToggle(t) {
-  const book = store.book;
-  const reasons = t.status === 'done' ? [] : blockers(book, t);
-  const done = t.status === 'done';
-  return h('button', {
-    class: ['tick', done && 'on', t.kind === 'milestone' && 'tick-ms'],
-    'aria-pressed': String(done),
-    'aria-label': `${done ? 'Mark not done' : 'Mark done'}: ${t.title}`,
-    title: reasons.length ? `Blocked: ${reasons.join('; ')}` : done ? 'Mark as not done' : 'Mark done',
-    disabled: reasons.length ? true : null,
-    onclick: event => {
-      event.stopPropagation();
-      act(done ? 'Reopen' : 'Complete', d => setStatus(d, t.id, done ? 'todo' : 'done', today()));
-    },
-  }, icon('check', 14));
-}
-
-/** A list row for an item: toggle, title, metadata, optional trailing actions. */
-function itemRow(t, { actions = null, showJob = true, showPhase = false, dense = false } = {}) {
-  const book = store.book;
-  const job = jobOf(book, t.jobId);
-  const phase = showPhase ? phaseTitle(book, t.phaseId) : '';
-  return h('div', { class: ['row-item', t.status === 'done' && 'is-done', dense && 'dense'], 'data-item': t.id, style: { '--job': jobColor(job) } },
-    doneToggle(t),
-    h('div', { class: 'row-main' },
-      h('button', { class: 'row-title', onclick: () => openDrawer('item', t.id) }, t.title),
-      h('div', { class: 'row-meta' },
-        showJob ? jobTag(job) : null,
-        chip(personName(book, t.assigneeId), 'muted', 'Assignee'),
-        phase ? h('span', { class: 'muted' }, phase) : null,
-        t.status === 'doing' ? chip('Doing', 'accent') : null,
-        dueChip(t),
-        readiness(t),
-        t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null,
-      )),
-    actions ? h('div', { class: 'row-actions' }, actions) : null);
-}
-
-function segmented(options, value, onChange, label) {
-  return h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': label },
-    options.map(([key, text]) => h('button', {
-      role: 'radio', 'aria-checked': String(key === value), class: key === value ? 'on' : null,
-      onclick: () => onChange(key),
-    }, text)));
-}
-
-/** Planned vs capacity bar. */
-function meter(used, capacity, { label = true } = {}) {
-  const pct = capacity ? Math.min(100, (used / capacity) * 100) : used ? 100 : 0;
-  const over = used > capacity;
-  return h('div', { class: ['meter', over && 'over'] },
-    h('div', { class: 'meter-track' }, h('span', { style: { width: `${pct}%` } })),
-    label ? h('div', { class: 'meter-label' },
-      h('strong', null, fmtHours(used)), ` planned of ${fmtHours(capacity)}`,
-      h('span', { class: over ? 'danger' : 'muted' }, over ? ` · ${fmtHours(used - capacity)} over` : ` · ${fmtHours(capacity - used)} free`)) : null);
-}
-
-function emptyState(title, body, ...actions) {
-  return h('div', { class: 'empty' }, h('h3', null, title), body ? h('p', null, body) : null, actions.length ? h('div', { class: 'empty-actions' }, actions) : null);
-}
-
-function btn(label, onclick, { kind = '', iconName = '', title = '', disabled = false, attrs = {} } = {}) {
-  return h('button', { class: ['btn', kind], onclick, title: title || null, disabled: disabled || null, ...attrs }, iconName ? icon(iconName, 16) : null, label ? h('span', null, label) : null);
-}
-
-function iconBtn(name, label, onclick, attrs = {}) {
-  return h('button', { class: 'icon-btn', 'aria-label': label, title: label, onclick, ...attrs }, icon(name, 18));
-}
-
 // ── ui/commands.js ──
 // User commands shared by menus, buttons and keyboard shortcuts.
 
@@ -2154,6 +2159,19 @@ function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.book)[0]?.
   return item;
 }
 
+/** Every status change goes through here so completing a repeating task says where the next one went. */
+function setItemStatus(id, status, label = status === 'done' ? 'Complete' : 'Change status') {
+  const before = itemOf(store.book, id);
+  const repeat = before?.status !== 'done' && status === 'done' ? before.repeat : null;
+  const done = act(label, d => patchItem(d, id, { status }, today()));
+  if (!done || !repeat) return done;
+  const list = store.book.items;
+  const next = list[list.findIndex(t => t.id === id) + 1];
+  const when = next?.plannedDay || next?.start || next?.finish;
+  if (next) notify(`${fmtRepeat(repeat)}: next “${next.title}”${when ? ` ${next.plannedDay ? 'to work on' : 'from'} ${fmtDate(when)}` : ''}.`, { action: { label: 'Open', run: () => openDrawer('item', next.id) } });
+  return done;
+}
+
 function removeItem(id) {
   const t = itemOf(store.book, id);
   if (!t) return;
@@ -2173,6 +2191,136 @@ function removeJob(id) {
   ui.drawer = null;
   rerender();
   notify(`Deleted job “${j.title}”`, { action: { label: 'Undo', run: undo } });
+}
+
+// ── ui/components.js ──
+// Small building blocks shared by several views.
+
+function jobColor(job) { return COLORS[job?.color]?.hex || COLORS.forest.hex; }
+
+function jobTag(job, { full = false } = {}) {
+  if (!job) return null;
+  return h('span', { class: 'job-tag', style: { '--job': jobColor(job) }, title: job.title },
+    h('span', { class: 'dot' }), full || !job.code ? job.title : job.code);
+}
+
+function chip(text, kind = '', title = '') { return h('span', { class: ['chip', kind], title: title || null }, text); }
+
+/** Forecast-finish chip that turns red once late and amber within two days. */
+function dueChip(t) {
+  if (!t.finish || t.status === 'done') return null;
+  const late = isLate(t, today());
+  const soon = !late && t.finish <= addDays(today(), 2);
+  const label = t.kind === 'milestone' ? `◆ ${fmtDate(t.finish)}` : `Forecast finish ${relDay(t.finish)}`;
+  return chip(label, late ? 'danger' : soon ? 'warn' : '', fmtDate(t.finish));
+}
+
+/** "Blocked: reason" when stuck now; a quiet "After X" when merely waiting on a prerequisite. */
+function readiness(t) {
+  const book = store.book;
+  if (t.status === 'done') return null;
+  if (isBlocked(book, t, today())) {
+    const reasons = blockers(book, t);
+    return chip(`Blocked · ${reasons[0]}`, 'warn', reasons.join('\n'));
+  }
+  const waiting = waitingOn(book, t);
+  return waiting.length ? chip(`After “${waiting[0].title}”${waiting.length > 1 ? ` +${waiting.length - 1}` : ''}`, 'muted', waiting.map(w => w.title).join('\n')) : null;
+}
+
+/** Round completion checkbox. Disabled with an explanation while blocked. */
+function doneToggle(t) {
+  const book = store.book;
+  const reasons = t.status === 'done' ? [] : blockers(book, t);
+  const done = t.status === 'done';
+  return h('button', {
+    class: ['tick', done && 'on', t.kind === 'milestone' && 'tick-ms'],
+    'aria-pressed': String(done),
+    'aria-label': `${done ? 'Mark not done' : 'Mark done'}: ${t.title}`,
+    title: reasons.length ? `Blocked: ${reasons.join('; ')}` : done ? 'Mark as not done' : 'Mark done',
+    disabled: reasons.length ? true : null,
+    onclick: event => {
+      event.stopPropagation();
+      setItemStatus(t.id, done ? 'todo' : 'done', done ? 'Reopen' : 'Complete');
+    },
+  }, icon('check', 14));
+}
+
+/** A list row for an item: toggle, title, metadata, optional trailing actions. */
+function itemRow(t, { actions = null, showJob = true, showPhase = false, dense = false } = {}) {
+  const book = store.book;
+  const job = jobOf(book, t.jobId);
+  const phase = showPhase ? phaseTitle(book, t.phaseId) : '';
+  return h('div', { class: ['row-item', t.status === 'done' && 'is-done', dense && 'dense'], 'data-item': t.id, style: { '--job': jobColor(job) } },
+    doneToggle(t),
+    h('div', { class: 'row-main' },
+      h('button', { class: 'row-title', onclick: () => openDrawer('item', t.id) }, t.title),
+      h('div', { class: 'row-meta' },
+        showJob ? jobTag(job) : null,
+        chip(personName(book, t.assigneeId), 'muted', 'Assignee'),
+        phase ? h('span', { class: 'muted' }, phase) : null,
+        t.status === 'doing' ? chip('Doing', 'accent') : null,
+        dueChip(t),
+        readiness(t),
+        stepsChip(t),
+        t.repeat ? chip(`↻ ${fmtRepeat(t.repeat)}`, 'muted', 'Repeats: the next one is created when this is done') : null,
+        t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null,
+      )),
+    actions ? h('div', { class: 'row-actions' }, actions) : null);
+}
+
+/** "2/5 steps" for a task with a checklist. */
+function stepsChip(t) {
+  if (!t.checklist.length) return null;
+  const done = t.checklist.filter(c => c.done).length;
+  return chip(`${done}/${t.checklist.length} steps`, done === t.checklist.length ? 'muted' : '', t.checklist.map(c => `${c.done ? '✓' : '○'} ${c.text}`).join('\n'));
+}
+
+function segmented(options, value, onChange, label) {
+  return h('div', { class: 'segmented', role: 'radiogroup', 'aria-label': label },
+    options.map(([key, text]) => h('button', {
+      role: 'radio', 'aria-checked': String(key === value), class: key === value ? 'on' : null,
+      onclick: () => onChange(key),
+    }, text)));
+}
+
+/** Planned vs capacity bar. */
+function meter(used, capacity, { label = true } = {}) {
+  const pct = capacity ? Math.min(100, (used / capacity) * 100) : used ? 100 : 0;
+  const over = used > capacity;
+  return h('div', { class: ['meter', over && 'over'] },
+    h('div', { class: 'meter-track' }, h('span', { style: { width: `${pct}%` } })),
+    label ? h('div', { class: 'meter-label' },
+      h('strong', null, fmtHours(used)), ` planned of ${fmtHours(capacity)}`,
+      h('span', { class: over ? 'danger' : 'muted' }, over ? ` · ${fmtHours(used - capacity)} over` : ` · ${fmtHours(capacity - used)} free`)) : null);
+}
+
+function emptyState(title, body, ...actions) {
+  return h('div', { class: 'empty' }, h('h3', null, title), body ? h('p', null, body) : null, actions.length ? h('div', { class: 'empty-actions' }, actions) : null);
+}
+
+function btn(label, onclick, { kind = '', iconName = '', title = '', disabled = false, attrs = {} } = {}) {
+  return h('button', { class: ['btn', kind], onclick, title: title || null, disabled: disabled || null, ...attrs }, iconName ? icon(iconName, 16) : null, label ? h('span', null, label) : null);
+}
+
+function iconBtn(name, label, onclick, attrs = {}) {
+  return h('button', { class: 'icon-btn', 'aria-label': label, title: label, onclick, ...attrs }, icon(name, 18));
+}
+
+// ── core/backups.js ──
+// Rolling backups: which versions of a book to keep. Storage lives in the UI layer.
+
+const BACKUP_KEEP = 10;
+const BACKUP_GAP_MS = 15 * 60 * 1000;
+
+/**
+ * Adds a backup to a newest-first list unless it matches the newest one,
+ * or (without force) the newest is younger than BACKUP_GAP_MS. Returns the new list, or null for no change.
+ */
+function withBackup(list, entry, { force = false, keep = BACKUP_KEEP } = {}) {
+  const newest = list[0];
+  if (newest && newest.raw === entry.raw) return null;
+  if (!force && newest && Date.parse(entry.at) - Date.parse(newest.at) < BACKUP_GAP_MS) return null;
+  return [entry, ...list].slice(0, keep);
 }
 
 // ── core/example.js ──
@@ -2220,6 +2368,7 @@ function exampleBook(today) {
 //  1. A linked file (File System Access API, Edge/Chrome): explicit save, then autosave.
 //  2. A recovery copy in this browser's local storage, restored on next launch.
 //  3. Download fallback where neither is available (cannot confirm the write).
+// Separately, rolling backups of each book are kept in this browser's IndexedDB.
 
 const RECOVERY_KEY = 'tas-time:recovery:v3';
 const PREF_KEY = 'tas-time:prefs';
@@ -2357,9 +2506,9 @@ async function reconnect() {
   } catch (error) { notify(error.message, { kind: 'error' }); return false; }
 }
 
-function download() {
-  const url = URL.createObjectURL(new Blob([encodeBook(store.book)], { type: 'application/json' }));
-  const a = Object.assign(document.createElement('a'), { href: url, download: file.name || suggestedName() });
+function download(raw = encodeBook(store.book), name = file.name || suggestedName()) {
+  const url = URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
   document.body.append(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
   notify('Download started. This browser cannot confirm the file was saved — check your Downloads folder.', { kind: 'warn', timeout: 9000 });
@@ -2425,6 +2574,7 @@ async function loadText(text, name, handle) {
     } else link(handle);
   }
   writeRecovery.flush();
+  backup({ force: true });
   rerender();
   if (!upgradedFrom) notify(`Opened ${name}`);
 }
@@ -2458,6 +2608,7 @@ let recoveryFailed = false;
 const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
+    maybeBackup();
     localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book, view: sessionView() }));
     recoveryRevision = store.revision;
     recoveryFailed = false;
@@ -2471,6 +2622,7 @@ const writeRecovery = debounce(() => {
 function clearRecovery() {
   recoveryRevision = -1;
   try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
+  backups = backups.catch(() => {}).then(() => idbDeleteWhere(key => typeof key === 'string' && key.startsWith('backups:')));
 }
 
 /**
@@ -2500,12 +2652,66 @@ async function restoreSession() {
     notify(`Recovered a version ${upgradedFrom} book and upgraded it for assignments. Save a new copy; the original file is untouched.`, { kind: 'warn', timeout: 12000 });
     return true;
   }
+  backup({ force: true });
   const handle = await idbGet('lastFile');
   if (handle && handle.name === saved.fileName) {
     file.handle = handle;
     file.state = (await ensurePermission(handle, false).catch(() => false)) ? 'linked' : 'reconnect';
   }
   return true;
+}
+
+// ── Rolling backups: up to BACKUP_KEEP versions per book, at least BACKUP_GAP_MS apart ──
+
+const backupKey = id => `backups:${id}`;
+let backups = Promise.resolve();
+let lastBackupTry = { id: '', at: 0 };
+
+/** Newest first: [{ at, name, fileName, tasks, raw }]. Empty when browser storage is unavailable. */
+async function listBackups(bookId = store.book.id) {
+  await backups.catch(() => {});
+  return readBackups(bookId);
+}
+
+async function readBackups(bookId) {
+  const list = await idbGet(backupKey(bookId));
+  return Array.isArray(list) ? list : [];
+}
+
+/** Keeps a copy of the open book. force: also within BACKUP_GAP_MS (on open, before a restore). */
+function backup({ force = false } = {}) {
+  const book = store.book;
+  // Backups follow the recovery setting: off on a shared computer means nothing stays in this browser.
+  if (!book.jobs.length || !prefs().recovery) return backups;
+  const entry = { at: new Date().toISOString(), name: book.name, fileName: file.name, tasks: book.items.length, raw: encodeBook(book) };
+  lastBackupTry = { id: book.id, at: Date.now() };
+  backups = backups.catch(() => {}).then(async () => {
+    const next = withBackup(await readBackups(book.id), entry, { force }); // not listBackups: it would wait for this very step
+    if (next) await idbSet(backupKey(book.id), next);
+  });
+  return backups;
+}
+
+/** Cheap enough to call on every recovery write: storage is only read once per gap. */
+function maybeBackup() {
+  if (lastBackupTry.id === store.book.id && Date.now() - lastBackupTry.at < BACKUP_GAP_MS) return;
+  backup();
+}
+
+/** Replaces the open book's content with a backup as one undoable step; the file link stays. */
+async function restoreBackup(entry) {
+  const { book } = decodeBook(entry.raw);
+  if (book.id !== store.book.id) throw new Error('That backup belongs to a different book.');
+  await backup({ force: true });
+  return store.commit(`Restore backup from ${new Date(entry.at).toLocaleString()}`, draft => {
+    for (const k of Object.keys(draft)) delete draft[k];
+    Object.assign(draft, book);
+  });
+}
+
+function downloadBackup(entry) {
+  const stamp = entry.at.slice(0, 16).replace('T', '-').replace(':', '');
+  return download(entry.raw, `${(entry.fileName || suggestedName()).replace(/\.json$/i, '')}-backup-${stamp}.json`);
 }
 
 // ── IndexedDB holds the file handle (handles cannot go in localStorage) ──
@@ -2522,8 +2728,24 @@ function idb() {
 async function idbSet(key, value) {
   try {
     const db = await idb();
-    db.transaction('kv', 'readwrite').objectStore('kv').put(value, key);
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').put(value, key);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
+    });
   } catch { /* storage blocked: linking still works for this session */ }
+}
+
+async function idbDeleteWhere(match) {
+  try {
+    const db = await idb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      const req = tx.objectStore('kv').getAllKeys();
+      req.onsuccess = () => { for (const key of req.result) if (match(key)) tx.objectStore('kv').delete(key); };
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+  } catch { /* storage blocked: nothing stored */ }
 }
 
 async function idbGet(key) {
@@ -2806,6 +3028,42 @@ function downloadIcs(options) {
   notify(`Calendar file downloaded: ${name}. Import it into your calendar.`);
 }
 
+// ── ui/backups.js ──
+// Backups dialog: earlier versions of the open book kept in this browser, to restore or download.
+
+function ago(iso) {
+  const min = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const hours = Math.round(min / 60);
+  return hours < 48 ? `${hours} h ago` : `${Math.round(hours / 24)} days ago`;
+}
+
+async function showBackups() {
+  const list = h('div', { 'aria-live': 'polite' }, h('p', { class: 'muted' }, 'Loading…'));
+  const dialog = showModal('Backups', [
+    h('p', { class: 'muted' }, `Tas-Time keeps the last ${BACKUP_KEEP} versions of this book in this browser: when you open it, and then at most every ${BACKUP_GAP_MS / 60000} minutes while you work. They are not files and are lost if the browser’s data is cleared, so keep your own copies of important books.`),
+    list,
+  ]);
+  if (!prefs().recovery) { list.replaceChildren(h('p', null, 'Backups are off because the recovery copy is off (⋯ menu). Turn it on to keep backups in this browser.')); return dialog; }
+  const entries = await listBackups();
+  if (!entries.length) { list.replaceChildren(h('p', null, 'No backups of this book yet. The first is kept when you open it or after a few minutes of work.')); return dialog; }
+  list.replaceChildren(h('ul', { class: 'backup-list' }, entries.map(entry => h('li', null,
+    h('div', null, h('strong', null, `${new Date(entry.at).toLocaleString()}`),
+      h('span', { class: 'muted' }, `${ago(entry.at)} · ${entry.tasks} task${entry.tasks === 1 ? '' : 's'}${entry.fileName ? ` · ${entry.fileName}` : ''}`)),
+    btn('Download', () => downloadBackup(entry), { kind: 'sm', iconName: 'save' }),
+    btn('Restore', async () => {
+      if (!confirm(`Replace the open book with the version from ${new Date(entry.at).toLocaleString()}? You can undo this, and the current version is backed up first.`)) return;
+      try {
+        await restoreBackup(entry);
+        dialog.close();
+        rerender();
+        notify(`Restored the version from ${new Date(entry.at).toLocaleString()}.`, { action: { label: 'Undo', run: undo } });
+      } catch (error) { notify(`Could not restore: ${error.message}`, { kind: 'error' }); }
+    }, { kind: 'sm primary' })))));
+  return dialog;
+}
+
 // ── ui/guide.js ──
 // The beginner's guide, bundled into the page at build time (docs/TUTORIAL.md) and shown
 // offline in a reading window. The build places it in <template id="guide-content">.
@@ -2970,7 +3228,7 @@ function itemEditor(t) {
     h('p', { class: 'field-hint' }, `Job: ${job.title} → ${book.phases.find(p => p.id === t.phaseId)?.title || 'No phase'} → ${isMs ? 'Milestone' : 'Task'}. Changes save automatically.`),
     h('div', { class: 'drawer-row' },
       segmented([['task', 'Task'], ['milestone', '◆ Milestone']], t.kind, k => set('Change kind', { kind: k, finish: t.finish || t.start || today() }), 'Kind'),
-      segmented([['todo', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status, st => set(st === 'done' ? 'Complete' : 'Change status', { status: st }), 'Status')),
+      segmented([['todo', 'To do'], ['doing', 'Doing'], ['done', 'Done']], t.status, st => setItemStatus(t.id, st), 'Status')),
     reasons.length ? h('div', { class: 'notice warn' }, icon('alert', 16), h('div', null, h('strong', null, 'Blocked'), h('ul', null, reasons.map(r => h('li', null, r))))) : null,
     conflicts.length ? h('div', { class: 'notice danger' }, icon('alert', 16), h('div', null, `Starts before ${conflicts.map(c => `“${c.title}”`).join(', ')} is forecast to finish (${conflicts.map(c => fmtShort(c.finish)).join(', ')}).`)) : null,
 
@@ -2992,6 +3250,8 @@ function itemEditor(t) {
       field('Effort left', effortInput, { id: 'd-effort', hint: 'Use units: 10h or 45m. Your working time, not calendar duration. A work day receives the whole estimate; split tasks that need several work sessions.' }),
       field('Work on', h('input', { id: 'd-plannedDay', type: 'date', value: t.plannedDay, onchange: e => set('Plan day', { plannedDay: e.target.value }) }), { id: 'd-plannedDay', hint: t.plannedDay ? relDay(t.plannedDay) : 'Day you intend to do it' })),
 
+    repeatField(t, set),
+
     field('Waiting on / constraint', liveText('d-blocker', t.blocker, typed('blocker', 'Edit constraint'), { multiline: true, rows: 1, placeholder: 'e.g. Supervisor feedback, access to the lab, a delivery…' }),
       { id: 'd-blocker', hint: 'Anything written here marks the task as blocked until you clear it.' }),
 
@@ -3008,9 +3268,46 @@ function itemEditor(t) {
       neededBy.length ? h('p', { class: 'field-hint' }, 'Needed by: ', neededBy.map((x, i) => [i ? ', ' : '', h('button', { class: 'link', onclick: () => openDrawer('item', x.id) }, x.title)])) : null),
 
     field('Contacts / consulted', liveText('d-owner', t.owner, typed('owner', 'Edit contacts'), { maxlength: 200, placeholder: 'Optional: suppliers, reviewers, contacts' }), { id: 'd-owner', hint: 'Separate from the person responsible for completing this task. Existing owner/contact text is kept here.' }),
+    checklist(t),
     field(isMs ? 'Acceptance criteria' : 'Notes', liveText('d-notes', t.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: isMs ? 'What must be true for this to be accepted?' : 'Details, links, acceptance criteria…' }), { id: 'd-notes' }),
     t.doneOn ? h('p', { class: 'field-hint' }, `Completed ${fmtDate(t.doneOn)}.`) : null,
   ];
+}
+
+function repeatField(t, set) {
+  const r = t.repeat;
+  const every = h('input', {
+    id: 'd-repeat-every', type: 'number', min: 1, max: 99, value: r?.every || 1, disabled: !r || null, 'aria-label': 'Repeat every',
+    onchange: e => {
+      const n = Math.round(Number(e.target.value));
+      if (n >= 1 && n <= 99) set('Change repeat', { repeat: { ...r, every: n } }); else e.target.value = r.every;
+    },
+  });
+  const unit = h('select', { id: 'd-repeat', onchange: e => set(e.target.value ? 'Repeat task' : 'Stop repeating', { repeat: e.target.value ? { every: r?.every || 1, unit: e.target.value } : null }) },
+    [['', 'Does not repeat'], ['day', 'Day(s)'], ['week', 'Week(s)'], ['month', 'Month(s)']].map(([v, label]) => h('option', { value: v, selected: (r?.unit || '') === v }, label)));
+  return field('Repeats', h('div', { class: 'repeat-control' }, r ? h('span', { class: 'muted' }, 'Every') : null, r ? every : null, unit), {
+    id: 'd-repeat',
+    hint: r ? `${fmtRepeat(r)}. When you mark it done, the next one is created ${r.every === 1 ? `one ${r.unit}` : `${r.every} ${r.unit}s`} after this one’s dates (skipping any already past), with its checklist cleared.` : 'For routine work: the next one is created when you mark this done.',
+  });
+}
+
+function checklist(t) {
+  const steps = t.checklist;
+  const add = () => {
+    if (!input.value.trim()) { input.focus(); return; }
+    ui.drawer.focusField = 'step-new';
+    act('Add step', dd => addStep(dd, t.id, input.value));
+  };
+  const input = h('input', { id: 'd-step-new', placeholder: 'Add a step', maxlength: 500, autocomplete: 'off', onkeydown: e => { if (e.key === 'Enter') { e.preventDefault(); add(); } } });
+  const done = steps.filter(c => c.done).length;
+  return h('div', { class: 'field' }, h('label', { for: 'd-step-new' }, steps.length ? `Checklist · ${done} of ${steps.length} done` : 'Checklist'),
+    steps.length ? h('ul', { class: 'checklist' }, steps.map((c, i) => h('li', { class: c.done ? 'is-done' : null },
+      h('input', { type: 'checkbox', checked: c.done, 'aria-label': `Step done: ${c.text}`, onchange: e => act(e.target.checked ? 'Tick step' : 'Untick step', dd => patchStep(dd, t.id, c.id, { done: e.target.checked })) }),
+      liveText(`d-step-${c.id}`, c.text, value => act('Edit step', dd => patchStep(dd, t.id, c.id, { text: value.slice(0, 500) }), { key: `step:${c.id}`, quiet: true }), { 'aria-label': `Step ${i + 1}`, maxlength: 500 }),
+      iconBtn('left', 'Move up', () => act('Reorder steps', dd => moveStep(dd, t.id, c.id, -1)), { class: 'icon-btn sm up', disabled: i === 0 || null }),
+      iconBtn('x', `Remove step ${c.text}`, () => act('Remove step', dd => removeStep(dd, t.id, c.id)), { class: 'icon-btn sm' })))) : null,
+    h('div', { class: 'phase-add-control' }, input, btn('Add', add, { kind: 'sm', iconName: 'plus' })),
+    h('p', { class: 'field-hint' }, 'Small steps inside this task. They have no dates or effort of their own and never block completing the task.'));
 }
 
 function jobEditor(job) {
@@ -3094,6 +3391,74 @@ function welcome() {
       h('p', { class: 'fine' }, 'Nothing leaves this computer. No account, server or internet connection is used.')));
 }
 
+// ── ui/finishday.js ──
+// "Finish the day": what got done, a decision for each unfinished task, and where you stopped.
+// Task moves wait for Finish the day and are one undo step; resume notes save as you type, as in Today.
+
+const CHOICES = [['tomorrow', 'Tomorrow'], ['unplan', 'Unplan'], ['leave', 'Leave']];
+
+function showFinishDay() {
+  const book = store.book;
+  const day = today();
+  const tomorrow = addDays(day, 1);
+  const personId = workPersonId();
+  const { planned, carried } = todayList(book, day, ui.focus, personId);
+  const open = [...planned.filter(t => t.status !== 'done'), ...carried];
+  const done = activeItems(book).filter(t => t.doneOn === day && matchesFocus(t, ui.focus) && matchesPerson(t, personId));
+  const choice = new Map(open.map(t => [t.id, 'tomorrow']));
+
+  const rows = h('div', { class: 'finish-list' });
+  const drawRows = () => rows.replaceChildren(...open.map(t => h('div', { class: 'finish-row', style: { '--job': jobColor(jobOf(book, t.jobId)) } },
+    h('div', { class: 'finish-title' }, h('strong', null, t.title),
+      h('span', { class: 'muted' }, jobOf(book, t.jobId).title, t.plannedDay < day ? ` · planned ${fmtDate(t.plannedDay)}` : '')),
+    segmented(CHOICES, choice.get(t.id), value => { choice.set(t.id, value); drawRows(); }, `What to do with ${t.title}`))));
+  drawRows();
+
+  const jobIds = [...new Set([...planned, ...done].map(t => t.jobId))];
+  const notes = jobIds.map(id => jobOf(store.book, id)).filter(j => j && !j.archived).map(job => {
+    const area = h('textarea', {
+      class: 'resume-text', rows: 2, 'aria-label': `Resume note for ${job.title}`,
+      placeholder: 'Where you stopped, what is unresolved, the next concrete step…',
+      oninput: e => { autosize(e.target); act('Edit resume note', d => setNote(d, job.id, 'restart', e.target.value), { key: `restart:${job.id}`, quiet: true }); },
+    });
+    area.value = job.notes.restart;
+    requestAnimationFrame(() => autosize(area));
+    return h('div', { class: 'resume', style: { '--job': jobColor(job) } }, jobTag(job, { full: true }), area);
+  });
+
+  const finish = () => {
+    const moved = open.filter(t => choice.get(t.id) === 'tomorrow');
+    const unplanned = open.filter(t => choice.get(t.id) === 'unplan');
+    dialog.close();
+    if (!moved.length && !unplanned.length) return;
+    const ok = act('Finish the day', d => {
+      for (const t of moved) patchItem(d, t.id, { plannedDay: tomorrow }, day);
+      for (const t of unplanned) patchItem(d, t.id, { plannedDay: '' }, day);
+      return true;
+    });
+    if (ok) {
+      const parts = [moved.length ? `${moved.length} moved to tomorrow` : '', unplanned.length ? `${unplanned.length} unplanned` : ''].filter(Boolean);
+      notify(`Day finished: ${parts.join(', ')}.`, { action: { label: 'Undo', run: undo } });
+    }
+  };
+
+  const dialog = showModal(`Finish the day · ${fmtLong(day)}`, [
+    h('section', { class: 'finish-section' },
+      h('h3', null, done.length ? `Done today · ${done.length}` : 'Done today'),
+      done.length ? h('ul', { class: 'finish-done' }, done.map(t => h('li', null, t.title))) : h('p', { class: 'muted' }, 'Nothing ticked off today.')),
+    h('section', { class: 'finish-section' },
+      h('h3', null, open.length ? `Still open · ${open.length}` : 'Still open'),
+      open.length
+        ? [h('p', { class: 'muted' }, `Tomorrow plans it for ${fmtDate(tomorrow)}. Unplan returns it to the unplanned list in Week. Leave keeps it where it is. Forecast dates never change.`), rows]
+        : h('p', { class: 'muted' }, 'Everything planned for today is done.')),
+    notes.length ? h('section', { class: 'finish-section' }, h('h3', null, 'Where you stopped'), notes) : null,
+    h('div', { class: 'finish-actions' },
+      btn('Cancel', () => dialog.close(), { kind: 'ghost' }),
+      btn('Finish the day', finish, { kind: 'primary', iconName: 'check', attrs: { id: 'finish-day-apply' } })),
+  ]);
+  return dialog;
+}
+
 // ── ui/views/today.js ──
 // Today: what to do now, what slipped, and where each job left off.
 
@@ -3153,7 +3518,9 @@ function renderToday() {
   return h('div', { class: 'view today' },
     h('header', { class: 'page-head' },
       h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub)),
-      personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'today-person', label: 'Show work for' })),
+      h('div', { class: 'page-head-actions' },
+        personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'today-person', label: 'Show work for' }),
+        btn('Finish the day', showFinishDay, { kind: 'sm', iconName: 'check', title: 'Review what got done and decide what happens to unfinished tasks', attrs: { id: 'finish-day' } }))),
     h('div', { class: 'today-grid' }, main, side));
 }
 
@@ -3661,7 +4028,7 @@ function moveTo(id, column) {
     notify(`Still blocked: ${reasons.join('; ')}. Clear it in the task first.`, { kind: 'warn', action: { label: 'Open', run: () => openDrawer('item', id, 'blocker') } });
     return;
   }
-  act(`Move to ${STATUS[column]}`, d => patchItem(d, id, { status: column }, today()));
+  setItemStatus(id, column, `Move to ${STATUS[column]}`);
 }
 
 function renderBoard() {
@@ -4000,6 +4367,7 @@ function fileMenu() {
     { label: 'Save', icon: 'save', hint: keys('S'), run: () => save() },
     { label: 'Save as…', icon: 'copy', hint: keys('Shift+S'), run: () => save({ saveAs: true }) },
     { label: 'Open…', icon: 'open', hint: keys('O'), run: openFile },
+    { label: 'Backups…', icon: 'archive', run: showBackups },
     'separator',
     { label: 'Undo', icon: 'undo', hint: keys('Z'), run: undo, disabled: !store.canUndo },
     { label: 'Redo', icon: 'redo', hint: keys(IS_MAC ? 'Shift+Z' : 'Y'), run: redo, disabled: !store.canRedo },
@@ -4010,7 +4378,7 @@ function fileMenu() {
     { label: 'Export to calendar (.ics)…', icon: 'week', run: showCalendarExport },
     { label: 'Print this view', icon: 'print', hint: keys('P'), run: () => window.print() },
     'separator',
-    { label: p.recovery ? 'Recovery copy: on' : 'Recovery copy: off', icon: p.recovery ? 'check' : 'x', run: () => setPref('recovery', !p.recovery) },
+    { label: p.recovery ? 'Recovery copy & backups: on' : 'Recovery copy & backups: off', icon: p.recovery ? 'check' : 'x', run: () => setPref('recovery', !p.recovery) },
   ];
 }
 

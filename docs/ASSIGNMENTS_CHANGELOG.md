@@ -44,3 +44,9 @@
 - Closing warns while a linked file lacks the latest edits (e.g. waiting on Reconnect), even when the recovery copy holds them. An up-to-date file closes quietly.
 - The e2e harness accepts leave prompts. The guide scroll check waits for the pane to move before treating the scroll as settled.
 - Validation: 41/41 unit tests. Browser checks pass apart from an existing intermittent guide-scroll failure in headless Edge, which also occurs without this change.
+
+## Release — v3.3.0
+
+- Repeating tasks (spawn on completion), task checklists, Finish the day review, and rolling browser backups (10 per book, 15-minute gap, tied to the recovery setting).
+- Real-browser checks found and fixed two bugs before release: a backup deadlock (a chain step awaited its own chain) and a missing Finish the day confirmation.
+- Validation: 48/48 unit tests and 45/45 real-browser checks passed. Reviewed screenshots of the task editor, Finish the day and Backups.
