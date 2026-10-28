@@ -12,6 +12,7 @@ import { showMenu, showModal } from './overlay.js';
 import { appearanceMenu } from './appearance.js';
 import { showCalendarExport } from './export.js';
 import { showBackups } from './backups.js';
+import { showConflict } from './conflict.js';
 import { guideButton, showGuide } from './guide.js';
 import { renderDrawer } from './drawer.js';
 import { renderToday } from './views/today.js';
@@ -39,7 +40,7 @@ export function renderShell(scope = 'all') {
   renderStatus();
   renderQuickDestination();
   const main = document.getElementById('main');
-  fill(main, RENDER[ui.view]());
+  fill(main, guarded(`the ${ui.view} view`, () => RENDER[ui.view](), viewError));
   const focusedJob = store.book.jobs.find(j => j.id === ui.focus);
   if (focusedJob) main.prepend(h('div', { class: 'focus-banner' },
     h('strong', null, `Showing: ${focusedJob.title}`),
@@ -47,7 +48,7 @@ export function renderShell(scope = 'all') {
     btn('Edit job', () => openJobEditor(focusedJob.id), { kind: 'sm' }),
     focusedJob.status !== 'active' ? h('span', null, `${focusedJob.status === 'hold' ? 'On hold' : 'Complete'} · Tasks are paused in Today and Week. Reactivate in Edit job.`) : null));
   main.scrollTop = pageY;
-  const drawer = renderDrawer();
+  const drawer = guarded('the editor panel', renderDrawer, () => { ui.drawer = null; return null; });
   fill(document.getElementById('drawer-host'), drawer);
   if (drawer) drawer.scrollTop = drawerY;
   document.body.classList.toggle('has-drawer', !!drawer);
@@ -64,6 +65,26 @@ export function renderShell(scope = 'all') {
     }
   }
   document.title = `${store.dirty ? '• ' : ''}${store.book.name} — Tas-Time`;
+}
+
+/**
+ * A bug in one view must not blank the app: show what failed, keep the book, and let the user move on.
+ * The error still reaches the console (and the browser test harness).
+ */
+function guarded(what, render, fallback) {
+  try { return render(); } catch (error) {
+    console.error(`Tas-Time could not draw ${what}:`, error);
+    return fallback(what, error);
+  }
+}
+
+function viewError(what, error) {
+  return h('div', { class: 'view' }, h('div', { class: 'empty', role: 'alert' },
+    h('h2', null, `Something went wrong drawing ${what}`),
+    h('p', null, `Your book is safe: nothing was changed, and the recovery copy and backups are kept. Try another view, or undo your last change. (${error?.message || error})`),
+    h('div', { class: 'empty-actions' },
+      btn('Go to Today', () => setView('today'), { kind: 'primary' }),
+      btn('Undo last change', undo, { disabled: !store.canUndo }))));
 }
 
 function sidebar() {
@@ -132,6 +153,7 @@ export function renderStatus() {
   let label; let kind = ''; let title = ''; let onclick = () => save();
   if (file.state === 'saving') { label = 'Saving…'; kind = 'busy'; }
   else if (file.state === 'reconnect') { label = `Reconnect ${file.name}`; kind = 'warn'; title = 'The browser needs your permission again to keep saving to this file.'; onclick = reconnect; }
+  else if (file.state === 'conflict') { label = `${file.name} changed elsewhere`; kind = 'danger'; title = 'Saved from somewhere else since this window last saved. Autosave has stopped: choose which version to keep.'; onclick = showConflict; }
   else if (file.state === 'error') { label = 'Save failed — retry'; kind = 'danger'; title = file.lastError; }
   else if (file.handle && !dirty) { label = `Saved · ${file.name}`; kind = 'ok'; title = file.savedAt ? `Last saved ${file.savedAt.toLocaleTimeString()}` : 'Up to date'; }
   else if (file.handle) { label = 'Saving soon…'; kind = 'busy'; }

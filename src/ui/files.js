@@ -20,7 +20,8 @@ const PICKER_TYPES = [{ description: 'Tas-Time planning book', accept: { 'applic
 export const file = {
   handle: null,
   name: '',
-  state: 'none',        // none | linked | saving | error | reconnect
+  state: 'none',        // none | linked | saving | error | reconnect | conflict
+  disk: null,           // { modified, raw } of the linked file as this window last read or wrote it
   savedAt: null,
   lastError: '',
   restoredAt: null,     // set when unsaved work was restored on launch
@@ -55,6 +56,40 @@ class StaleSave extends Error {
   constructor() { super('A different book was opened before this save finished. Nothing was written.'); this.name = 'StaleSave'; }
 }
 
+class FileChanged extends Error {
+  constructor() { super('The file was changed outside this window since Tas-Time last read or saved it. Nothing was written.'); this.name = 'FileChanged'; }
+}
+
+/** What the linked file holds now, or null where this browser cannot tell. */
+async function readDisk(handle) {
+  if (typeof handle?.getFile !== 'function') return null;
+  const f = await handle.getFile();
+  if (typeof f.lastModified !== 'number') return null;
+  return { modified: f.lastModified, text: () => f.text() };
+}
+
+/** True when the linked file still holds what this window last read or wrote. */
+async function diskUnchanged(handle) {
+  if (!file.disk || handle !== file.handle) return true;
+  const now = await readDisk(handle);
+  if (!now || now.modified === file.disk.modified) return true;
+  // Sync clients sometimes touch the timestamp without changing the content: not a conflict.
+  if (file.disk.raw !== null && await now.text() === file.disk.raw) { file.disk.modified = now.modified; return true; }
+  return false;
+}
+
+/** Stops autosave until the user chooses which version to keep. */
+function markConflict() {
+  autosave.cancel();
+  file.state = 'conflict';
+  rerender('status');
+  notify(`${file.name} was changed outside this window. Nothing was overwritten — choose which version to keep.`, { kind: 'warn', timeout: 15000, action: { label: 'Choose', run: () => onConflict() } });
+}
+
+let onConflict = () => {};
+/** The UI registers the dialog that resolves a conflict, keeping dialogs out of this module. */
+export function setConflictHandler(fn) { onConflict = fn; }
+
 /** Saves to the linked file, asking for a location the first time (or always with saveAs). */
 export async function save({ saveAs = false } = {}) {
   if (!canLinkFiles) return download();
@@ -72,6 +107,7 @@ export async function save({ saveAs = false } = {}) {
   } catch (error) {
     if (error.name === 'AbortError') return false;
     if (error.name === 'StaleSave') { notify(error.message, { kind: 'warn' }); return false; }
+    if (error.name === 'FileChanged') { if (snap.session === session) markConflict(); return false; }
     if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     notify(`Save failed: ${error.message}`, { kind: 'error' });
     return false;
@@ -82,6 +118,7 @@ export async function save({ saveAs = false } = {}) {
 function queueWrite(handle, snap, { linkOnSuccess = false } = {}) {
   if (snap.session === session) { file.state = 'saving'; rerender('status'); }
   writing = writing.catch(() => {}).then(async () => {
+    if (snap.session === session && !(await diskUnchanged(handle))) throw new FileChanged();
     const writer = await handle.createWritable();
     await writer.write(snap.raw);
     await writer.close();
@@ -90,6 +127,8 @@ function queueWrite(handle, snap, { linkOnSuccess = false } = {}) {
     // An autosave queued before Save as may still target the previous file.
     // Only a write to the current destination can mark this book as saved.
     if (handle !== file.handle) return;
+    const after = await readDisk(handle).catch(() => null);
+    file.disk = after ? { modified: after.modified, raw: snap.raw } : null;
     store.markSaved(snap.rev);
     file.savedAt = new Date(); file.state = 'linked'; file.lastError = '';
     writeRecovery.flush();
@@ -117,7 +156,7 @@ export const autosave = debounce(() => { flushToFile(); }, 1200);
 async function flushToFile() {
   autosave.cancel();
   const handle = file.handle;
-  if (!handle || file.state === 'reconnect') return false;
+  if (!handle || file.state === 'reconnect' || file.state === 'conflict') return false;
   if (!store.dirty) { await writing.catch(() => {}); return file.state === 'linked'; }
   const snap = snapshot();
   try {
@@ -130,7 +169,9 @@ async function flushToFile() {
     if (snap.session === session) rerender('status');
     return true;
   } catch (error) {
-    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
+    if (snap.session !== session) return false;
+    if (error.name === 'FileChanged') markConflict();
+    else { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     return false;
   }
 }
@@ -142,10 +183,73 @@ export async function reconnect() {
   try {
     if (!(await ensurePermission(file.handle, true)) || mine !== session) return false;
     file.state = 'linked';
+    await checkLinkedFile();
+    if (file.state !== 'linked' || mine !== session) return false;
     if (store.dirty) await queueWrite(file.handle, snapshot());
     rerender('status');
     return true;
-  } catch (error) { notify(error.message, { kind: 'error' }); return false; }
+  } catch (error) {
+    if (error.name === 'FileChanged') { markConflict(); return false; }
+    notify(error.message, { kind: 'error' });
+    return false;
+  }
+}
+
+/**
+ * Picks up a version of the linked file saved elsewhere (another PC, another window): loads it when
+ * this window has no unsaved edits, otherwise flags a conflict. Runs on launch, Reconnect and when
+ * the window becomes visible again.
+ */
+export async function checkLinkedFile() {
+  const handle = file.handle;
+  if (!handle || file.state !== 'linked') return;
+  const mine = session;
+  let now;
+  try { now = await readDisk(handle); } catch { return; }
+  if (!now || mine !== session || handle !== file.handle) return;
+  if (file.disk && now.modified === file.disk.modified) return;
+  const text = await now.text();
+  if (mine !== session || handle !== file.handle) return;
+  if (text === encodeBook(store.book) || (file.disk && file.disk.raw === text)) { file.disk = { modified: now.modified, raw: text }; return; }
+  if (store.dirty) { markConflict(); return; }
+  try { adoptDisk(handle, text, now.modified); } catch (error) { file.state = 'error'; file.lastError = error.message; rerender('status'); return; }
+  notify(`Loaded the newer version of ${handle.name} saved elsewhere.`);
+}
+
+/** Shows the linked file's own content, keeping the view where it can. */
+function adoptDisk(handle, text, modified) {
+  const { book, upgradedFrom } = decodeBook(text);
+  if (upgradedFrom) throw new Error(`${handle.name} now holds a version ${upgradedFrom} book. Use Open… to upgrade it.`);
+  const view = sessionView();
+  beginSession();
+  store.replace(book);
+  restoreView(view);
+  file.handle = handle; file.name = handle.name; file.state = 'linked'; file.restoredAt = null;
+  file.disk = { modified, raw: text };
+  writeRecovery.flush();
+  backup({ force: true });
+  rerender();
+}
+
+/** Conflict choice: show the file's version. This window's version is kept as a backup first. */
+export async function useFileVersion() {
+  const handle = file.handle;
+  const now = await readDisk(handle);
+  await backup({ force: true });
+  adoptDisk(handle, await now.text(), now.modified);
+  notify(`Showing ${handle.name} as saved elsewhere. Your version is in Backups.`, { kind: 'warn', timeout: 9000 });
+}
+
+/** Conflict choice: overwrite the file with this window's version. The file's version is kept as a backup first. */
+export async function keepThisVersion() {
+  const handle = file.handle;
+  const now = await readDisk(handle);
+  if (now) await backupRaw(await now.text());
+  file.disk = null;
+  file.state = 'linked';
+  await queueWrite(handle, snapshot());
+  rerender('status');
+  notify(`Saved your version to ${handle.name}. The version saved elsewhere is in Backups.`, { kind: 'warn', timeout: 9000 });
 }
 
 function download(raw = encodeBook(store.book), name = file.name || suggestedName()) {
@@ -175,7 +279,7 @@ export async function openFile() {
     try {
       const [handle] = await window.showOpenFilePicker({ types: PICKER_TYPES, multiple: false });
       const f = await handle.getFile();
-      await loadText(await f.text(), f.name, handle);
+      await loadText(await f.text(), f.name, handle, f.lastModified);
       if (file.handle === handle) await grantWrite(handle);
     } catch (error) {
       if (error.name !== 'AbortError') notify(`Could not open: ${error.message}`, { kind: 'error' });
@@ -202,7 +306,7 @@ async function grantWrite(handle) {
   rerender('status');
 }
 
-async function loadText(text, name, handle) {
+async function loadText(text, name, handle, modified) {
   const { book, upgradedFrom } = decodeBook(text);
   beginSession();
   store.replace(book, { dirty: !!upgradedFrom });
@@ -213,7 +317,10 @@ async function loadText(text, name, handle) {
       // Never overwrite an older-format original silently.
       file.name = '';
       notify(`Upgraded from version ${upgradedFrom}. Use Save to choose where to keep the new version — the original file is untouched.`, { kind: 'warn', timeout: 12000 });
-    } else link(handle);
+    } else {
+      link(handle);
+      file.disk = typeof modified === 'number' ? { modified, raw: text } : null;
+    }
   }
   writeRecovery.flush();
   backup({ force: true });
@@ -236,7 +343,7 @@ export async function loadExample(today) {
   notify('Example loaded. It is synthetic — start your own with New book when ready.');
 }
 
-function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; }
+function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; file.disk = null; }
 
 function resetView() {
   restoreView(null);
@@ -251,7 +358,7 @@ export const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
     maybeBackup();
-    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book, view: sessionView() }));
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, fileModified: file.disk?.modified ?? null, dirty: store.dirty, book: store.book, view: sessionView() }));
     recoveryRevision = store.revision;
     recoveryFailed = false;
   } catch {
@@ -264,7 +371,7 @@ export const writeRecovery = debounce(() => {
 function clearRecovery() {
   recoveryRevision = -1;
   try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
-  backups = backups.catch(() => {}).then(() => idbDeleteWhere(key => typeof key === 'string' && key.startsWith('backups:')));
+  backups = backups.catch(() => {}).then(() => idbDeleteWhere(key => typeof key === 'string' && (key.startsWith('backups:') || key === 'backups-index')));
 }
 
 /**
@@ -298,7 +405,10 @@ export async function restoreSession() {
   const handle = await idbGet('lastFile');
   if (handle && handle.name === saved.fileName) {
     file.handle = handle;
+    // Without unsaved edits the recovery copy is what was last saved, so a newer file is detectable by content too.
+    file.disk = typeof saved.fileModified === 'number' ? { modified: saved.fileModified, raw: saved.dirty ? null : encodeBook(book) } : null;
     file.state = (await ensurePermission(handle, false).catch(() => false)) ? 'linked' : 'reconnect';
+    await checkLinkedFile();
   }
   return true;
 }
@@ -306,6 +416,16 @@ export async function restoreSession() {
 // ── Rolling backups: up to BACKUP_KEEP versions per book, at least BACKUP_GAP_MS apart ──
 
 const backupKey = id => `backups:${id}`;
+const BACKUP_BOOKS = 20;
+
+/** Saves a book's backups and forgets the least recently backed-up books beyond BACKUP_BOOKS. */
+async function storeBackups(bookId, list) {
+  await idbSet(backupKey(bookId), list);
+  const index = { ...(await idbGet('backups-index')), [bookId]: list[0].at };
+  const stale = Object.keys(index).sort((x, y) => index[y].localeCompare(index[x])).slice(BACKUP_BOOKS);
+  for (const id of stale) { delete index[id]; await idbDelete(backupKey(id)); }
+  await idbSet('backups-index', index);
+}
 let backups = Promise.resolve();
 let lastBackupTry = { id: '', at: 0 };
 
@@ -329,7 +449,7 @@ export function backup({ force = false } = {}) {
   lastBackupTry = { id: book.id, at: Date.now() };
   backups = backups.catch(() => {}).then(async () => {
     const next = withBackup(await readBackups(book.id), entry, { force }); // not listBackups: it would wait for this very step
-    if (next) await idbSet(backupKey(book.id), next);
+    if (next) await storeBackups(book.id, next);
   });
   return backups;
 }
@@ -338,6 +458,19 @@ export function backup({ force = false } = {}) {
 function maybeBackup() {
   if (lastBackupTry.id === store.book.id && Date.now() - lastBackupTry.at < BACKUP_GAP_MS) return;
   backup();
+}
+
+/** Keeps another version of the open book (the file's, before overwriting it) as a backup. */
+async function backupRaw(raw) {
+  let book;
+  try { ({ book } = decodeBook(raw)); } catch { return; }
+  if (book.id !== store.book.id || !prefs().recovery) return;
+  const entry = { at: new Date().toISOString(), name: book.name, fileName: file.name, tasks: book.items.length, raw: encodeBook(book) };
+  backups = backups.catch(() => {}).then(async () => {
+    const next = withBackup(await readBackups(book.id), entry, { force: true });
+    if (next) await storeBackups(book.id, next);
+  });
+  await backups;
 }
 
 /** Replaces the open book's content with a backup as one undoable step; the file link stays. */
@@ -376,6 +509,17 @@ async function idbSet(key, value) {
       tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
     });
   } catch { /* storage blocked: linking still works for this session */ }
+}
+
+async function idbDelete(key) {
+  try {
+    const db = await idb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').delete(key);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+  } catch { /* storage blocked: nothing stored */ }
 }
 
 async function idbDeleteWhere(match) {
