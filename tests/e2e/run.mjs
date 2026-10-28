@@ -43,8 +43,14 @@ const STUB_FS = `(() => {
     requestPermission: async () => { await sleep(window.__permDelay); return 'granted'; },
     createWritable: async () => { let buf = ''; return { write: async s => { buf += s; }, close: async () => { await sleep(window.__writeDelay); window.__saved.push({ name, raw: buf }); } }; } });
   window.showSaveFilePicker = async () => handle(window.__pickName);
-  window.__openText = '';
-  window.showOpenFilePicker = async () => [{ ...handle('old-v2.json'), getFile: async () => ({ name: 'old-v2.json', text: async () => window.__openText }) }];
+  window.__openText = ''; window.__openName = 'old-v2.json';
+  // Real browsers open files read-only: write access starts as __openPerm and becomes __openGrant once asked.
+  window.__openPerm = 'granted'; window.__openGrant = 'granted';
+  window.showOpenFilePicker = async () => {
+    const name = window.__openName; let perm = window.__openPerm;
+    return [{ ...handle(name), queryPermission: async () => perm, requestPermission: async () => (perm = window.__openGrant),
+      getFile: async () => ({ name, text: async () => window.__openText }) }];
+  };
   return true;
 })()`;
 const lastSaved = async (name = '') => JSON.parse(await ev(`window.__saved.filter(s => !${JSON.stringify(name)} || s.name === ${JSON.stringify(name)}).at(-1)?.raw || "null"`));
@@ -312,6 +318,25 @@ try {
     await page.wait(600);
     assert.ok((await lastSaved('plan.json')).items.some(i => i.title === 'Edit before switch'), 'edit reached plan.json');
     assert.match(await text('.status'), /Not saved to a file/, 'new book is not linked to plan.json');
+  });
+
+  await check('opening a current file asks for write access once, then autosaves without Reconnect', async () => {
+    await ev(`window.__openText = window.__saved.filter(s => s.name === 'plan.json').at(-1).raw; window.__openName = 'opened.json'; window.__openPerm = 'prompt'; true`);
+    await page.key('o', { modifiers: 2, keyCode: 79 });
+    await page.wait(300);
+    assert.doesNotMatch(await text('.status'), /Reconnect/);
+    await quickAdd('Edit after open');
+    await page.wait(1600);
+    assert.ok((await lastSaved('opened.json')).items.some(i => i.title === 'Edit after open'), 'edit reached opened.json');
+    assert.match(await text('.status'), /Saved · opened\.json/);
+  });
+
+  await check('opening a file whose write access is refused shows Reconnect straight away', async () => {
+    await ev(`window.__openName = 'refused.json'; window.__openPerm = 'prompt'; window.__openGrant = 'denied'; true`);
+    await page.key('o', { modifiers: 2, keyCode: 79 });
+    await page.wait(300);
+    assert.match(await text('.status'), /Reconnect refused\.json/);
+    await ev(`window.__openName = 'old-v2.json'; window.__openPerm = 'granted'; window.__openGrant = 'granted'; true`);
   });
 
   await check('a slow permission check never writes another book into the file', async () => {
@@ -681,9 +706,25 @@ try {
     assert.equal((await lastSaved()).people.find(p => p.id === david.id).name, 'David');
     await page.reload();
     await ev(STUB_FS);
-    await nav(6);
-    await ev(`(() => { const e = document.getElementById('assignment-person'); e.value = ${JSON.stringify(david.id)}; e.dispatchEvent(new Event('change')); return true; })()`);
+    assert.match(await ev('document.querySelector(".nav-item.on").textContent.trim()'), /^Assignments/);
+    assert.equal(await ev('document.getElementById("assignment-person").value'), david.id);
     assert.equal(await count('.assignment-group .row-item'), 2);
+  });
+
+  await check('relaunch restores the selected job, notes page and open job panel after navigation only', async () => {
+    await page.click('.job-link');
+    const selectedJob = await text('.job-link.on .job-name');
+    await nav(5);
+    await page.clickText('.tabs button', 'Working');
+    await page.clickText('.focus-banner .btn', 'Edit job');
+    const title = await ev('document.getElementById("d-title").value');
+    await page.reload();
+    await ev(STUB_FS);
+    assert.equal(await text('.job-link.on .job-name'), selectedJob);
+    assert.match(await ev('document.querySelector(".nav-item.on").textContent.trim()'), /^Notes/);
+    assert.match(await ev('document.getElementById("note-text").getAttribute("aria-label")'), /Working/);
+    assert.equal(await ev('document.getElementById("d-title").value'), title);
+    await page.key('Escape', { keyCode: 27 });
   });
 
   await check('no page errors during the whole session', async () => assert.deepEqual(page.errors, []));

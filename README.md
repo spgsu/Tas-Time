@@ -112,6 +112,7 @@ Books from older app versions upgrade to **format 4**. Their existing tasks rema
 - **One file.** Your planning book is a JSON file at a location you choose. Back it up by copying it, or with **⋯ → Save as…**.
 - **Autosave.** After the first save, Edge and Chrome write every change to that file. After restarting the browser, it may ask you to **Reconnect** once.
 - **Recovery copy.** The browser also keeps a copy of unsaved work, so closing the window by accident loses nothing. Turn it off in the **⋯** menu on a shared computer.
+- **Resume where you left off.** With recovery enabled, reopening Tas-Time in the same browser and from the same location restores your last book and file link, view, selected job, week, notes page, filters and open task or job panel. The browser may require **Reconnect** to resume saving to the linked file.
 - **Older books.** Files from earlier Tas-Time versions open and are upgraded. The original file is never overwritten; you choose where to save the new version.
 - **Work and personal.** Keep separate books in separate environments. Tas-Time cannot enforce an employer's rules, so check that running a local HTML file is allowed at work.
 
