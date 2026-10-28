@@ -31,3 +31,10 @@
 - User requested a release. Bumped the application version to 3.2.0, rebuilt the HTML and added release notes with format 4 upgrade instructions.
 - Re-ran validation: 38/38 unit tests and 38/38 real-browser checks passed.
 - Packaged Windows, macOS and standalone HTML downloads. Independently checked ZIP CRCs, matching bundled HTML, version strings and macOS launcher executable permissions.
+
+## Release — v3.2.1
+
+- Resume the last session: the recovery copy now stores view state (view, job, week, notes page, filters, open panel). Damaged or old view data falls back to the defaults.
+- Write access is requested when a file is opened. The recovery copy is flushed on pagehide and when the window is hidden.
+- Launchers switch to Chrome when an Edge `ClearBrowsingDataOnExit` policy would wipe the recovery copy on every exit.
+- Validation: 40/40 unit tests and 41/41 real-browser checks passed, including the relaunch-restore check.
