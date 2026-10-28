@@ -7,8 +7,7 @@
 //  3. Download fallback where neither is available (cannot confirm the write).
 import { decodeBook, encodeBook, newBook } from '../core/model.js';
 import { debounce } from './dom.js';
-import { notify, rerender, store, ui } from './state.js';
-import { mondayOf, todayIso } from '../core/dates.js';
+import { notify, rerender, restoreView, sessionView, store } from './state.js';
 import { exampleBook } from '../core/example.js';
 
 const RECOVERY_KEY = 'tas-time:recovery:v3';
@@ -175,6 +174,7 @@ export async function openFile() {
       const [handle] = await window.showOpenFilePicker({ types: PICKER_TYPES, multiple: false });
       const f = await handle.getFile();
       await loadText(await f.text(), f.name, handle);
+      if (file.handle === handle) await grantWrite(handle);
     } catch (error) {
       if (error.name !== 'AbortError') notify(`Could not open: ${error.message}`, { kind: 'error' });
     }
@@ -186,6 +186,18 @@ export async function openFile() {
     if (f) { try { await loadText(await f.text(), f.name, null); } catch (error) { notify(`Could not open: ${error.message}`, { kind: 'error' }); } }
   });
   input.click();
+}
+
+/**
+ * The open picker grants read access only. Ask for write access while the click that opened
+ * the file still counts, so autosave works at once instead of stopping at Reconnect.
+ */
+async function grantWrite(handle) {
+  const mine = session;
+  const granted = await ensurePermission(handle, true).catch(() => false);
+  if (granted || mine !== session || file.handle !== handle) return;
+  file.state = 'reconnect';
+  rerender('status');
 }
 
 async function loadText(text, name, handle) {
@@ -224,11 +236,7 @@ export async function loadExample(today) {
 function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; }
 
 function resetView() {
-  ui.focus = ''; ui.drawer = null; ui.notesJob = ''; ui.week = mondayOf(todayIso());
-  ui.quickJob = ''; ui.quickPhase = ''; ui.addingIn = ''; ui.collapsedPhases.clear();
-  ui.workPerson = ''; ui.assignments = { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' }; ui.assignmentWeek = mondayOf(todayIso());
-  ui.assignmentFiltersOpen = false;
-  ui.quickAssignee = '';
+  restoreView(null);
 }
 
 // ── Recovery copy ──
@@ -239,7 +247,7 @@ let recoveryFailed = false;
 export const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
-    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book }));
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book, view: sessionView() }));
     recoveryRevision = store.revision;
     recoveryFailed = false;
   } catch {
@@ -270,6 +278,7 @@ export async function restoreSession() {
   let book; let upgradedFrom;
   try { ({ book, upgradedFrom } = decodeBook(JSON.stringify(saved.book))); } catch { return false; }
   store.replace(book, { dirty: !!saved.dirty || !!upgradedFrom });
+  restoreView(saved.view);
   file.name = saved.fileName || '';
   if (saved.dirty) file.restoredAt = new Date(saved.at);
   if (upgradedFrom) {

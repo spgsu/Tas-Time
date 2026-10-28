@@ -2,7 +2,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { newBook } from '../src/core/model.js';
-import { onNotify, store } from '../src/ui/state.js';
+import { onNotify, restoreView, sessionView, store, ui } from '../src/ui/state.js';
 
 globalThis.window = { showSaveFilePicker: async () => pickedHandle };
 const storage = new Map();
@@ -46,6 +46,7 @@ test.beforeEach(() => {
   autosave.cancel(); writeRecovery.cancel();
   storage.clear(); storageBlocked = false;
   store.replace(newBook());
+  restoreView(null);
   Object.assign(file, { handle: null, name: '', state: 'none' });
 });
 test.afterEach(() => { autosave.cancel(); writeRecovery.cancel(); });
@@ -123,4 +124,44 @@ test('disabled recovery warns only for unsaved edits', () => {
   assert.equal(closeAttempt().prevented, true);
   store.markSaved(store.revision);
   assert.equal(closeAttempt().prevented, false);
+});
+
+test('closing and reopening restores the file, job, view and planning context without edits', async () => {
+  const book = newBook('Session book');
+  // Use the real example schema for jobs, phases and tasks.
+  const { exampleBook } = await import('../src/core/example.js');
+  store.replace(exampleBook('2026-10-27'));
+  const job = store.book.jobs[0];
+  const task = store.book.items.find(t => t.jobId === job.id);
+  Object.assign(file, { name: 'my-book.json' });
+  Object.assign(ui, { view: 'notes', focus: job.id, notesJob: job.id, notesPage: 'working', week: '2026-11-02',
+    drawer: { type: 'item', id: task.id, focusField: 'd-title' }, planRange: '3m', planShowDone: false,
+    collapsedPhases: new Set(['collapsed-phase']), assignmentWeek: '2026-11-09' });
+  ui.assignments = { person: store.book.selfId, status: 'doing', period: 'week', group: 'status', paused: true, search: 'draft' };
+  const expected = sessionView();
+  closeAttempt();
+  restoreView(null);
+  store.replace(book);
+  file.name = '';
+  assert.equal(await restoreSession(), true);
+  assert.equal(file.name, 'my-book.json');
+  assert.deepEqual(sessionView(), expected);
+  assert.equal(store.dirty, false, 'view changes do not dirty the planning book');
+});
+
+test('old and invalid session views fall back safely and cannot reopen missing records', () => {
+  restoreView({ view: 'missing', notesPage: 'missing', week: '2026-02-30', focus: 'deleted-job',
+    drawer: { type: 'item', id: 'deleted-task' }, assignments: { person: 'deleted-person', search: 123 },
+    collapsedPhases: {}, planShowDone: 'false', addingIn: 'unsaved-inline-form' });
+  assert.equal(ui.view, 'today');
+  assert.equal(ui.notesPage, 'restart');
+  assert.equal(ui.focus, '');
+  assert.equal(ui.drawer, null);
+  assert.equal(ui.assignments.person, 'all');
+  assert.equal(ui.assignments.search, '');
+  assert.equal(ui.planShowDone, true);
+  assert.equal(ui.addingIn, '');
+  assert.ok(ui.collapsedPhases instanceof Set);
+  restoreView();
+  assert.equal(ui.view, 'today');
 });

@@ -11,7 +11,7 @@ async function start() {
   initToasts();
   initQuickAdd();
   initKeys();
-  onRender(renderShell);
+  onRender(scope => { renderShell(scope); writeRecovery(); });
   store.subscribe(reason => {
     // Quiet commits come from text fields being typed in: refresh only the chrome so the caret stays put.
     if (reason === 'quiet' || reason === 'saved') renderStatus(); else renderShell();
@@ -23,5 +23,9 @@ async function start() {
 }
 
 window.addEventListener('beforeunload', beforeUnload);
+window.addEventListener('pagehide', () => writeRecovery.flush());
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') writeRecovery.flush();
+});
 
 start();

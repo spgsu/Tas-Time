@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // Shared UI state. The book itself lives in the store; this is view state only.
-import { mondayOf, todayIso } from '../core/dates.js';
+import { isIsoDate, mondayOf, todayIso } from '../core/dates.js';
 import { createStore } from '../core/store.js';
-import { newBook } from '../core/model.js';
+import { newBook, NOTE_PAGES } from '../core/model.js';
 
 export const VIEWS = [
   { id: 'today', label: 'Today', key: '1', icon: 'today' },
@@ -15,7 +15,7 @@ export const VIEWS = [
 
 export const store = createStore(newBook());
 
-export const ui = {
+function defaultUi() { return {
   view: 'today',
   focus: '',            // job id the views are narrowed to
   week: mondayOf(todayIso()),
@@ -36,7 +36,47 @@ export const ui = {
   assignmentWeek: mondayOf(todayIso()),
   assignmentFiltersOpen: false,
   assignments: { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' },
-};
+}; }
+
+export const ui = defaultUi();
+
+/** JSON-safe view state, stored alongside the book so selections never cross books. */
+export function sessionView() {
+  const { addingIn, drawer, collapsedPhases, ...view } = ui;
+  return { ...view, drawer: drawer ? { type: drawer.type, id: drawer.id } : null, collapsedPhases: [...collapsedPhases] };
+}
+
+/** Old or damaged recovery records fall back to valid defaults. */
+export function restoreView(saved) {
+  Object.assign(ui, defaultUi());
+  if (!saved || typeof saved !== 'object') return;
+  const choose = (key, choices) => { if (choices.includes(saved[key])) ui[key] = saved[key]; };
+  choose('view', VIEWS.map(v => v.id));
+  choose('notesPage', NOTE_PAGES.map(p => p[0]));
+  choose('planRange', ['6w', '3m', 'all']);
+  for (const key of ['planShowDone', 'planShowArchived', 'boardAllDone', 'planMobileTimeline', 'assignmentFiltersOpen']) {
+    if (typeof saved[key] === 'boolean') ui[key] = saved[key];
+  }
+  for (const key of ['week', 'assignmentWeek']) if (isIsoDate(saved[key])) ui[key] = mondayOf(saved[key]);
+  const jobIds = store.book.jobs.map(j => j.id);
+  for (const key of ['focus', 'notesJob', 'quickJob']) choose(key, jobIds);
+  const peopleIds = store.book.people.map(p => p.id);
+  choose('workPerson', [...peopleIds, 'all', 'unassigned']);
+  choose('quickAssignee', [...peopleIds, 'unassigned']);
+  choose('quickPhase', store.book.phases.filter(p => p.jobId === ui.quickJob).map(p => p.id));
+  if (Array.isArray(saved.collapsedPhases)) ui.collapsedPhases = new Set(saved.collapsedPhases.filter(k => typeof k === 'string'));
+  const drawer = saved.drawer;
+  if (drawer && (drawer.type === 'job' ? jobIds.includes(drawer.id) : drawer.type === 'item' && store.book.items.some(t => t.id === drawer.id))) {
+    ui.drawer = { type: drawer.type, id: drawer.id };
+  }
+  const filters = saved.assignments;
+  if (filters && typeof filters === 'object') {
+    const choices = { person: ['all', 'unassigned', ...peopleIds], status: ['all', 'open', 'todo', 'doing', 'blocked', 'done', 'late'], period: ['all', 'week', 'unscheduled'], group: ['job', 'person', 'status', 'week'] };
+    for (const [key, values] of Object.entries(choices)) if (values.includes(filters[key])) ui.assignments[key] = filters[key];
+    if (typeof filters.paused === 'boolean') ui.assignments.paused = filters.paused;
+    if (typeof filters.search === 'string') ui.assignments.search = filters.search;
+  }
+}
 
 export function today() { return todayIso(); }
 
