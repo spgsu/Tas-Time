@@ -11,6 +11,7 @@ import { createTask, undo } from '../commands.js';
 import { btn, emptyState, itemRow, jobColor, jobTag, meter } from '../components.js';
 import { welcome } from './welcome.js';
 import { personSelect, workPersonId } from '../people.js';
+import { showFinishDay } from '../finishday.js';
 
 function planFor(id, day, label) {
   return act(label, d => patchItem(d, id, { plannedDay: day }, today()));
@@ -68,7 +69,9 @@ export function renderToday() {
   return h('div', { class: 'view today' },
     h('header', { class: 'page-head' },
       h('div', null, h('p', { class: 'eyebrow' }, 'Today'), h('h1', null, fmtLong(day)), h('p', { class: 'sub' }, sub)),
-      personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'today-person', label: 'Show work for' })),
+      h('div', { class: 'page-head-actions' },
+        personSelect(personId, value => { ui.workPerson = value; rerender(); }, { id: 'today-person', label: 'Show work for' }),
+        btn('Finish the day', showFinishDay, { kind: 'sm', iconName: 'check', title: 'Review what got done and decide what happens to unfinished tasks', attrs: { id: 'finish-day' } }))),
     h('div', { class: 'today-grid' }, main, side));
 }
 

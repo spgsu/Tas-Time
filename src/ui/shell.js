@@ -11,6 +11,7 @@ import { canLinkFiles, file, loadExample, newBlankBook, openFile, prefs, reconne
 import { showMenu, showModal } from './overlay.js';
 import { appearanceMenu } from './appearance.js';
 import { showCalendarExport } from './export.js';
+import { showBackups } from './backups.js';
 import { guideButton, showGuide } from './guide.js';
 import { renderDrawer } from './drawer.js';
 import { renderToday } from './views/today.js';
@@ -164,6 +165,7 @@ function fileMenu() {
     { label: 'Save', icon: 'save', hint: keys('S'), run: () => save() },
     { label: 'Save as…', icon: 'copy', hint: keys('Shift+S'), run: () => save({ saveAs: true }) },
     { label: 'Open…', icon: 'open', hint: keys('O'), run: openFile },
+    { label: 'Backups…', icon: 'archive', run: showBackups },
     'separator',
     { label: 'Undo', icon: 'undo', hint: keys('Z'), run: undo, disabled: !store.canUndo },
     { label: 'Redo', icon: 'redo', hint: keys(IS_MAC ? 'Shift+Z' : 'Y'), run: redo, disabled: !store.canRedo },
@@ -174,7 +176,7 @@ function fileMenu() {
     { label: 'Export to calendar (.ics)…', icon: 'week', run: showCalendarExport },
     { label: 'Print this view', icon: 'print', hint: keys('P'), run: () => window.print() },
     'separator',
-    { label: p.recovery ? 'Recovery copy: on' : 'Recovery copy: off', icon: p.recovery ? 'check' : 'x', run: () => setPref('recovery', !p.recovery) },
+    { label: p.recovery ? 'Recovery copy & backups: on' : 'Recovery copy & backups: off', icon: p.recovery ? 'check' : 'x', run: () => setPref('recovery', !p.recovery) },
   ];
 }
 

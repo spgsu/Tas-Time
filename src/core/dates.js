@@ -30,6 +30,13 @@ export function dayNum(iso) {
 export function fromDayNum(n) { return new Date(n * DAY_MS).toISOString().slice(0, 10); }
 export function addDays(iso, n) { return fromDayNum(dayNum(iso) + n); }
 export function diffDays(a, b) { return dayNum(b) - dayNum(a); }
+/** Same day n months later, clamped to the month's last day (31 Jan + 1 month = 28/29 Feb). */
+export function addMonths(iso, n) {
+  const [y, m, d] = iso.split('-').map(Number);
+  const first = new Date(Date.UTC(y, m - 1 + n, 1));
+  const last = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth(), Math.min(d, last))).toISOString().slice(0, 10);
+}
 export function weekday(iso) { return new Date(dayNum(iso) * DAY_MS).getUTCDay(); }
 export function mondayOf(iso) { return addDays(iso, -((weekday(iso) + 6) % 7)); }
 

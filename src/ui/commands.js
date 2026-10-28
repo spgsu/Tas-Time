@@ -1,9 +1,10 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // User commands shared by menus, buttons and keyboard shortcuts.
 import { act, notify, openDrawer, rerender, store, ui, today } from './state.js';
-import { addItem, addJob, deleteItem, deleteJob } from '../core/ops.js';
+import { addItem, addJob, deleteItem, deleteJob, patchItem } from '../core/ops.js';
 import { itemOf, jobOf, liveJobs } from '../core/query.js';
-import { parseQuickAdd } from '../core/parse.js';
+import { fmtRepeat, parseQuickAdd } from '../core/parse.js';
+import { fmtDate } from '../core/dates.js';
 
 export const STANDARD_PHASES = ['Scope', 'Plan', 'Execute', 'Review & accept'];
 
@@ -54,6 +55,19 @@ export function createTask(jobId = ui.focus || ui.quickJob || liveJobs(store.boo
   const item = act('New task', d => addItem(d, { jobId, phaseId, plannedDay, assigneeId, title: 'Untitled task' }));
   if (item) openDrawer('item', item.id, 'title');
   return item;
+}
+
+/** Every status change goes through here so completing a repeating task says where the next one went. */
+export function setItemStatus(id, status, label = status === 'done' ? 'Complete' : 'Change status') {
+  const before = itemOf(store.book, id);
+  const repeat = before?.status !== 'done' && status === 'done' ? before.repeat : null;
+  const done = act(label, d => patchItem(d, id, { status }, today()));
+  if (!done || !repeat) return done;
+  const list = store.book.items;
+  const next = list[list.findIndex(t => t.id === id) + 1];
+  const when = next?.plannedDay || next?.start || next?.finish;
+  if (next) notify(`${fmtRepeat(repeat)}: next “${next.title}”${when ? ` ${next.plannedDay ? 'to work on' : 'from'} ${fmtDate(when)}` : ''}.`, { action: { label: 'Open', run: () => openDrawer('item', next.id) } });
+  return done;
 }
 
 export function removeItem(id) {

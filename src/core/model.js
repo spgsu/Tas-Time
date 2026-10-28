@@ -27,6 +27,8 @@ export const COLORS = {
   olive: { label: 'Olive', hex: '#6b7a2a' },
 };
 export const DEFAULT_CAPACITY = 10 * 60;
+export const REPEAT_UNITS = { day: 'day', week: 'week', month: 'month' };
+export const MAX_CHECKLIST = 100;
 
 export function uid() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -50,7 +52,7 @@ export function newItem(fields = {}) {
   return {
     id: uid(), jobId: '', phaseId: '', title: '', kind: 'task', status: 'todo',
     start: '', finish: '', effort: 0, plannedDay: '', assigneeId: '', owner: '', blocker: '', deps: [],
-    baseline: null, doneOn: '', notes: '', archived: false, ...fields,
+    baseline: null, doneOn: '', notes: '', archived: false, repeat: null, checklist: [], ...fields,
   };
 }
 
@@ -121,6 +123,18 @@ export function validate(book) {
       if (typeof t.baseline !== 'object') fail('Invalid baseline.');
       date(t.baseline.start, 'Baseline start'); date(t.baseline.finish, 'Baseline finish');
     }
+    if (t.repeat !== null) {
+      if (!t.repeat || typeof t.repeat !== 'object' || !REPEAT_UNITS[t.repeat.unit]) fail(`"${t.title}" has an invalid repeat.`);
+      if (!Number.isInteger(t.repeat.every) || t.repeat.every < 1 || t.repeat.every > 99) fail(`"${t.title}" must repeat every 1 to 99 ${t.repeat.unit}s.`);
+    }
+    if (!Array.isArray(t.checklist) || t.checklist.length > MAX_CHECKLIST) fail(`"${t.title}" has an invalid checklist (max ${MAX_CHECKLIST} steps).`);
+    const steps = new Set();
+    for (const c of t.checklist) {
+      if (!c || typeof c !== 'object' || typeof c.done !== 'boolean') fail(`A checklist step in "${t.title}" is malformed.`);
+      text(c.id, 'Checklist step identifier', 200); text(c.text, 'Checklist step', 500);
+      if (!c.id || steps.has(c.id)) fail(`Checklist steps in "${t.title}" need unique identifiers.`);
+      steps.add(c.id);
+    }
     if (!Array.isArray(t.deps) || new Set(t.deps).size !== t.deps.length) fail('Invalid dependency list.');
     for (const d of t.deps) if (!items.has(d) || d === t.id) fail(`"${t.title}" depends on a missing item.`);
   }
@@ -155,10 +169,18 @@ export function findCycle(items) {
   return seen !== items.length;
 }
 
-/** Notebook pages added after a book was saved start empty instead of failing validation. */
-function addMissingNotePages(book) {
+/**
+ * Fields added after a book was saved start empty instead of failing validation:
+ * notebook pages, and task repeats and checklists (3.3). Older 3.x apps ignore these fields.
+ */
+function addMissingFields(book) {
   for (const j of Array.isArray(book.jobs) ? book.jobs : []) {
     if (j && j.notes && typeof j.notes === 'object') for (const [k] of NOTE_PAGES) if (j.notes[k] === undefined) j.notes[k] = '';
+  }
+  for (const t of Array.isArray(book.items) ? book.items : []) {
+    if (!t || typeof t !== 'object') continue;
+    if (t.repeat === undefined) t.repeat = null;
+    if (t.checklist === undefined) t.checklist = [];
   }
   return book;
 }
@@ -169,10 +191,10 @@ const V2_JOB_STATUS = { Active: 'active', 'On hold': 'hold', Complete: 'done' };
 /** Upgrades version 1 and 2 books to the current schema without dropping data. */
 export function migrate(raw) {
   if (!raw || raw.format !== FORMAT) fail('This file is not a Tas-Time planning book.');
-  if (raw.version === VERSION) return addMissingNotePages(raw);
+  if (raw.version === VERSION) return addMissingFields(raw);
   if (raw.version === 3) {
     const b = newBook();
-    return addMissingNotePages({ ...raw, version: VERSION, people: b.people, selfId: b.selfId,
+    return addMissingFields({ ...raw, version: VERSION, people: b.people, selfId: b.selfId,
       weeks: Object.fromEntries(Object.entries(raw.weeks || {}).map(([day, week]) => [day, { ...week, people: { [b.selfId]: week.capacity } }])),
       items: raw.items.map(t => ({ ...t, assigneeId: b.selfId })) });
   }
