@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="generator" content="Tas-Time 3.4.0">
+<meta name="generator" content="Tas-Time 3.4.1">
 <meta name="copyright" content="© 2026 Selami Pazarbasi. MIT License.">
 <title>Tas-Time</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNTYgMjU2Ij4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0iY292ZXIiIHgyPSIxIiB5Mj0iMSI+PHN0b3Agc3RvcC1jb2xvcj0iIzM5ODQ2NiIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iIzE4NGMzYiIvPjwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9InBhcGVyIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIHN0b3AtY29sb3I9IiNmZmZkZjQiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNlOGVmZGYiLz48L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB4PSIxNiIgeT0iMTYiIHdpZHRoPSIyMjQiIGhlaWdodD0iMjI0IiByeD0iNTIiIGZpbGw9InVybCgjY292ZXIpIi8+CiAgPHJlY3QgeD0iNjIiIHk9IjUxIiB3aWR0aD0iMTM5IiBoZWlnaHQ9IjE2NCIgcng9IjE3IiBmaWxsPSIjMTAzZTMxIiBvcGFjaXR5PSIuMyIvPgogIDxyZWN0IHg9IjU2IiB5PSI0NCIgd2lkdGg9IjE0NCIgaGVpZ2h0PSIxNjQiIHJ4PSIxNyIgZmlsbD0idXJsKCNwYXBlcikiLz4KICA8cGF0aCBkPSJNNzkgNDR2MTY0IiBzdHJva2U9IiNkMWRkYzgiIHN0cm9rZS13aWR0aD0iMyIvPgogIDxwYXRoIGQ9Ik01MSA3NmgxNm0tMTYgMzZoMTZtLTE2IDM2aDE2bS0xNiAzNmgxNiIgc3Ryb2tlPSIjYWNkMGI1IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgogIDxyZWN0IHg9Ijk2IiB5PSI3NiIgd2lkdGg9IjU5IiBoZWlnaHQ9IjE0IiByeD0iNyIgZmlsbD0iIzM0N2E1OCIvPgogIDxyZWN0IHg9IjExMiIgeT0iMTExIiB3aWR0aD0iNjQiIGhlaWdodD0iMTQiIHJ4PSI3IiBmaWxsPSIjMzQ3YTU4Ii8+CiAgPHJlY3QgeD0iMTMyIiB5PSIxNDYiIHdpZHRoPSI0NCIgaGVpZ2h0PSIxNCIgcng9IjciIGZpbGw9IiMzNDdhNTgiLz4KICA8Y2lyY2xlIGN4PSIxNzgiIGN5PSIxOTAiIHI9IjM1IiBmaWxsPSIjZGJhNTRhIi8+CiAgPHBhdGggZD0iTTE3OCAxNzB2MjFsMTMgOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZGY0IiBzdHJva2Utd2lkdGg9IjciIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIvPgo8L3N2Zz4K">
@@ -853,6 +853,8 @@ h1, h2, h3, p { margin: 0; }
   .log-lines, .lookahead-row .field-hint { margin-left: 0; }
   .reason-row { grid-template-columns: 1fr 60px 28px; }
 }
+.conflict-choices { display: grid; gap: 14px; margin-top: 16px; }
+.conflict-choices .field-hint { margin-top: 4px; }
 
 </style>
 </head>
@@ -1081,11 +1083,17 @@ const FULL_WEEKDAYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', '
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// Validation checks every date in the book on every edit; a book reuses few distinct dates.
+const knownDates = new Set();
+
 function isIsoDate(value) {
+  if (knownDates.has(value)) return true;
   if (typeof value !== 'string' || !ISO_RE.test(value)) return false;
   const [y, m, d] = value.split('-').map(Number);
   if (y < 1900 || y > 2200) return false;
-  return new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10) === value;
+  const ok = new Date(Date.UTC(y, m - 1, d)).toISOString().slice(0, 10) === value;
+  if (ok && knownDates.size < 100000) knownDates.add(value);
+  return ok;
 }
 
 function todayIso(now = new Date()) {
@@ -1459,7 +1467,16 @@ function encodeBook(book) { return JSON.stringify(validate(book), null, 2); }
 // applies the mutation, validates, and only then publishes the new book.
 
 const HISTORY_LIMIT = 200;
+// Each undo step is a full copy of the book (in memory about twice its file size): big books keep
+// fewer steps, at least 20, within this budget of serialized bytes.
+const HISTORY_BYTES = 80_000_000;
+const HISTORY_MIN = 20;
 const COALESCE_MS = 1500;
+
+/** Undo steps to keep for a book of this serialized size. */
+function historyLimit(bytes) {
+  return Math.max(HISTORY_MIN, Math.min(HISTORY_LIMIT, Math.floor(HISTORY_BYTES / Math.max(1, bytes))));
+}
 
 function createStore(initial) {
   let book = validate(initial);
@@ -1469,6 +1486,8 @@ function createStore(initial) {
   let savedRevision = 0;
   let lastKey = '';
   let lastAt = 0;
+  let limit = historyLimit(JSON.stringify(book).length);
+  let sinceMeasure = 0;
   const listeners = new Set();
 
   const emit = reason => { for (const fn of listeners) fn(reason); };
@@ -1479,6 +1498,7 @@ function createStore(initial) {
     get dirty() { return revision !== savedRevision; },
     get canUndo() { return past.length > 0; },
     get canRedo() { return future.length > 0; },
+    get historyLimit() { return limit; },
     subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
 
     /**
@@ -1494,7 +1514,9 @@ function createStore(initial) {
       const coalesce = key && key === lastKey && now - lastAt < COALESCE_MS;
       if (!coalesce) {
         past.push({ book, label });
-        if (past.length > HISTORY_LIMIT) past.shift();
+        // Re-measure now and then as the book grows; serializing on every keystroke would cost more than it saves.
+        if (++sinceMeasure >= 25) { sinceMeasure = 0; limit = historyLimit(JSON.stringify(draft).length); }
+        while (past.length > limit) past.shift();
       }
       future = [];
       lastKey = key; lastAt = now;
@@ -1524,6 +1546,7 @@ function createStore(initial) {
     /** Replaces the whole book (open, new, example). Clears history. */
     replace(next, { dirty = false } = {}) {
       book = validate(next); past = []; future = []; lastKey = '';
+      limit = historyLimit(JSON.stringify(book).length); sinceMeasure = 0;
       revision++; savedRevision = dirty ? -1 : revision;
       emit('replace');
     },
@@ -1666,7 +1689,7 @@ function keys(combo) {
 }
 
 /** Replaced with package.json's version by the build. */
-const APP_VERSION = '3.4.0';
+const APP_VERSION = '3.4.1';
 
 // ── ui/dom.js ──
 // Tiny DOM builder. User text only ever becomes text nodes or attribute values,
@@ -1767,11 +1790,21 @@ function autosize(el) {
   el.style.height = `${el.scrollHeight + 2}px`;
 }
 
-function debounce(fn, ms) {
-  let t;
-  const wrapped = (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-  wrapped.flush = (...args) => { clearTimeout(t); fn(...args); };
-  wrapped.cancel = () => clearTimeout(t);
+/**
+ * Runs fn once calls pause for ms. With maxWait, a steady stream of calls (typing, clicking) still
+ * runs it at least that often instead of postponing it indefinitely.
+ */
+function debounce(fn, ms, { maxWait = Infinity } = {}) {
+  let t; let first = 0;
+  const run = args => { clearTimeout(t); first = 0; fn(...args); };
+  const wrapped = (...args) => {
+    clearTimeout(t);
+    if (!first) first = Date.now();
+    const wait = Math.min(ms, Math.max(0, first + maxWait - Date.now()));
+    t = setTimeout(() => run(args), wait);
+  };
+  wrapped.flush = (...args) => run(args);
+  wrapped.cancel = () => { clearTimeout(t); first = 0; };
   return wrapped;
 }
 
@@ -2710,7 +2743,8 @@ const PICKER_TYPES = [{ description: 'Tas-Time planning book', accept: { 'applic
 const file = {
   handle: null,
   name: '',
-  state: 'none',        // none | linked | saving | error | reconnect
+  state: 'none',        // none | linked | saving | error | reconnect | conflict
+  disk: null,           // { modified, raw } of the linked file as this window last read or wrote it
   savedAt: null,
   lastError: '',
   restoredAt: null,     // set when unsaved work was restored on launch
@@ -2745,6 +2779,40 @@ class StaleSave extends Error {
   constructor() { super('A different book was opened before this save finished. Nothing was written.'); this.name = 'StaleSave'; }
 }
 
+class FileChanged extends Error {
+  constructor() { super('The file was changed outside this window since Tas-Time last read or saved it. Nothing was written.'); this.name = 'FileChanged'; }
+}
+
+/** What the linked file holds now, or null where this browser cannot tell. */
+async function readDisk(handle) {
+  if (typeof handle?.getFile !== 'function') return null;
+  const f = await handle.getFile();
+  if (typeof f.lastModified !== 'number') return null;
+  return { modified: f.lastModified, text: () => f.text() };
+}
+
+/** True when the linked file still holds what this window last read or wrote. */
+async function diskUnchanged(handle) {
+  if (!file.disk || handle !== file.handle) return true;
+  const now = await readDisk(handle);
+  if (!now || now.modified === file.disk.modified) return true;
+  // Sync clients sometimes touch the timestamp without changing the content: not a conflict.
+  if (file.disk.raw !== null && await now.text() === file.disk.raw) { file.disk.modified = now.modified; return true; }
+  return false;
+}
+
+/** Stops autosave until the user chooses which version to keep. */
+function markConflict() {
+  autosave.cancel();
+  file.state = 'conflict';
+  rerender('status');
+  notify(`${file.name} was changed outside this window. Nothing was overwritten — choose which version to keep.`, { kind: 'warn', timeout: 15000, action: { label: 'Choose', run: () => onConflict() } });
+}
+
+let onConflict = () => {};
+/** The UI registers the dialog that resolves a conflict, keeping dialogs out of this module. */
+function setConflictHandler(fn) { onConflict = fn; }
+
 /** Saves to the linked file, asking for a location the first time (or always with saveAs). */
 async function save({ saveAs = false } = {}) {
   if (!canLinkFiles) return download();
@@ -2762,6 +2830,7 @@ async function save({ saveAs = false } = {}) {
   } catch (error) {
     if (error.name === 'AbortError') return false;
     if (error.name === 'StaleSave') { notify(error.message, { kind: 'warn' }); return false; }
+    if (error.name === 'FileChanged') { if (snap.session === session) markConflict(); return false; }
     if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     notify(`Save failed: ${error.message}`, { kind: 'error' });
     return false;
@@ -2772,6 +2841,7 @@ async function save({ saveAs = false } = {}) {
 function queueWrite(handle, snap, { linkOnSuccess = false } = {}) {
   if (snap.session === session) { file.state = 'saving'; rerender('status'); }
   writing = writing.catch(() => {}).then(async () => {
+    if (snap.session === session && !(await diskUnchanged(handle))) throw new FileChanged();
     const writer = await handle.createWritable();
     await writer.write(snap.raw);
     await writer.close();
@@ -2780,6 +2850,8 @@ function queueWrite(handle, snap, { linkOnSuccess = false } = {}) {
     // An autosave queued before Save as may still target the previous file.
     // Only a write to the current destination can mark this book as saved.
     if (handle !== file.handle) return;
+    const after = await readDisk(handle).catch(() => null);
+    file.disk = after ? { modified: after.modified, raw: snap.raw } : null;
     store.markSaved(snap.rev);
     file.savedAt = new Date(); file.state = 'linked'; file.lastError = '';
     writeRecovery.flush();
@@ -2807,7 +2879,7 @@ const autosave = debounce(() => { flushToFile(); }, 1200);
 async function flushToFile() {
   autosave.cancel();
   const handle = file.handle;
-  if (!handle || file.state === 'reconnect') return false;
+  if (!handle || file.state === 'reconnect' || file.state === 'conflict') return false;
   if (!store.dirty) { await writing.catch(() => {}); return file.state === 'linked'; }
   const snap = snapshot();
   try {
@@ -2820,7 +2892,9 @@ async function flushToFile() {
     if (snap.session === session) rerender('status');
     return true;
   } catch (error) {
-    if (snap.session === session) { file.state = 'error'; file.lastError = error.message; rerender('status'); }
+    if (snap.session !== session) return false;
+    if (error.name === 'FileChanged') markConflict();
+    else { file.state = 'error'; file.lastError = error.message; rerender('status'); }
     return false;
   }
 }
@@ -2832,10 +2906,73 @@ async function reconnect() {
   try {
     if (!(await ensurePermission(file.handle, true)) || mine !== session) return false;
     file.state = 'linked';
+    await checkLinkedFile();
+    if (file.state !== 'linked' || mine !== session) return false;
     if (store.dirty) await queueWrite(file.handle, snapshot());
     rerender('status');
     return true;
-  } catch (error) { notify(error.message, { kind: 'error' }); return false; }
+  } catch (error) {
+    if (error.name === 'FileChanged') { markConflict(); return false; }
+    notify(error.message, { kind: 'error' });
+    return false;
+  }
+}
+
+/**
+ * Picks up a version of the linked file saved elsewhere (another PC, another window): loads it when
+ * this window has no unsaved edits, otherwise flags a conflict. Runs on launch, Reconnect and when
+ * the window becomes visible again.
+ */
+async function checkLinkedFile() {
+  const handle = file.handle;
+  if (!handle || file.state !== 'linked') return;
+  const mine = session;
+  let now;
+  try { now = await readDisk(handle); } catch { return; }
+  if (!now || mine !== session || handle !== file.handle) return;
+  if (file.disk && now.modified === file.disk.modified) return;
+  const text = await now.text();
+  if (mine !== session || handle !== file.handle) return;
+  if (text === encodeBook(store.book) || (file.disk && file.disk.raw === text)) { file.disk = { modified: now.modified, raw: text }; return; }
+  if (store.dirty) { markConflict(); return; }
+  try { adoptDisk(handle, text, now.modified); } catch (error) { file.state = 'error'; file.lastError = error.message; rerender('status'); return; }
+  notify(`Loaded the newer version of ${handle.name} saved elsewhere.`);
+}
+
+/** Shows the linked file's own content, keeping the view where it can. */
+function adoptDisk(handle, text, modified) {
+  const { book, upgradedFrom } = decodeBook(text);
+  if (upgradedFrom) throw new Error(`${handle.name} now holds a version ${upgradedFrom} book. Use Open… to upgrade it.`);
+  const view = sessionView();
+  beginSession();
+  store.replace(book);
+  restoreView(view);
+  file.handle = handle; file.name = handle.name; file.state = 'linked'; file.restoredAt = null;
+  file.disk = { modified, raw: text };
+  writeRecovery.flush();
+  backup({ force: true });
+  rerender();
+}
+
+/** Conflict choice: show the file's version. This window's version is kept as a backup first. */
+async function useFileVersion() {
+  const handle = file.handle;
+  const now = await readDisk(handle);
+  await backup({ force: true });
+  adoptDisk(handle, await now.text(), now.modified);
+  notify(`Showing ${handle.name} as saved elsewhere. Your version is in Backups.`, { kind: 'warn', timeout: 9000 });
+}
+
+/** Conflict choice: overwrite the file with this window's version. The file's version is kept as a backup first. */
+async function keepThisVersion() {
+  const handle = file.handle;
+  const now = await readDisk(handle);
+  if (now) await backupRaw(await now.text());
+  file.disk = null;
+  file.state = 'linked';
+  await queueWrite(handle, snapshot());
+  rerender('status');
+  notify(`Saved your version to ${handle.name}. The version saved elsewhere is in Backups.`, { kind: 'warn', timeout: 9000 });
 }
 
 function download(raw = encodeBook(store.book), name = file.name || suggestedName()) {
@@ -2865,7 +3002,7 @@ async function openFile() {
     try {
       const [handle] = await window.showOpenFilePicker({ types: PICKER_TYPES, multiple: false });
       const f = await handle.getFile();
-      await loadText(await f.text(), f.name, handle);
+      await loadText(await f.text(), f.name, handle, f.lastModified);
       if (file.handle === handle) await grantWrite(handle);
     } catch (error) {
       if (error.name !== 'AbortError') notify(`Could not open: ${error.message}`, { kind: 'error' });
@@ -2892,7 +3029,7 @@ async function grantWrite(handle) {
   rerender('status');
 }
 
-async function loadText(text, name, handle) {
+async function loadText(text, name, handle, modified) {
   const { book, upgradedFrom } = decodeBook(text);
   beginSession();
   store.replace(book, { dirty: !!upgradedFrom });
@@ -2903,7 +3040,10 @@ async function loadText(text, name, handle) {
       // Never overwrite an older-format original silently.
       file.name = '';
       notify(`Upgraded from version ${upgradedFrom}. Use Save to choose where to keep the new version — the original file is untouched.`, { kind: 'warn', timeout: 12000 });
-    } else link(handle);
+    } else {
+      link(handle);
+      file.disk = typeof modified === 'number' ? { modified, raw: text } : null;
+    }
   }
   writeRecovery.flush();
   backup({ force: true });
@@ -2926,7 +3066,7 @@ async function loadExample(today) {
   notify('Example loaded. It is synthetic — start your own with New book when ready.');
 }
 
-function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; }
+function unlink() { file.handle = null; file.name = ''; file.state = 'none'; file.restoredAt = null; file.disk = null; }
 
 function resetView() {
   restoreView(null);
@@ -2941,7 +3081,7 @@ const writeRecovery = debounce(() => {
   if (!prefs().recovery) return;
   try {
     maybeBackup();
-    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, dirty: store.dirty, book: store.book, view: sessionView() }));
+    localStorage.setItem(RECOVERY_KEY, JSON.stringify({ at: new Date().toISOString(), fileName: file.name, fileModified: file.disk?.modified ?? null, dirty: store.dirty, book: store.book, view: sessionView() }));
     recoveryRevision = store.revision;
     recoveryFailed = false;
   } catch {
@@ -2949,12 +3089,12 @@ const writeRecovery = debounce(() => {
     if (!recoveryFailed) notify('Recovery copy could not be saved. Save your book to a file before closing.', { kind: 'warn' });
     recoveryFailed = true;
   }
-}, 400);
+}, 400, { maxWait: 2000 });
 
 function clearRecovery() {
   recoveryRevision = -1;
   try { localStorage.removeItem(RECOVERY_KEY); } catch { /* ignore */ }
-  backups = backups.catch(() => {}).then(() => idbDeleteWhere(key => typeof key === 'string' && key.startsWith('backups:')));
+  backups = backups.catch(() => {}).then(() => idbDeleteWhere(key => typeof key === 'string' && (key.startsWith('backups:') || key === 'backups-index')));
 }
 
 /**
@@ -2988,7 +3128,10 @@ async function restoreSession() {
   const handle = await idbGet('lastFile');
   if (handle && handle.name === saved.fileName) {
     file.handle = handle;
+    // Without unsaved edits the recovery copy is what was last saved, so a newer file is detectable by content too.
+    file.disk = typeof saved.fileModified === 'number' ? { modified: saved.fileModified, raw: saved.dirty ? null : encodeBook(book) } : null;
     file.state = (await ensurePermission(handle, false).catch(() => false)) ? 'linked' : 'reconnect';
+    await checkLinkedFile();
   }
   return true;
 }
@@ -2996,6 +3139,16 @@ async function restoreSession() {
 // ── Rolling backups: up to BACKUP_KEEP versions per book, at least BACKUP_GAP_MS apart ──
 
 const backupKey = id => `backups:${id}`;
+const BACKUP_BOOKS = 20;
+
+/** Saves a book's backups and forgets the least recently backed-up books beyond BACKUP_BOOKS. */
+async function storeBackups(bookId, list) {
+  await idbSet(backupKey(bookId), list);
+  const index = { ...(await idbGet('backups-index')), [bookId]: list[0].at };
+  const stale = Object.keys(index).sort((x, y) => index[y].localeCompare(index[x])).slice(BACKUP_BOOKS);
+  for (const id of stale) { delete index[id]; await idbDelete(backupKey(id)); }
+  await idbSet('backups-index', index);
+}
 let backups = Promise.resolve();
 let lastBackupTry = { id: '', at: 0 };
 
@@ -3019,7 +3172,7 @@ function backup({ force = false } = {}) {
   lastBackupTry = { id: book.id, at: Date.now() };
   backups = backups.catch(() => {}).then(async () => {
     const next = withBackup(await readBackups(book.id), entry, { force }); // not listBackups: it would wait for this very step
-    if (next) await idbSet(backupKey(book.id), next);
+    if (next) await storeBackups(book.id, next);
   });
   return backups;
 }
@@ -3028,6 +3181,19 @@ function backup({ force = false } = {}) {
 function maybeBackup() {
   if (lastBackupTry.id === store.book.id && Date.now() - lastBackupTry.at < BACKUP_GAP_MS) return;
   backup();
+}
+
+/** Keeps another version of the open book (the file's, before overwriting it) as a backup. */
+async function backupRaw(raw) {
+  let book;
+  try { ({ book } = decodeBook(raw)); } catch { return; }
+  if (book.id !== store.book.id || !prefs().recovery) return;
+  const entry = { at: new Date().toISOString(), name: book.name, fileName: file.name, tasks: book.items.length, raw: encodeBook(book) };
+  backups = backups.catch(() => {}).then(async () => {
+    const next = withBackup(await readBackups(book.id), entry, { force: true });
+    if (next) await storeBackups(book.id, next);
+  });
+  await backups;
 }
 
 /** Replaces the open book's content with a backup as one undoable step; the file link stays. */
@@ -3066,6 +3232,17 @@ async function idbSet(key, value) {
       tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); tx.onabort = () => reject(tx.error);
     });
   } catch { /* storage blocked: linking still works for this session */ }
+}
+
+async function idbDelete(key) {
+  try {
+    const db = await idb();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('kv', 'readwrite');
+      tx.objectStore('kv').delete(key);
+      tx.oncomplete = resolve; tx.onerror = () => reject(tx.error);
+    });
+  } catch { /* storage blocked: nothing stored */ }
 }
 
 async function idbDeleteWhere(match) {
@@ -3395,6 +3572,30 @@ async function showBackups() {
     }, { kind: 'sm primary' })))));
   return dialog;
 }
+
+// ── ui/conflict.js ──
+// The linked file changed outside this window: choose which version to keep. Neither is lost —
+// the version not chosen goes into Backups.
+
+function showConflict() {
+  const run = fn => async () => {
+    dialog.close();
+    try { await fn(); } catch (error) { notify(`Could not finish: ${error.message}`, { kind: 'error' }); }
+  };
+  const dialog = showModal(`${file.name} changed elsewhere`, [
+    h('p', null, `Since this window last read or saved ${file.name}, it was saved from somewhere else — another computer, another Tas-Time window, or a sync client. Autosave has stopped so neither version is overwritten.`),
+    h('div', { class: 'conflict-choices' },
+      h('div', null, btn('Show the file’s version', run(useFileVersion), { kind: 'primary', attrs: { id: 'conflict-file' } }),
+        h('p', { class: 'field-hint' }, 'Recommended when the other edit is the one you want. Your version here is kept in ⋯ → Backups.')),
+      h('div', null, btn('Keep this window’s version', run(keepThisVersion), { attrs: { id: 'conflict-mine' } }),
+        h('p', { class: 'field-hint' }, 'Overwrites the file. The version saved elsewhere is kept in ⋯ → Backups.')),
+      h('div', null, btn('Save this version as a new file…', run(() => save({ saveAs: true })), { kind: 'ghost' }),
+        h('p', { class: 'field-hint' }, 'Keeps both files; compare them and merge by hand.'))),
+  ]);
+  return dialog;
+}
+
+setConflictHandler(showConflict);
 
 // ── ui/guide.js ──
 // The beginner's guide, bundled into the page at build time (docs/TUTORIAL.md) and shown
@@ -4773,7 +4974,7 @@ function renderShell(scope = 'all') {
   renderStatus();
   renderQuickDestination();
   const main = document.getElementById('main');
-  fill(main, RENDER[ui.view]());
+  fill(main, guarded(`the ${ui.view} view`, () => RENDER[ui.view](), viewError));
   const focusedJob = store.book.jobs.find(j => j.id === ui.focus);
   if (focusedJob) main.prepend(h('div', { class: 'focus-banner' },
     h('strong', null, `Showing: ${focusedJob.title}`),
@@ -4781,7 +4982,7 @@ function renderShell(scope = 'all') {
     btn('Edit job', () => openJobEditor(focusedJob.id), { kind: 'sm' }),
     focusedJob.status !== 'active' ? h('span', null, `${focusedJob.status === 'hold' ? 'On hold' : 'Complete'} · Tasks are paused in Today and Week. Reactivate in Edit job.`) : null));
   main.scrollTop = pageY;
-  const drawer = renderDrawer();
+  const drawer = guarded('the editor panel', renderDrawer, () => { ui.drawer = null; return null; });
   fill(document.getElementById('drawer-host'), drawer);
   if (drawer) drawer.scrollTop = drawerY;
   document.body.classList.toggle('has-drawer', !!drawer);
@@ -4798,6 +4999,26 @@ function renderShell(scope = 'all') {
     }
   }
   document.title = `${store.dirty ? '• ' : ''}${store.book.name} — Tas-Time`;
+}
+
+/**
+ * A bug in one view must not blank the app: show what failed, keep the book, and let the user move on.
+ * The error still reaches the console (and the browser test harness).
+ */
+function guarded(what, render, fallback) {
+  try { return render(); } catch (error) {
+    console.error(`Tas-Time could not draw ${what}:`, error);
+    return fallback(what, error);
+  }
+}
+
+function viewError(what, error) {
+  return h('div', { class: 'view' }, h('div', { class: 'empty', role: 'alert' },
+    h('h2', null, `Something went wrong drawing ${what}`),
+    h('p', null, `Your book is safe: nothing was changed, and the recovery copy and backups are kept. Try another view, or undo your last change. (${error?.message || error})`),
+    h('div', { class: 'empty-actions' },
+      btn('Go to Today', () => setView('today'), { kind: 'primary' }),
+      btn('Undo last change', undo, { disabled: !store.canUndo }))));
 }
 
 function sidebar() {
@@ -4866,6 +5087,7 @@ function renderStatus() {
   let label; let kind = ''; let title = ''; let onclick = () => save();
   if (file.state === 'saving') { label = 'Saving…'; kind = 'busy'; }
   else if (file.state === 'reconnect') { label = `Reconnect ${file.name}`; kind = 'warn'; title = 'The browser needs your permission again to keep saving to this file.'; onclick = reconnect; }
+  else if (file.state === 'conflict') { label = `${file.name} changed elsewhere`; kind = 'danger'; title = 'Saved from somewhere else since this window last saved. Autosave has stopped: choose which version to keep.'; onclick = showConflict; }
   else if (file.state === 'error') { label = 'Save failed — retry'; kind = 'danger'; title = file.lastError; }
   else if (file.handle && !dirty) { label = `Saved · ${file.name}`; kind = 'ok'; title = file.savedAt ? `Last saved ${file.savedAt.toLocaleTimeString()}` : 'Up to date'; }
   else if (file.handle) { label = 'Saving soon…'; kind = 'busy'; }
@@ -5009,6 +5231,35 @@ function showHelp() {
   ], { wide: true });
 }
 
+// ── ui/presence.js ──
+// Two windows on one book share a recovery copy and race to save. Each window announces the book it
+// shows through localStorage, whose storage event reaches the other windows of this browser, so both
+// can warn. (The file itself is protected separately: a save never overwrites a file changed elsewhere.)
+
+const KEY = 'tas-time:presence';
+const me = globalThis.crypto?.randomUUID?.() || `w-${Date.now()}-${Math.random()}`;
+let warnedFor = '';
+
+function say(kind) {
+  try { localStorage.setItem(KEY, JSON.stringify({ from: me, kind, bookId: store.book.id, at: Date.now() })); } catch { /* storage unavailable */ }
+}
+
+function onPresence(raw) {
+  let msg;
+  try { msg = JSON.parse(raw); } catch { return; }
+  if (!msg || msg.from === me || msg.bookId !== store.book.id) return;
+  if (msg.kind === 'hello') say('here');
+  if (warnedFor === store.book.id) return;
+  warnedFor = store.book.id;
+  notify('This book is also open in another Tas-Time window. Close one of them: edits made in both can conflict.', { kind: 'warn', timeout: 20000 });
+}
+
+function initPresence(target = globalThis) {
+  target.addEventListener('storage', e => { if (e.key === KEY && e.newValue) onPresence(e.newValue); });
+  store.subscribe(reason => { if (reason === 'replace') say('hello'); });
+  say('hello');
+}
+
 // ── ui/main.js ──
 // Entry point.
 
@@ -5024,14 +5275,29 @@ async function start() {
     if (reason !== 'saved') { writeRecovery(); autosave(); }
   });
   await restoreSession();
+  initPresence();
   renderShell();
   document.documentElement.classList.add('ready');
+  // Left open overnight, Today, Week and the lookahead would still show yesterday: redraw when the date changes.
+  let shownDay = today();
+  setInterval(() => {
+    if (today() === shownDay) return;
+    // Someone looking at "this week" on Sunday night should see the new week on Monday.
+    if (ui.week === mondayOf(shownDay)) ui.week = mondayOf(today());
+    shownDay = today();
+    rerender();
+  }, 60000);
 }
 
 window.addEventListener('beforeunload', beforeUnload);
+// Errors outside rendering (event handlers, async saves) get a visible message instead of failing silently.
+window.addEventListener('error', event => notify(`Unexpected error: ${event.message}. Your work is kept in the recovery copy.`, { kind: 'error' }));
+window.addEventListener('unhandledrejection', event => notify(`Unexpected error: ${event.reason?.message || event.reason}. Your work is kept in the recovery copy.`, { kind: 'error' }));
 window.addEventListener('pagehide', () => writeRecovery.flush());
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') writeRecovery.flush();
+  // Coming back to the window: pick up a version of the file saved elsewhere meanwhile.
+  else checkLinkedFile();
 });
 
 start();

@@ -56,3 +56,11 @@
 - Last Planner: constraint log with ball in court (linked to tasks; open entries block them), Lookahead view with Lookahead, Ball in court and PPC tabs, and weekly commitment from Week.
 - Found and fixed before release: 27px phone overflow in Lookahead (grid items not shrinking), PPC chart stray scrollbar and misaligned stat cards, and Ready labels hidden in print.
 - Validation: 56/56 unit tests and 47/47 real-browser checks passed. Reviewed screenshots of all three Lookahead tabs.
+
+## Release — v3.4.1 (hardening)
+
+- Reproduced before fixing: autosave overwrote a linked file saved elsewhere. Writes now check the file's state first; conflicts stop autosave and offer three resolutions, with the unchosen version backed up.
+- Second-window warning (checked in a real browser with two windows), guarded view rendering, undo history capped by size (measured 1.35 GB → ~200 MB at 10,000 tasks), date-validation memo (validate ~97 → ~29 ms at 10,000 tasks), backups capped to 20 books, and a redraw when the date changes.
+- A table of 26 damaged or hostile files: all refused with readable messages and no crashes. Hostile titles and log subjects render as text.
+- Found while validating the release: the recovery copy's 400 ms debounce was postponed indefinitely by continuous renders. It now runs at least every 2 s; the browser check that exposed it (by reading too soon) now waits for the write.
+- Validation: 64/64 unit tests, and 51/51 real-browser checks passed in three consecutive runs.
