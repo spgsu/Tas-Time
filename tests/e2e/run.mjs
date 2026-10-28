@@ -877,6 +877,7 @@ try {
     assert.equal(await count('.ppc-col'), 1);
     assert.match(await ev('document.querySelector(".ppc-chart").getAttribute("aria-label")'), /50%/);
     await page.screenshot(join(shots, 'l3-ppc.png'), { full: false });
+    await page.wait(600); // the recovery copy is written once activity pauses
     const book = await recoveryBook();
     assert.equal(Object.values(book.weeks).find(w => w.commitment).commitment.items.length, 2);
   });

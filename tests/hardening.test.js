@@ -177,3 +177,16 @@ test('damaged and hostile book files are refused with a readable message, never 
   assert.equal(refused, Object.keys(cases).length);
   assert.equal(Object.prototype.capacity, undefined, 'nothing reached Object.prototype');
 });
+
+test('the recovery copy is written during continuous activity, not only after a pause', async () => {
+  const { debounce } = await import('../src/ui/dom.js');
+  let runs = 0;
+  const save = debounce(() => { runs++; }, 40, { maxWait: 120 });
+  const end = Date.now() + 400;
+  while (Date.now() < end) { save(); await new Promise(r => setTimeout(r, 10)); }
+  assert.ok(runs >= 2, `ran ${runs} times during 400 ms of calls 10 ms apart`);
+  const plain = debounce(() => { runs = -100; }, 40);
+  for (let i = 0; i < 20; i++) { plain(); await new Promise(r => setTimeout(r, 10)); }
+  assert.ok(runs >= 2, 'without maxWait a steady stream postpones the call (the behaviour fixed above)');
+  plain.cancel();
+});
