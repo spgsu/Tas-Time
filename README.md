@@ -50,6 +50,7 @@ A **job** is a goal with an outcome, such as *Science fair project* or *Kitchen 
 | **Board** | 4 | To do, Doing, Blocked and Done at a glance, with job colours. |
 | **Notes** | 5 | A notebook per job: resume here, scope, decisions, working notes, references and lessons learned. |
 | **Assignments** | 6 | A person's work across jobs, with status/week filters, workload, CSV export and a printable report. |
+| **Lookahead** | 7 | Last Planner: which work in the next weeks is ready, who holds the ball on each constraint, RFI or submittal, and Percent Plan Complete. |
 
 <table>
   <tr>
@@ -103,6 +104,15 @@ Books from older app versions upgrade to **format 4**. Their existing tasks rema
 
 - **Repeating tasks.** In a task editor, set **Repeats** to every N days, weeks or months. When you mark it done, the next one is created with its dates moved on by that interval from the task's own schedule, so finishing early or late keeps the rhythm. Occurrences already in the past are skipped. Only the next occurrence exists at any time, so Plan and Week stay uncluttered. A repeating task with no dates gets a work day one interval after you complete it.
 - **Checklists.** Add small steps inside a task. They have no dates or effort, never block completing the task, and show as *2/5 steps* on the task. A repeating task's next occurrence starts with its steps unticked.
+
+### Last Planner: lookahead, ball in court and PPC
+
+The **Lookahead** view (key **7**) follows the Last Planner System used in construction and design.
+
+- **Constraint log.** Log what stands in the way of work: a **constraint**, **RFI**, **submittal**, **approval** or **information** request. Each entry has a number (RFI-001, SUB-002…, per job), a subject, **ball in court** (who has to act next: Owner, MEP engineer, GC…; earlier names are suggested), sent and response-due dates, and the tasks it holds up. Add entries from a task's editor (**Constraints & RFIs → New constraint**) or from Lookahead. A task is blocked while any linked entry is open, and it cannot be marked done until the entry is **Cleared**.
+- **Lookahead.** The next 3, 4 or 6 weeks of open work, week by week, with each task marked **Ready** or showing its open constraints. Responses that are overdue, or due after the task is meant to start, are flagged. Open work scheduled before this week counts in this week.
+- **Ball in court.** Every open entry grouped by who has to act, the most overdue first. **Export CSV** gives an RFI/submittal log for a meeting; **Print** prints the current tab.
+- **Weekly commitment and PPC.** After planning a week in Week, press **Commit this week**. Percent Plan Complete is the share of those committed tasks done by the week's Sunday. Tasks added later or finished after Sunday don't count; deleted tasks leave the measure. **Re-commit** records the plan again if you replan on Monday. In **PPC**, see this week's figure, the trend for the last 12 committed weeks, the average of finished weeks, and record a **reason** for each missed task (prerequisite not done, RFI not answered, submittal not returned, design change, people, estimate, priorities, outside party). The reasons chart shows what most often breaks the plan.
 
 ### Finish the day
 

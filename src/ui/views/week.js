@@ -13,6 +13,8 @@ import { showMenu } from '../overlay.js';
 import { welcome } from './welcome.js';
 import { createTask } from '../commands.js';
 import { personSelect, workPersonId } from '../people.js';
+import { commitThisWeek } from './lookahead.js';
+import { ppcWeek } from '../../core/lastplanner.js';
 
 const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -88,6 +90,15 @@ export function renderWeek() {
     h('div', { class: 'tray-cards' }, ready.length ? ready.map(t => weekCard(t, load.days)) : h('p', { class: 'day-empty' }, 'No unscheduled or carried-over tasks. Check other weeks or paused jobs in Plan.'))), id => planOn(id, ''));
 
   const range = `${fmtShort(monday)} – ${fmtShort(addDays(monday, 6))} ${addDays(monday, 6).slice(0, 4)}`;
+  const ppc = ppcWeek(book, monday, today(), { person: personId });
+  const ended = addDays(monday, 6) < today();
+  const commitment = ppc
+    ? h('div', { class: 'commit-status' }, icon('flag', 16),
+      h('span', null, `Committed ${fmtShort(ppc.committedOn)}: ${ppc.committed.length} task${ppc.committed.length === 1 ? '' : 's'} · PPC ${ppc.ppc ?? 0}%${ended ? '' : ' so far'}`),
+      ended ? btn('Review misses', () => { ui.view = 'lookahead'; ui.lookaheadTab = 'ppc'; rerender(); }, { kind: 'sm ghost' }) : btn('Re-commit', () => commitThisWeek(monday), { kind: 'sm ghost', title: 'Record the current plan as this week’s commitment' }))
+    : ended ? null : h('div', { class: 'commit-status' }, icon('flag', 16),
+      h('span', { class: 'muted' }, 'Planned the week? Commit it to measure Percent Plan Complete.'),
+      btn('Commit this week', () => commitThisWeek(monday), { kind: 'sm', attrs: { id: 'week-commit' } }));
   return h('div', { class: 'view week' },
     h('header', { class: 'page-head' },
       h('div', null, h('p', { class: 'eyebrow' }, isCurrent ? 'This week' : weekOffsetLabel(monday)), h('h1', null, range)),
@@ -102,7 +113,7 @@ export function renderWeek() {
       h('div', { class: 'cap-facts muted' },
         load.unestimated ? h('span', { class: 'warn-text' }, `${load.unestimated} without an estimate · `) : null,
         `${load.done} done`, ui.focus ? ' · totals include all jobs for selected person' : '', unassigned ? ` · ${fmtHours(unassigned)} unassigned (excluded from capacity)` : ''),
-      notes),
+      notes, commitment),
     h('div', { class: 'week-body' }, h('div', { class: 'days' }, columns), tray));
 }
 

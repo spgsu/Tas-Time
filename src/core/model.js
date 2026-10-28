@@ -29,6 +29,26 @@ export const COLORS = {
 export const DEFAULT_CAPACITY = 10 * 60;
 export const REPEAT_UNITS = { day: 'day', week: 'week', month: 'month' };
 export const MAX_CHECKLIST = 100;
+/** Constraint log entry types: [label, number prefix]. */
+export const LOG_TYPES = {
+  constraint: ['Constraint', 'C'],
+  rfi: ['RFI', 'RFI'],
+  submittal: ['Submittal', 'SUB'],
+  approval: ['Approval', 'APP'],
+  info: ['Information', 'INF'],
+};
+/** Why committed work was not done, after the Last Planner System's usual categories. */
+export const MISS_REASONS = {
+  prereq: 'Prerequisite work not done',
+  info: 'Information or RFI not answered',
+  approval: 'Approval or submittal not returned',
+  change: 'Design or scope change',
+  people: 'People or capacity not available',
+  estimate: 'Took longer than planned',
+  priority: 'Priorities changed',
+  external: 'Owner, consultant or other outside party',
+  other: 'Other',
+};
 
 export function uid() {
   return globalThis.crypto?.randomUUID?.() || `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -36,7 +56,15 @@ export function uid() {
 
 export function newBook(name = 'My planning book') {
   const self = { id: uid(), name: 'Me', capacity: DEFAULT_CAPACITY };
-  return { format: FORMAT, version: VERSION, id: uid(), name, people: [self], selfId: self.id, jobs: [], phases: [], items: [], weeks: {}, baselineDate: '' };
+  return { format: FORMAT, version: VERSION, id: uid(), name, people: [self], selfId: self.id, jobs: [], phases: [], items: [], log: [], weeks: {}, baselineDate: '' };
+}
+
+/** A constraint, RFI, submittal, approval or information request; open entries block their linked tasks. */
+export function newLogEntry(fields = {}) {
+  return {
+    id: uid(), jobId: '', type: 'constraint', number: '', subject: '', ball: '', sent: '', due: '',
+    status: 'open', clearedOn: '', notes: '', itemIds: [], ...fields,
+  };
 }
 
 export function newJob(fields = {}) {
@@ -139,10 +167,35 @@ export function validate(book) {
     for (const d of t.deps) if (!items.has(d) || d === t.id) fail(`"${t.title}" depends on a missing item.`);
   }
   if (findCycle(book.items)) fail('These dependencies form a loop. Remove one of the links.');
+  if (!Array.isArray(book.log) || book.log.length > 20000) fail('The constraint log is invalid.');
+  const logIds = new Set();
+  for (const e of book.log) {
+    if (!e || typeof e !== 'object') fail('A constraint log entry is malformed.');
+    text(e.id, 'Log entry identifier', 200);
+    if (!e.id || logIds.has(e.id)) fail('Constraint log identifiers must be unique.');
+    logIds.add(e.id);
+    if (!jobs.has(e.jobId)) fail('A constraint log entry belongs to a missing job.');
+    if (!LOG_TYPES[e.type]) fail('Invalid constraint log type.');
+    text(e.number, 'Log number', 40); text(e.subject, 'Log subject', 500); text(e.ball, 'Ball in court', 200); text(e.notes, 'Log notes');
+    date(e.sent, 'Sent date'); date(e.due, 'Response due'); date(e.clearedOn, 'Cleared date');
+    if (!['open', 'cleared'].includes(e.status)) fail('Invalid constraint log status.');
+    if (!Array.isArray(e.itemIds) || new Set(e.itemIds).size !== e.itemIds.length) fail('Invalid constraint log links.');
+    for (const id of e.itemIds) if (!items.has(id)) fail(`Log entry “${e.subject}” links to a missing task.`);
+  }
   if (!book.weeks || typeof book.weeks !== 'object' || Array.isArray(book.weeks)) fail('Invalid weekly plans.');
   for (const [key, w] of Object.entries(book.weeks)) {
     if (!isIsoDate(key) || mondayOf(key) !== key) fail('Weekly plans must start on a Monday.');
     whole(w.capacity, 'Weekly capacity', 7 * 24 * 60); text(w.notes, 'Week notes');
+    if (w.commitment !== undefined) {
+      if (!w.commitment || typeof w.commitment !== 'object' || !Array.isArray(w.commitment.items)) fail('Invalid weekly commitment.');
+      date(w.commitment.at, 'Commitment date');
+      if (new Set(w.commitment.items).size !== w.commitment.items.length) fail('Invalid weekly commitment.');
+      for (const id of w.commitment.items) text(id, 'Committed task', 200);
+    }
+    if (w.misses !== undefined) {
+      if (!w.misses || typeof w.misses !== 'object' || Array.isArray(w.misses)) fail('Invalid reasons for missed work.');
+      for (const reason of Object.values(w.misses)) if (!MISS_REASONS[reason]) fail('Invalid reason for missed work.');
+    }
     if (w.people !== undefined) {
       if (!w.people || typeof w.people !== 'object' || Array.isArray(w.people)) fail('Invalid weekly person capacities.');
       for (const [id, minutes] of Object.entries(w.people)) {
@@ -171,9 +224,17 @@ export function findCycle(items) {
 
 /**
  * Fields added after a book was saved start empty instead of failing validation:
- * notebook pages, and task repeats and checklists (3.3). Older 3.x apps ignore these fields.
+ * notebook pages, task repeats and checklists (3.3), and the constraint log (3.4). Older 3.x apps ignore these fields.
  */
 function addMissingFields(book) {
+  if (book && typeof book === 'object' && book.log === undefined) book.log = [];
+  // An older app may have deleted a linked task or job: drop the dangling link rather than refuse the book.
+  if (Array.isArray(book?.log) && Array.isArray(book.items) && Array.isArray(book.jobs)) {
+    const itemIds = new Set(book.items.map(t => t?.id));
+    const jobIds = new Set(book.jobs.map(j => j?.id));
+    book.log = book.log.filter(e => !e || typeof e !== 'object' || jobIds.has(e.jobId));
+    for (const e of book.log) if (e && Array.isArray(e.itemIds)) e.itemIds = e.itemIds.filter(id => itemIds.has(id));
+  }
   for (const j of Array.isArray(book.jobs) ? book.jobs : []) {
     if (j && j.notes && typeof j.notes === 'object') for (const [k] of NOTE_PAGES) if (j.notes[k] === undefined) j.notes[k] = '';
   }

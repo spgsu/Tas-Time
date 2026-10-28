@@ -11,6 +11,7 @@ export const VIEWS = [
   { id: 'board', label: 'Board', key: '4', icon: 'board' },
   { id: 'notes', label: 'Notes', key: '5', icon: 'notes' },
   { id: 'assignments', label: 'Assignments', key: '6', icon: 'people' },
+  { id: 'lookahead', label: 'Lookahead', key: '7', icon: 'flag' },
 ];
 
 export const store = createStore(newBook());
@@ -19,7 +20,7 @@ function defaultUi() { return {
   view: 'today',
   focus: '',            // job id the views are narrowed to
   week: mondayOf(todayIso()),
-  drawer: null,         // { type: 'item' | 'job', id }
+  drawer: null,         // { type: 'item' | 'job' | 'log', id }
   notesJob: '',
   notesPage: 'restart',
   planRange: '6w',      // '6w' | '3m' | 'all'
@@ -36,6 +37,9 @@ function defaultUi() { return {
   assignmentWeek: mondayOf(todayIso()),
   assignmentFiltersOpen: false,
   assignments: { person: 'all', status: 'open', period: 'all', group: 'job', paused: false, search: '' },
+  lookaheadTab: 'lookahead', // 'lookahead' | 'ball' | 'ppc'
+  lookaheadWeeks: 6,
+  logShowCleared: false,
 }; }
 
 export const ui = defaultUi();
@@ -54,7 +58,9 @@ export function restoreView(saved) {
   choose('view', VIEWS.map(v => v.id));
   choose('notesPage', NOTE_PAGES.map(p => p[0]));
   choose('planRange', ['6w', '3m', 'all']);
-  for (const key of ['planShowDone', 'planShowArchived', 'boardAllDone', 'planMobileTimeline', 'assignmentFiltersOpen']) {
+  choose('lookaheadTab', ['lookahead', 'ball', 'ppc']);
+  choose('lookaheadWeeks', [3, 4, 6]);
+  for (const key of ['planShowDone', 'planShowArchived', 'boardAllDone', 'planMobileTimeline', 'assignmentFiltersOpen', 'logShowCleared']) {
     if (typeof saved[key] === 'boolean') ui[key] = saved[key];
   }
   for (const key of ['week', 'assignmentWeek']) if (isIsoDate(saved[key])) ui[key] = mondayOf(saved[key]);
@@ -66,7 +72,8 @@ export function restoreView(saved) {
   choose('quickPhase', store.book.phases.filter(p => p.jobId === ui.quickJob).map(p => p.id));
   if (Array.isArray(saved.collapsedPhases)) ui.collapsedPhases = new Set(saved.collapsedPhases.filter(k => typeof k === 'string'));
   const drawer = saved.drawer;
-  if (drawer && (drawer.type === 'job' ? jobIds.includes(drawer.id) : drawer.type === 'item' && store.book.items.some(t => t.id === drawer.id))) {
+  const exists = { job: id => jobIds.includes(id), item: id => store.book.items.some(t => t.id === id), log: id => store.book.log.some(e => e.id === id) };
+  if (drawer && Object.hasOwn(exists, drawer.type) && exists[drawer.type](drawer.id)) {
     ui.drawer = { type: drawer.type, id: drawer.id };
   }
   const filters = saved.assignments;

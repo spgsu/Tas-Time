@@ -1,8 +1,8 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
-// Side panel editor for items and jobs. Every field saves as you go — there is no
+// Side panel editor for items, jobs and constraint log entries. Every field saves as you go — there is no
 // "Keep changes" step; undo (Ctrl+Z outside a text field) reverts mistakes.
 import { h, icon, autosize } from './dom.js';
-import { COLORS, JOB_STATUS, NOTE_PAGES } from '../core/model.js';
+import { COLORS, JOB_STATUS, LOG_TYPES, NOTE_PAGES } from '../core/model.js';
 import { fmtDate, fmtShort, relDay } from '../core/dates.js';
 import { fmtEffort, fmtRepeat, parseEffort } from '../core/parse.js';
 import { blockers, dateConflicts, dependents, itemOf, jobOf, liveJobs, phasesOf, slip } from '../core/query.js';
@@ -11,6 +11,8 @@ import { act, closeDrawer, openDrawer, rerender, setView, store, today, ui } fro
 import { btn, chip, iconBtn, jobColor, segmented } from './components.js';
 import { STANDARD_PHASES, createTask, removeItem, removeJob, setItemStatus } from './commands.js';
 import { personSelect, showPeople } from './people.js';
+import { deleteLogEntry, isOverdue, linkLog, logEntry, parties, patchLogEntry, unlinkLog } from '../core/lastplanner.js';
+import { createLogEntry, setLogStatus } from './views/lookahead.js';
 
 let typedSinceRender = false;
 
@@ -34,10 +36,10 @@ export function renderDrawer() {
   typedSinceRender = false;
   const d = ui.drawer;
   if (!d) return null;
-  const record = d.type === 'item' ? itemOf(store.book, d.id) : jobOf(store.book, d.id);
+  const record = d.type === 'item' ? itemOf(store.book, d.id) : d.type === 'log' ? logEntry(store.book, d.id) : jobOf(store.book, d.id);
   if (!record) { ui.drawer = null; return null; }
-  const panel = h('aside', { class: 'drawer', id: 'drawer', 'data-record': d.id, 'aria-label': d.type === 'item' ? 'Edit task' : 'Edit job', tabindex: '-1' },
-    d.type === 'item' ? itemEditor(record) : jobEditor(record));
+  const panel = h('aside', { class: 'drawer', id: 'drawer', 'data-record': d.id, 'aria-label': { item: 'Edit task', log: 'Edit log entry', job: 'Edit job' }[d.type], tabindex: '-1' },
+    d.type === 'item' ? itemEditor(record) : d.type === 'log' ? logEditor(record) : jobEditor(record));
   // Text edits commit quietly (without rebuilding the page); refresh once focus leaves the field.
   panel.addEventListener('focusout', () => {
     if (typedSinceRender) {
@@ -131,6 +133,7 @@ function itemEditor(t) {
 
     field('Waiting on / constraint', liveText('d-blocker', t.blocker, typed('blocker', 'Edit constraint'), { multiline: true, rows: 1, placeholder: 'e.g. Supervisor feedback, access to the lab, a delivery…' }),
       { id: 'd-blocker', hint: 'Anything written here marks the task as blocked until you clear it.' }),
+    logSection(t),
 
     h('div', { class: 'field' }, h('label', { for: 'd-deps' }, 'Prerequisites'),
       t.deps.length ? h('ul', { class: 'deps' }, t.deps.map(id => {
@@ -185,6 +188,70 @@ function checklist(t) {
       iconBtn('x', `Remove step ${c.text}`, () => act('Remove step', dd => removeStep(dd, t.id, c.id)), { class: 'icon-btn sm' })))) : null,
     h('div', { class: 'phase-add-control' }, input, btn('Add', add, { kind: 'sm', iconName: 'plus' })),
     h('p', { class: 'field-hint' }, 'Small steps inside this task. They have no dates or effort of their own and never block completing the task.'));
+}
+
+/** Constraints, RFIs and submittals holding up this task, from the job's log. */
+function logSection(t) {
+  const book = store.book;
+  const linked = book.log.filter(e => e.itemIds.includes(t.id));
+  const others = book.log.filter(e => e.status === 'open' && !e.itemIds.includes(t.id) && e.jobId === t.jobId);
+  return h('div', { class: 'field' }, h('label', { for: 'd-log-link' }, 'Constraints & RFIs'),
+    linked.length ? h('ul', { class: 'deps' }, linked.map(e => h('li', { class: e.status === 'open' ? null : 'is-done' },
+      h('span', { class: ['tick-mini', e.status !== 'open' && 'on'] }, e.status !== 'open' ? icon('check', 12) : null),
+      h('button', { class: 'link', onclick: () => openDrawer('log', e.id) }, `${e.number} ${e.subject || 'Untitled'}`),
+      h('span', { class: isOverdue(e, today()) ? 'danger' : 'muted' }, [e.ball, e.due && e.status === 'open' ? `due ${fmtShort(e.due)}` : ''].filter(Boolean).join(' · ')),
+      iconBtn('x', `Unlink ${e.number}`, () => act('Unlink constraint', dd => unlinkLog(dd, e.id, t.id)), { class: 'icon-btn sm' })))) : null,
+    h('div', { class: 'phase-add-control' },
+      others.length ? h('select', { id: 'd-log-link', 'aria-label': 'Link an open log entry', onchange: e => { if (e.target.value) act('Link constraint', dd => linkLog(dd, e.target.value, t.id)); } },
+        h('option', { value: '' }, 'Link an open entry…'), others.map(e => h('option', { value: e.id }, `${e.number} ${e.subject}`))) : null,
+      btn('New constraint', () => createLogEntry(t.jobId, t.id), { kind: 'sm', iconName: 'plus', attrs: { id: others.length ? null : 'd-log-link' } })),
+    h('p', { class: 'field-hint' }, 'Logged constraints, RFIs and submittals with who has to act. The task is blocked while any is open. See them all in Lookahead → Ball in court.'));
+}
+
+function logEditor(e) {
+  const book = store.book;
+  const set = (label, patch) => act(label, dd => patchLogEntry(dd, e.id, patch, today()));
+  const typed = (key, label) => value => act(label, dd => patchLogEntry(dd, e.id, { [key]: value }, today()), { key: `log-${key}:${e.id}`, quiet: true });
+  const dateInput = (key, label) => h('input', { id: `d-${key}`, type: 'date', value: e[key], min: '1900-01-01', max: '2200-12-31', 'aria-label': label, onchange: ev => set('Change date', { [key]: ev.target.value }) });
+  const linked = e.itemIds.map(id => itemOf(book, id)).filter(Boolean);
+  const candidates = book.items.filter(x => !x.archived && x.status !== 'done' && !e.itemIds.includes(x.id));
+  const job = jobOf(book, e.jobId);
+  return [
+    h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
+      h('div', { class: 'drawer-crumbs' }, h('span', { class: 'dot' }), job.title, chip(LOG_TYPES[e.type][0], 'muted')),
+      h('div', { class: 'drawer-head-actions' },
+        iconBtn('trash', 'Delete entry', () => { if (confirm(`Delete ${e.number}? Linked tasks are no longer held up by it.`)) { act('Delete log entry', dd => deleteLogEntry(dd, e.id)); closeDrawer(); } }),
+        iconBtn('x', 'Close (Esc)', closeDrawer))),
+    liveText('d-subject', e.subject, typed('subject', 'Edit subject'), { class: 'drawer-title', 'aria-label': 'Subject', maxlength: 500, placeholder: 'What is needed, e.g. Confirm slab edge detail at grid C' }),
+    h('p', { class: 'field-hint' }, 'Changes save automatically. Open entries block their linked tasks until marked cleared.'),
+    h('div', { class: 'drawer-row' },
+      segmented([['open', 'Open'], ['cleared', 'Cleared']], e.status, st => setLogStatus(e, st), 'Status'),
+      e.clearedOn ? h('span', { class: 'muted' }, `Cleared ${fmtDate(e.clearedOn)}`) : null),
+    h('div', { class: 'fields two' },
+      field('Type', h('select', { id: 'd-type', onchange: ev => set('Change type', { type: ev.target.value }) },
+        Object.entries(LOG_TYPES).map(([key, [label]]) => h('option', { value: key, selected: key === e.type }, label))), { id: 'd-type' }),
+      field('Number', liveText('d-number', e.number, typed('number', 'Edit number'), { maxlength: 40 }), { id: 'd-number' })),
+    field('Ball in court', h('div', null,
+      liveText('d-ball', e.ball, typed('ball', 'Ball in court'), { maxlength: 200, list: 'd-ball-parties', placeholder: 'Who has to act next: Owner, MEP engineer, GC…', autocomplete: 'off' }),
+      h('datalist', { id: 'd-ball-parties' }, parties(book).map(p => h('option', { value: p })))), { id: 'd-ball', hint: 'Change it when the ball moves, e.g. a submittal returned for revision goes back to the contractor.' }),
+    h('div', { class: 'fields two' },
+      field('Sent / raised', dateInput('sent', 'Sent'), { id: 'd-sent' }),
+      field('Response due', dateInput('due', 'Response due'), { id: 'd-due', hint: e.due ? relDay(e.due) : 'When an answer is needed' })),
+    field('Job', h('select', { id: 'd-log-job', onchange: ev => set('Move entry to job', { jobId: ev.target.value }) },
+      liveJobs(book).map(j => h('option', { value: j.id, selected: j.id === e.jobId }, j.title))), { id: 'd-log-job' }),
+    h('div', { class: 'field' }, h('label', { for: 'd-log-items' }, 'Holds up these tasks'),
+      linked.length ? h('ul', { class: 'deps' }, linked.map(t => h('li', { class: t.status === 'done' ? 'is-done' : null },
+        h('button', { class: 'link', onclick: () => openDrawer('item', t.id) }, t.title),
+        h('span', { class: 'muted' }, t.start ? `starts ${fmtShort(t.start)}` : t.plannedDay ? `work on ${fmtShort(t.plannedDay)}` : ''),
+        iconBtn('x', `Unlink ${t.title}`, () => act('Unlink task', dd => unlinkLog(dd, e.id, t.id)), { class: 'icon-btn sm' })))) : null,
+      h('select', { id: 'd-log-items', 'aria-label': 'Link a task', onchange: ev => { if (ev.target.value) act('Link task', dd => linkLog(dd, e.id, ev.target.value)); } },
+        h('option', { value: '' }, 'Link a task…'),
+        liveJobs(book).map(j => {
+          const opts = candidates.filter(x => x.jobId === j.id);
+          return opts.length ? h('optgroup', { label: j.title }, opts.map(x => h('option', { value: x.id }, x.title))) : null;
+        }))),
+    field('Notes', liveText('d-log-notes', e.notes, typed('notes', 'Edit notes'), { multiline: true, rows: 3, placeholder: 'Question asked, answer received, references…' }), { id: 'd-log-notes' }),
+  ];
 }
 
 function jobEditor(job) {

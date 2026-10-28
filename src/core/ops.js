@@ -112,6 +112,7 @@ export function shiftItem(book, id, days) {
 export function deleteItem(book, id) {
   book.items = book.items.filter(t => t.id !== id);
   for (const t of book.items) t.deps = t.deps.filter(d => d !== id);
+  for (const e of book.log) e.itemIds = e.itemIds.filter(d => d !== id);
 }
 
 export function duplicateItem(book, id) {
@@ -160,6 +161,8 @@ export function deleteJob(book, id) {
   const gone = new Set(book.items.filter(t => t.jobId === id).map(t => t.id));
   book.items = book.items.filter(t => !gone.has(t.id));
   for (const t of book.items) t.deps = t.deps.filter(d => !gone.has(d));
+  book.log = book.log.filter(e => e.jobId !== id);
+  for (const e of book.log) e.itemIds = e.itemIds.filter(d => !gone.has(d));
   book.phases = book.phases.filter(p => p.jobId !== id);
   book.jobs = book.jobs.filter(j => j.id !== id);
 }

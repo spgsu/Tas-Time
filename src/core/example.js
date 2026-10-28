@@ -3,6 +3,7 @@
 import { addDays, mondayOf } from './dates.js';
 import { newBook } from './model.js';
 import { addItem, addJob, captureBaseline } from './ops.js';
+import { addLogEntry } from './lastplanner.js';
 
 export function exampleBook(today) {
   const book = newBook('Example planning book');
@@ -23,6 +24,7 @@ export function exampleBook(today) {
   const justify = addItem(book, { jobId: phd.id, phaseId: p2.id, title: 'Write method justification', start: d(4), finish: d(11), effort: 240, deps: [compare.id] });
   const limits = addItem(book, { jobId: phd.id, phaseId: p2.id, title: 'Limitations table', start: d(4), finish: d(7), effort: 90, plannedDay: d(1), deps: [compare.id] });
   const draft = addItem(book, { jobId: phd.id, phaseId: p3.id, title: 'Full chapter draft', start: d(12), finish: d(24), effort: 600, deps: [justify.id, limits.id] });
+  addLogEntry(book, { jobId: phd.id, type: 'info', subject: 'Is a sample of 40 enough for method B?', ball: 'Supervisor', sent: d(-2), due: d(10), itemIds: [draft.id] });
   addItem(book, { jobId: phd.id, phaseId: p3.id, title: 'Supervisor accepts draft', kind: 'milestone', finish: d(31), deps: [draft.id], notes: 'Acceptance: supervisor confirms the method and its limitations are addressed.' });
 
   addItem(book, { jobId: home.id, phaseId: h1.id, title: 'Measure and photograph kitchen', start: d(-4), finish: d(-1), effort: 60, plannedDay: d(-1) });
@@ -30,7 +32,9 @@ export function exampleBook(today) {
   const quotes = addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Get three quotes', start: d(3), finish: d(17), effort: 120, deps: [brief.id], blocker: '' });
   addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Second contractor site visit', start: d(5), finish: d(5), effort: 60, blocker: 'Contractor to confirm a date' });
   const choose = addItem(book, { jobId: home.id, phaseId: h2.id, title: 'Contractor chosen', kind: 'milestone', finish: d(20), deps: [quotes.id] });
-  addItem(book, { jobId: home.id, phaseId: h3.id, title: 'Works on site', start: d(35), finish: d(48), effort: 120, deps: [choose.id] });
+  const works = addItem(book, { jobId: home.id, phaseId: h3.id, title: 'Works on site', start: d(35), finish: d(48), effort: 120, deps: [choose.id] });
+  addLogEntry(book, { jobId: home.id, type: 'approval', subject: 'Landlord consent for the works', ball: 'Landlord', sent: d(-12), due: d(-2), itemIds: [works.id] });
+  addLogEntry(book, { jobId: home.id, type: 'rfi', subject: 'Keep or move the gas supply?', ball: 'Me', sent: d(-6), due: d(-3), status: 'cleared', clearedOn: d(-3), itemIds: [brief.id] });
 
   captureBaseline(book, d(-7));
   // Show some slippage against the baseline.

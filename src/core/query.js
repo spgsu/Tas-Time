@@ -1,6 +1,7 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // Read-only derivations used by the views. None of these mutate the book.
 import { addDays, diffDays, weekDays } from './dates.js';
+import { LOG_TYPES } from './model.js';
 
 export function jobOf(book, id) { return book.jobs.find(j => j.id === id); }
 export function itemOf(book, id) { return book.items.find(t => t.id === id); }
@@ -24,11 +25,21 @@ export function phasesOf(book, jobId) {
 
 export function phaseTitle(book, id) { return book.phases.find(p => p.id === id)?.title || ''; }
 
-/** Reasons an item cannot progress: a recorded constraint or unfinished prerequisites. */
+/** Open constraint log entries (constraints, RFIs, submittals…) holding up this item. */
+export function openLogFor(book, t) {
+  return book.log.filter(e => e.status === 'open' && e.itemIds.includes(t.id));
+}
+
+export function logLabel(e) {
+  return `${e.number || LOG_TYPES[e.type][0]}: ${e.subject || 'Untitled'}${e.ball ? ` (ball in court: ${e.ball})` : ''}`;
+}
+
+/** Reasons an item cannot progress: a recorded constraint, open log entries or unfinished prerequisites. */
 export function blockers(book, t) {
   if (t.status === 'done') return [];
   const out = [];
   if (t.blocker.trim()) out.push(t.blocker.trim());
+  for (const e of openLogFor(book, t)) out.push(logLabel(e));
   for (const id of t.deps) {
     const d = itemOf(book, id);
     if (d && d.status !== 'done') out.push(`Waiting for “${d.title}”`);
@@ -48,7 +59,7 @@ export function waitingOn(book, t) {
  */
 export function isBlocked(book, t, today) {
   if (t.status === 'done') return false;
-  if (t.blocker.trim()) return true;
+  if (t.blocker.trim() || openLogFor(book, t).length) return true;
   if (!waitingOn(book, t).length) return false;
   return t.status === 'doing' || (!!t.start && t.start <= today) || (!!t.plannedDay && t.plannedDay <= today);
 }
