@@ -7,6 +7,7 @@ import { addDays, fmtDate, relDay } from '../core/dates.js';
 import { fmtEffort, fmtHours, fmtRepeat } from '../core/parse.js';
 import { openDrawer, store, today } from './state.js';
 import { setItemStatus } from './commands.js';
+import { taskMenuButton } from './actions.js';
 
 export function jobColor(job) { return COLORS[job?.color]?.hex || COLORS.forest.hex; }
 
@@ -77,7 +78,7 @@ export function itemRow(t, { actions = null, showJob = true, showPhase = false, 
         t.repeat ? chip(`↻ ${fmtRepeat(t.repeat)}`, 'muted', 'Repeats: the next one is created when this is done') : null,
         t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null,
       )),
-    actions ? h('div', { class: 'row-actions' }, actions) : null);
+    h('div', { class: 'row-actions' }, actions, taskMenuButton(t)));
 }
 
 /** "2/5 steps" for a task with a checklist. */

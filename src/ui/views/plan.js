@@ -10,6 +10,7 @@ import { act, openDrawer, rerender, setFocus, store, today, ui, notify } from '.
 import { btn, chip, doneToggle, iconBtn, jobColor, segmented } from '../components.js';
 import { createJob, createTask, quickAdd } from '../commands.js';
 import { welcome } from './welcome.js';
+import { jobMenuButton, taskMenuButton } from '../actions.js';
 
 const ROW = { job: 46, phase: 42, item: 36, add: 34 };
 const HEADER = 52;
@@ -124,7 +125,8 @@ function jobRow(job) {
       job.archived ? chip('Archived', 'muted') : null,
       job.status !== 'active' ? chip(job.status === 'hold' ? 'On hold' : 'Complete', 'muted') : null,
       h('span', { class: 'job-facts muted' }, `${s.done}/${s.total}`, s.late ? h('span', { class: 'danger' }, ` · ${s.late} late`) : null),
-      iconBtn('focus', ui.focus === job.id ? 'Show all jobs' : `Focus on ${job.title}`, () => setFocus(job.id), { class: ['icon-btn', 'sm', ui.focus === job.id && 'on'] })),
+      iconBtn('focus', ui.focus === job.id ? 'Show all jobs' : `Focus on ${job.title}`, () => setFocus(job.id), { class: ['icon-btn', 'sm', ui.focus === job.id && 'on'] }),
+      jobMenuButton(job)),
     h('div', { class: 'pt' }));
 }
 
@@ -150,6 +152,7 @@ function mobilePlanList(rows) {
       groupKey = '';
       return h('section', { class: 'mobile-job-head' },
         h('strong', null, `Job: ${row.job.title}`),
+        jobMenuButton(row.job),
         btn('Edit job / phases', () => openDrawer('job', row.job.id), { kind: 'sm' }),
         !row.job.archived ? btn('Add task', () => createTask(row.job.id), { kind: 'sm', iconName: 'plus' }) : null);
     }
@@ -162,7 +165,8 @@ function mobilePlanList(rows) {
     return h('div', { class: 'mobile-plan-task' }, doneToggle(t), h('div', null,
       h('button', { class: 'link', onclick: () => openDrawer('item', t.id) }, `${t.kind === 'milestone' ? '◆ Milestone: ' : 'Task: '}${t.title}`),
       h('p', { class: 'muted' }, `Forecast: ${t.start ? fmtShort(t.start) : 'No start'} → ${t.finish ? fmtShort(t.finish) : 'No finish'}`),
-      h('p', { class: 'muted' }, `${fmtEffort(t.effort) || 'No effort estimate'} · ${t.plannedDay ? `Work on ${fmtShort(t.plannedDay)}` : 'No work day'}`)));
+      h('p', { class: 'muted' }, `${fmtEffort(t.effort) || 'No effort estimate'} · ${t.plannedDay ? `Work on ${fmtShort(t.plannedDay)}` : 'No work day'}`)),
+      taskMenuButton(t));
   }));
 }
 
@@ -202,7 +206,8 @@ function itemRowPlan(t, range) {
         t.kind === 'milestone' ? h('span', { class: 'ms-mark', 'aria-label': 'Milestone' }, '◆') : null, t.title,
         reasons.length ? h('span', { class: 'blocked-dot', 'aria-label': 'Blocked' }) : null),
       h('span', { class: ['item-dates', late && 'danger', !dates && 'muted'] }, dates || 'No dates'),
-      h('span', { class: 'item-effort' }, t.status === 'done' ? '' : fmtEffort(t.effort))),
+      h('span', { class: 'item-effort' }, t.status === 'done' ? '' : fmtEffort(t.effort)),
+      taskMenuButton(t)),
     track(t, range, { late, blocked, slip: s }));
 }
 

@@ -9,7 +9,7 @@ import { DEFAULT_CAPACITY } from '../../core/model.js';
 import { act, openDrawer, rerender, store, today, ui, notify } from '../state.js';
 import { btn, doneToggle, dueChip, iconBtn, jobColor, jobTag, meter, readiness } from '../components.js';
 import { makeDraggable, makeDropZone } from '../dnd.js';
-import { showMenu } from '../overlay.js';
+import { taskMenuButton } from '../actions.js';
 import { welcome } from './welcome.js';
 import { createTask } from '../commands.js';
 import { personSelect, workPersonId } from '../people.js';
@@ -22,14 +22,15 @@ function planOn(id, day) {
   act(day ? 'Plan day' : 'Unplan', d => patchItem(d, id, { plannedDay: day }, today()));
 }
 
-function dayMenu(anchor, t, days) {
-  showMenu(anchor, [
+function dayItems(t, days) {
+  return [
     { heading: 'Plan for' },
     ...days.map((d, i) => ({ label: `${DAY_LABELS[i]} ${fmtShort(d)}${d === today() ? ' · today' : ''}`, run: () => planOn(t.id, d) })),
     'separator',
     { label: 'Next week', icon: 'arrowRight', run: () => planOn(t.id, addDays(days[0], 7)) },
     t.plannedDay ? { label: 'Remove from week', icon: 'x', run: () => planOn(t.id, '') } : null,
-  ].filter(Boolean));
+    'separator',
+  ].filter(Boolean);
 }
 
 function weekCard(t, days) {
@@ -40,7 +41,7 @@ function weekCard(t, days) {
     h('div', { class: 'wcard-body' },
       h('button', { class: 'wcard-title', onclick: () => openDrawer('item', t.id) }, t.title),
       h('div', { class: 'wcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, dueChip(t), readiness(t))),
-    iconBtn('more', `Plan “${t.title}” for another day`, e => dayMenu(e.currentTarget, t, days), { class: 'icon-btn wcard-menu' }));
+    taskMenuButton(t, { extra: () => dayItems(t, days), className: 'wcard-menu' }));
   return makeDraggable(el, t.id);
 }
 

@@ -56,6 +56,7 @@ const ICONS = {
   left: 'M15 5l-7 7 7 7',
   right: 'M9 5l7 7-7 7',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
+  pencil: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
   undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
   redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
   save: 'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-7h8v7',

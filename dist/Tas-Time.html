@@ -110,6 +110,12 @@ h1, h2, h3, p { margin: 0; }
 
 .jobs-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 10px 4px; font-size: 11px; font-weight: 600; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
 .jobs { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.jobs li { display: flex; align-items: center; gap: 2px; }
+.jobs li .job-link { flex: 1; min-width: 0; }
+.actions-btn { flex-shrink: 0; }
+.bcard-head { display: flex; align-items: flex-start; gap: 4px; }
+.bcard-head .bcard-title { flex: 1; min-width: 0; }
+.mobile-plan-task > div { flex: 1; }
 .job-link { width: 100%; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--radius-sm); color: var(--ink-2); }
 .job-link:hover { background: var(--surface-3); color: var(--ink); }
 .job-link.on { background: color-mix(in srgb, var(--job) 14%, var(--surface)); color: var(--ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--job); }
@@ -409,8 +415,7 @@ h1, h2, h3, p { margin: 0; }
 .drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 0 -8px; }
 .drawer-crumbs { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 600; min-width: 0; padding-left: 8px; }
 .drawer-head-actions { display: flex; gap: 2px; }
-.drawer-title { font: 600 21px/1.3 var(--font-display); border-color: transparent; padding: 4px 8px; margin: 0 -8px; width: calc(100% + 16px); background: transparent; letter-spacing: -.3px; }
-.drawer-title:hover { border-color: var(--line); }
+.drawer-title { font: 600 21px/1.3 var(--font-display); padding: 4px 8px; letter-spacing: -.3px; }
 .drawer-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .fields.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .field label { display: block; font-size: 12px; font-weight: 600; color: var(--ink-2); margin-bottom: 5px; }
@@ -553,9 +558,9 @@ h1, h2, h3, p { margin: 0; }
   & input:hover, & select:hover, & textarea:hover { border-color: var(--ink); }
   & input:focus, & select:focus, & textarea:focus { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
   /* In-place fields (titles, notes) stay borderless until hovered or focused. */
-  & .drawer-title, & .resume-text, & .week-notes { border-color: transparent; }
-  & .drawer-title:hover, & .resume-text:hover, & .week-notes:hover { border-color: var(--line-strong); }
-  & .drawer-title:focus, & .resume-text:focus, & .week-notes:focus { border-color: var(--accent); }
+  & .resume-text, & .week-notes { border-color: transparent; }
+  & .resume-text:hover, & .week-notes:hover { border-color: var(--line-strong); }
+  & .resume-text:focus, & .week-notes:focus { border-color: var(--accent); }
   & .note-text, & .note-text:hover, & .note-text:focus { border-color: transparent; box-shadow: none; }
   & .icon-btn { border-radius: 2px; }
   & .chip { border-radius: 2px; }
@@ -1749,6 +1754,7 @@ const ICONS = {
   left: 'M15 5l-7 7 7 7',
   right: 'M9 5l7 7-7 7',
   more: 'M5 12h.01M12 12h.01M19 12h.01',
+  pencil: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
   undo: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
   redo: 'M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3',
   save: 'M5 3h11l3 3v15H5zM8 3v5h7V3M8 21v-7h8v7',
@@ -1806,81 +1812,6 @@ function debounce(fn, ms, { maxWait = Infinity } = {}) {
   wrapped.flush = (...args) => run(args);
   wrapped.cancel = () => { clearTimeout(t); first = 0; };
   return wrapped;
-}
-
-// ── core/parse.js ──
-// Human input: effort durations and the one-line quick-add syntax.
-
-/** Explicit units avoid confusing hours with minutes. Returns minutes or null. */
-function parseEffort(input) {
-  const s = String(input).trim().toLowerCase().replace(/\s+/g, '');
-  if (s === '') return 0;
-  let m = s.match(/^(\d+(?:\.\d+)?)h(?:(\d+)m?)?$/);
-  if (m) return Math.round(Number(m[1]) * 60 + Number(m[2] || 0));
-  m = s.match(/^(\d+)(?:m|min|mins)$/);
-  if (m) return Number(m[1]);
-  m = s.match(/^(\d+(?:\.\d+)?)d$/);
-  if (m) return Math.round(Number(m[1]) * 8 * 60);
-  return null;
-}
-
-/** 0 → "", 45 → "45m", 90 → "1h 30m", 120 → "2h". */
-function fmtEffort(min) {
-  if (!min) return '';
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
-}
-
-/** Hours with one decimal, for totals: 135 → "2.3h". */
-function fmtHours(min) {
-  const h = min / 60;
-  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`;
-}
-
-const EFFORT_TOKEN = /^\d+(?:\.\d+)?h(?:\d+m?)?$|^\d+(?:m|min|mins|d)$/i;
-
-/**
- * Quick add: "Draft literature review #phd 2h @tue !fri"
- *   #code   job (matches code or title start)   2h / 30m / 1h30   effort
- *   @day    plan to work on it that day          !day              forecast finish
- *   *       leading star marks a milestone
- */
-function parseQuickAdd(input, jobs, today = todayIso()) {
-  const tokens = input.trim().split(/\s+/).filter(Boolean);
-  const out = { title: '', jobId: '', jobHint: '', effort: null, plannedDay: '', finish: '', kind: 'task', errors: [] };
-  const words = [];
-  for (const tok of tokens) {
-    if (tok.length > 1 && tok[0] === '#') {
-      out.jobHint = tok.slice(1);
-      const job = matchJob(jobs, out.jobHint);
-      if (job) out.jobId = job.id; else out.errors.push(`No unique job matches “${tok}”. Choose a job or use its full code`);
-    } else if (tok.length > 1 && (tok[0] === '@' || tok[0] === '!')) {
-      const day = parseDayWord(tok.slice(1), today);
-      if (!day) { out.errors.push(`Unrecognised day “${tok}”`); continue; }
-      if (tok[0] === '@') out.plannedDay = day; else out.finish = day;
-    } else if (EFFORT_TOKEN.test(tok)) {
-      out.effort = parseEffort(tok);
-    } else words.push(tok);
-  }
-  if (words[0] === '*') { out.kind = 'milestone'; words.shift(); } else if (words[0]?.startsWith('*')) { out.kind = 'milestone'; words[0] = words[0].slice(1); }
-  out.title = words.join(' ');
-  return out;
-}
-
-function matchJob(jobs, hint) {
-  const h = hint.toLowerCase();
-  const live = jobs.filter(j => !j.archived);
-  const exact = live.filter(j => j.code.toLowerCase() === h || j.title.toLowerCase() === h);
-  if (exact.length) return exact.length === 1 ? exact[0] : undefined;
-  const matches = live.filter(j => j.code.toLowerCase().startsWith(h) || j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
-  return matches.length === 1 ? matches[0] : undefined;
-}
-
-/** "Every week", "Every 2 weeks", "Every month". */
-function fmtRepeat(repeat) {
-  if (!repeat) return '';
-  return repeat.every === 1 ? `Every ${repeat.unit}` : `Every ${repeat.every} ${repeat.unit}s`;
 }
 
 // ── core/query.js ──
@@ -2272,6 +2203,162 @@ function removeDep(book, id, depId) {
   t.deps = t.deps.filter(d => d !== depId);
 }
 
+// ── ui/overlay.js ──
+// Toasts, popover menus and the small modal used for help.
+
+// ── Toasts ──
+
+function initToasts() {
+  const host = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' });
+  document.body.append(host);
+  onNotify((message, { kind = '', action = null, timeout = kind === 'error' ? 8000 : 4500 } = {}) => {
+    const el = h('div', { class: ['toast', kind] },
+      kind === 'error' || kind === 'warn' ? icon('alert', 16) : icon('check', 16),
+      h('span', null, message),
+      action ? h('button', { class: 'toast-action', onclick: () => { action.run(); el.remove(); } }, action.label) : null,
+      h('button', { class: 'toast-close', 'aria-label': 'Dismiss', onclick: () => el.remove() }, icon('x', 14)));
+    host.append(el);
+    while (host.children.length > 3) host.firstChild.remove();
+    setTimeout(() => el.remove(), timeout);
+  });
+}
+
+// ── Popover menu ──
+
+let openMenu = null;
+
+function closeMenu() {
+  if (!openMenu) return;
+  openMenu.el.remove();
+  openMenu.anchor.setAttribute('aria-expanded', 'false');
+  openMenu.anchor.focus({ preventScroll: true });
+  openMenu = null;
+}
+
+/** items: [{ label, icon?, hint?, run, danger?, disabled? } | 'separator' | { heading }] */
+function showMenu(anchor, items, { align = 'end' } = {}) {
+  if (openMenu?.anchor === anchor) { closeMenu(); return; }
+  closeMenu();
+  const el = h('div', { class: 'menu', role: 'menu' }, items.map(it => {
+    if (it === 'separator') return h('div', { class: 'menu-sep', role: 'separator' });
+    if (it.heading) return h('div', { class: 'menu-heading' }, it.heading);
+    return h('button', {
+      role: 'menuitem', class: ['menu-item', it.danger && 'danger'], disabled: it.disabled || null,
+      onclick: () => { closeMenu(); it.run(); },
+    }, it.icon ? icon(it.icon, 16) : h('span', { class: 'icon-gap' }), h('span', null, it.label), it.hint ? h('kbd', null, it.hint) : null);
+  }));
+  document.body.append(el);
+  const r = anchor.getBoundingClientRect();
+  const w = el.offsetWidth;
+  const left = align === 'end' ? r.right - w : r.left;
+  el.style.left = `${Math.max(8, Math.min(left, innerWidth - w - 8))}px`;
+  const below = r.bottom + 6;
+  el.style.top = `${below + el.offsetHeight > innerHeight - 8 ? Math.max(8, r.top - el.offsetHeight - 6) : below}px`;
+  anchor.setAttribute('aria-expanded', 'true');
+  openMenu = { el, anchor };
+  el.querySelector('button:not([disabled])')?.focus();
+  el.addEventListener('keydown', event => {
+    const buttons = [...el.querySelectorAll('button:not([disabled])')];
+    const i = buttons.indexOf(document.activeElement);
+    if (event.key === 'ArrowDown') { event.preventDefault(); buttons[(i + 1) % buttons.length].focus(); }
+    if (event.key === 'ArrowUp') { event.preventDefault(); buttons[(i - 1 + buttons.length) % buttons.length].focus(); }
+    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); }
+    if (event.key === 'Tab') closeMenu();
+  });
+}
+
+document.addEventListener('pointerdown', event => {
+  if (openMenu && !openMenu.el.contains(event.target) && !openMenu.anchor.contains(event.target)) closeMenu();
+});
+
+// ── Modal ──
+
+function showModal(title, body, { wide = false } = {}) {
+  const dialog = h('dialog', { class: ['modal', wide && 'wide'], 'aria-label': title },
+    h('div', { class: 'modal-head' }, h('h2', null, title),
+      h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: () => dialog.close() }, icon('x', 18))),
+    h('div', { class: 'modal-body' }, body));
+  dialog.addEventListener('close', () => dialog.remove());
+  document.body.append(dialog);
+  dialog.showModal();
+  return dialog;
+}
+
+// ── core/parse.js ──
+// Human input: effort durations and the one-line quick-add syntax.
+
+/** Explicit units avoid confusing hours with minutes. Returns minutes or null. */
+function parseEffort(input) {
+  const s = String(input).trim().toLowerCase().replace(/\s+/g, '');
+  if (s === '') return 0;
+  let m = s.match(/^(\d+(?:\.\d+)?)h(?:(\d+)m?)?$/);
+  if (m) return Math.round(Number(m[1]) * 60 + Number(m[2] || 0));
+  m = s.match(/^(\d+)(?:m|min|mins)$/);
+  if (m) return Number(m[1]);
+  m = s.match(/^(\d+(?:\.\d+)?)d$/);
+  if (m) return Math.round(Number(m[1]) * 8 * 60);
+  return null;
+}
+
+/** 0 → "", 45 → "45m", 90 → "1h 30m", 120 → "2h". */
+function fmtEffort(min) {
+  if (!min) return '';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m}m`;
+}
+
+/** Hours with one decimal, for totals: 135 → "2.3h". */
+function fmtHours(min) {
+  const h = min / 60;
+  return `${Number.isInteger(h) ? h : h.toFixed(1)}h`;
+}
+
+const EFFORT_TOKEN = /^\d+(?:\.\d+)?h(?:\d+m?)?$|^\d+(?:m|min|mins|d)$/i;
+
+/**
+ * Quick add: "Draft literature review #phd 2h @tue !fri"
+ *   #code   job (matches code or title start)   2h / 30m / 1h30   effort
+ *   @day    plan to work on it that day          !day              forecast finish
+ *   *       leading star marks a milestone
+ */
+function parseQuickAdd(input, jobs, today = todayIso()) {
+  const tokens = input.trim().split(/\s+/).filter(Boolean);
+  const out = { title: '', jobId: '', jobHint: '', effort: null, plannedDay: '', finish: '', kind: 'task', errors: [] };
+  const words = [];
+  for (const tok of tokens) {
+    if (tok.length > 1 && tok[0] === '#') {
+      out.jobHint = tok.slice(1);
+      const job = matchJob(jobs, out.jobHint);
+      if (job) out.jobId = job.id; else out.errors.push(`No unique job matches “${tok}”. Choose a job or use its full code`);
+    } else if (tok.length > 1 && (tok[0] === '@' || tok[0] === '!')) {
+      const day = parseDayWord(tok.slice(1), today);
+      if (!day) { out.errors.push(`Unrecognised day “${tok}”`); continue; }
+      if (tok[0] === '@') out.plannedDay = day; else out.finish = day;
+    } else if (EFFORT_TOKEN.test(tok)) {
+      out.effort = parseEffort(tok);
+    } else words.push(tok);
+  }
+  if (words[0] === '*') { out.kind = 'milestone'; words.shift(); } else if (words[0]?.startsWith('*')) { out.kind = 'milestone'; words[0] = words[0].slice(1); }
+  out.title = words.join(' ');
+  return out;
+}
+
+function matchJob(jobs, hint) {
+  const h = hint.toLowerCase();
+  const live = jobs.filter(j => !j.archived);
+  const exact = live.filter(j => j.code.toLowerCase() === h || j.title.toLowerCase() === h);
+  if (exact.length) return exact.length === 1 ? exact[0] : undefined;
+  const matches = live.filter(j => j.code.toLowerCase().startsWith(h) || j.title.toLowerCase().split(/\s+/).some(w => w.startsWith(h)));
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+/** "Every week", "Every 2 weeks", "Every month". */
+function fmtRepeat(repeat) {
+  if (!repeat) return '';
+  return repeat.every === 1 ? `Every ${repeat.unit}` : `Every ${repeat.every} ${repeat.unit}s`;
+}
+
 // ── ui/commands.js ──
 // User commands shared by menus, buttons and keyboard shortcuts.
 
@@ -2360,6 +2447,103 @@ function removeJob(id) {
   notify(`Deleted job “${j.title}”`, { action: { label: 'Undo', run: undo } });
 }
 
+function duplicateTask(id) {
+  const copy = act('Duplicate', d => duplicateItem(d, id));
+  if (copy) openDrawer('item', copy.id, 'title');
+  return copy;
+}
+
+/** Completing a job with open work asks first; the work is kept, only paused in Today and Week. */
+function setJobStatus(id, status) {
+  const open = store.book.items.filter(t => t.jobId === id && !t.archived && t.status !== 'done').length;
+  if (status === 'done' && open && !confirm(`Complete this job with ${open} unfinished task${open === 1 ? '' : 's'}? They will be kept in Plan and Board, but removed from Today and Week until you reactivate the job.`)) return null;
+  return act('Job status', d => patchJob(d, id, { status }));
+}
+
+function setJobArchived(id, archived) {
+  return act(archived ? 'Archive job' : 'Restore job', d => patchJob(d, id, { archived }));
+}
+
+/** Rename without opening the panel: a second way to the same change. */
+function renameJob(id) {
+  const j = jobOf(store.book, id);
+  const name = j && prompt('Rename job', j.title);
+  if (name && name.trim() && name.trim() !== j.title) act('Rename job', d => patchJob(d, id, { title: name.trim().slice(0, 500) }));
+}
+
+function renameTask(id) {
+  const t = itemOf(store.book, id);
+  const name = t && prompt('Rename task', t.title);
+  if (name && name.trim() && name.trim() !== t.title) act('Rename', d => patchItem(d, id, { title: name.trim().slice(0, 500) }, today()));
+}
+
+// ── ui/actions.js ──
+// ⋯ action menus for jobs and tasks. Every change here is also available in the editor panel,
+// so each action has at least two ways in, both usable by keyboard and screen reader.
+
+/** The ⋯ button. `extra` items (e.g. day planning in Week) are shown above the standard ones. */
+function taskMenuButton(t, { extra = () => [], className = '' } = {}) {
+  return menuButton(`Actions for task “${t.title}”`, ['task-menu', className], () => [...extra(), ...taskActions(t.id)]);
+}
+
+function jobMenuButton(job, { className = '' } = {}) {
+  return menuButton(`Actions for job “${job.title || 'Untitled job'}”`, ['job-menu', className], () => jobActions(job.id));
+}
+
+function menuButton(label, classes, items) {
+  return h('button', {
+    class: ['icon-btn', 'sm', 'actions-btn', ...classes], 'aria-label': label, title: label, 'aria-haspopup': 'menu', 'aria-expanded': 'false',
+    onclick: e => { e.stopPropagation(); showMenu(e.currentTarget, items()); },
+  }, icon('more', 18));
+}
+
+function taskActions(id) {
+  const t = itemOf(store.book, id);
+  if (!t) return [];
+  const reasons = t.status === 'done' ? [] : blockers(store.book, t);
+  const planned = t.plannedDay === today();
+  return [
+    { heading: 'Task' },
+    { label: 'Edit task…', icon: 'open', run: () => openDrawer('item', id) },
+    { label: 'Rename…', icon: 'pencil', run: () => renameTask(id) },
+    t.status === 'done'
+      ? { label: 'Reopen', icon: 'undo', run: () => setItemStatus(id, 'todo', 'Reopen') }
+      : { label: reasons.length ? `Mark done (blocked: ${reasons[0]})` : 'Mark done', icon: 'check', disabled: !!reasons.length, run: () => setItemStatus(id, 'done', 'Complete') },
+    t.status === 'todo' ? { label: 'Mark doing', icon: 'clock', run: () => setItemStatus(id, 'doing') } : null,
+    t.status === 'doing' ? { label: 'Back to to do', icon: 'left', run: () => setItemStatus(id, 'todo') } : null,
+    t.kind !== 'milestone' && t.status !== 'done'
+      ? planned
+        ? { label: 'Remove work day', icon: 'x', run: () => act('Unplan', d => patchItem(d, id, { plannedDay: '' }, today())) }
+        : { label: 'Work on it today', icon: 'today', run: () => act('Plan for today', d => patchItem(d, id, { plannedDay: today() }, today())) }
+      : null,
+    { label: 'Duplicate', icon: 'copy', run: () => duplicateTask(id) },
+    'separator',
+    { label: t.archived ? 'Restore from archive' : 'Archive', icon: 'archive', run: () => act(t.archived ? 'Restore' : 'Archive', d => patchItem(d, id, { archived: !t.archived }, today())) },
+    { label: 'Delete task', icon: 'trash', danger: true, run: () => removeItem(id) },
+  ].filter(Boolean);
+}
+
+function jobActions(id) {
+  const job = jobOf(store.book, id);
+  if (!job) return [];
+  return [
+    { heading: 'Job' },
+    { label: 'Edit job…', icon: 'open', run: () => openDrawer('job', id) },
+    { label: 'Rename…', icon: 'pencil', run: () => renameJob(id) },
+    { label: ui.focus === id ? 'Show all jobs' : 'Show only this job', icon: 'focus', run: () => setFocus(id) },
+    !job.archived ? { label: 'Add task', icon: 'plus', run: () => createTask(id) } : null,
+    { label: 'Open notebook', icon: 'notes', run: () => { ui.notesJob = id; ui.drawer = null; setView('notes'); } },
+    { heading: 'Status' },
+    ...Object.entries(JOB_STATUS).map(([key, label]) => ({
+      label: job.status === key ? `${label} (current)` : `Mark ${label.toLowerCase()}`,
+      icon: job.status === key ? 'check' : null, disabled: job.status === key, run: () => setJobStatus(id, key),
+    })),
+    'separator',
+    { label: job.archived ? 'Restore job' : 'Archive job', icon: 'archive', run: () => setJobArchived(id, !job.archived) },
+    { label: 'Delete job…', icon: 'trash', danger: true, run: () => removeJob(id) },
+  ].filter(Boolean);
+}
+
 // ── ui/components.js ──
 // Small building blocks shared by several views.
 
@@ -2432,7 +2616,7 @@ function itemRow(t, { actions = null, showJob = true, showPhase = false, dense =
         t.repeat ? chip(`↻ ${fmtRepeat(t.repeat)}`, 'muted', 'Repeats: the next one is created when this is done') : null,
         t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null,
       )),
-    actions ? h('div', { class: 'row-actions' }, actions) : null);
+    h('div', { class: 'row-actions' }, actions, taskMenuButton(t)));
 }
 
 /** "2/5 steps" for a task with a checklist. */
@@ -3268,87 +3452,6 @@ async function idbGet(key) {
   } catch { return null; }
 }
 
-// ── ui/overlay.js ──
-// Toasts, popover menus and the small modal used for help.
-
-// ── Toasts ──
-
-function initToasts() {
-  const host = h('div', { class: 'toasts', role: 'status', 'aria-live': 'polite' });
-  document.body.append(host);
-  onNotify((message, { kind = '', action = null, timeout = kind === 'error' ? 8000 : 4500 } = {}) => {
-    const el = h('div', { class: ['toast', kind] },
-      kind === 'error' || kind === 'warn' ? icon('alert', 16) : icon('check', 16),
-      h('span', null, message),
-      action ? h('button', { class: 'toast-action', onclick: () => { action.run(); el.remove(); } }, action.label) : null,
-      h('button', { class: 'toast-close', 'aria-label': 'Dismiss', onclick: () => el.remove() }, icon('x', 14)));
-    host.append(el);
-    while (host.children.length > 3) host.firstChild.remove();
-    setTimeout(() => el.remove(), timeout);
-  });
-}
-
-// ── Popover menu ──
-
-let openMenu = null;
-
-function closeMenu() {
-  if (!openMenu) return;
-  openMenu.el.remove();
-  openMenu.anchor.setAttribute('aria-expanded', 'false');
-  openMenu.anchor.focus({ preventScroll: true });
-  openMenu = null;
-}
-
-/** items: [{ label, icon?, hint?, run, danger?, disabled? } | 'separator' | { heading }] */
-function showMenu(anchor, items, { align = 'end' } = {}) {
-  if (openMenu?.anchor === anchor) { closeMenu(); return; }
-  closeMenu();
-  const el = h('div', { class: 'menu', role: 'menu' }, items.map(it => {
-    if (it === 'separator') return h('div', { class: 'menu-sep', role: 'separator' });
-    if (it.heading) return h('div', { class: 'menu-heading' }, it.heading);
-    return h('button', {
-      role: 'menuitem', class: ['menu-item', it.danger && 'danger'], disabled: it.disabled || null,
-      onclick: () => { closeMenu(); it.run(); },
-    }, it.icon ? icon(it.icon, 16) : h('span', { class: 'icon-gap' }), h('span', null, it.label), it.hint ? h('kbd', null, it.hint) : null);
-  }));
-  document.body.append(el);
-  const r = anchor.getBoundingClientRect();
-  const w = el.offsetWidth;
-  const left = align === 'end' ? r.right - w : r.left;
-  el.style.left = `${Math.max(8, Math.min(left, innerWidth - w - 8))}px`;
-  const below = r.bottom + 6;
-  el.style.top = `${below + el.offsetHeight > innerHeight - 8 ? Math.max(8, r.top - el.offsetHeight - 6) : below}px`;
-  anchor.setAttribute('aria-expanded', 'true');
-  openMenu = { el, anchor };
-  el.querySelector('button:not([disabled])')?.focus();
-  el.addEventListener('keydown', event => {
-    const buttons = [...el.querySelectorAll('button:not([disabled])')];
-    const i = buttons.indexOf(document.activeElement);
-    if (event.key === 'ArrowDown') { event.preventDefault(); buttons[(i + 1) % buttons.length].focus(); }
-    if (event.key === 'ArrowUp') { event.preventDefault(); buttons[(i - 1 + buttons.length) % buttons.length].focus(); }
-    if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); closeMenu(); }
-    if (event.key === 'Tab') closeMenu();
-  });
-}
-
-document.addEventListener('pointerdown', event => {
-  if (openMenu && !openMenu.el.contains(event.target) && !openMenu.anchor.contains(event.target)) closeMenu();
-});
-
-// ── Modal ──
-
-function showModal(title, body, { wide = false } = {}) {
-  const dialog = h('dialog', { class: ['modal', wide && 'wide'], 'aria-label': title },
-    h('div', { class: 'modal-head' }, h('h2', null, title),
-      h('button', { class: 'icon-btn', 'aria-label': 'Close', onclick: () => dialog.close() }, icon('x', 18))),
-    h('div', { class: 'modal-body' }, body));
-  dialog.addEventListener('close', () => dialog.remove());
-  document.body.append(dialog);
-  dialog.showModal();
-  return dialog;
-}
-
 // ── ui/appearance.js ──
 // Visual style and light/dark choice. Stored per browser, like a window preference;
 // it is not part of the planning book.
@@ -3945,11 +4048,11 @@ function itemEditor(t) {
     h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
       h('div', { class: 'drawer-crumbs' }, h('span', { class: 'dot' }), job.title, t.archived ? chip('Archived', 'muted') : null),
       h('div', { class: 'drawer-head-actions' },
-        iconBtn('copy', 'Duplicate', () => { const c = act('Duplicate', dd => duplicateItem(dd, t.id)); if (c) openDrawer('item', c.id, 'title'); }),
+        iconBtn('copy', 'Duplicate', () => duplicateTask(t.id)),
         iconBtn('archive', t.archived ? 'Restore from archive' : 'Archive', () => set(t.archived ? 'Restore' : 'Archive', { archived: !t.archived })),
         iconBtn('trash', 'Delete', () => removeItem(t.id)),
         iconBtn('x', 'Close (Esc)', closeDrawer))),
-    liveText('d-title', t.title, typed('title', 'Rename'), { class: 'drawer-title', 'aria-label': 'Title', maxlength: 500, placeholder: 'Task name' }),
+    field('Task name', liveText('d-title', t.title, typed('title', 'Rename'), { class: 'drawer-title', maxlength: 500, placeholder: 'Task name' }), { id: 'd-title' }),
     h('p', { class: 'field-hint' }, `Job: ${job.title} → ${book.phases.find(p => p.id === t.phaseId)?.title || 'No phase'} → ${isMs ? 'Milestone' : 'Task'}. Changes save automatically.`),
     h('div', { class: 'drawer-row' },
       segmented([['task', 'Task'], ['milestone', '◆ Milestone']], t.kind, k => set('Change kind', { kind: k, finish: t.finish || t.start || today() }), 'Kind'),
@@ -4106,11 +4209,7 @@ function jobEditor(job) {
   const typed = (key, label) => value => act(label, dd => patchJob(dd, job.id, { [key]: value }), { key: `job-${key}:${job.id}`, quiet: true });
   const phases = phasesOf(book, job.id);
   const count = id => book.items.filter(t => t.phaseId === id && !t.archived).length;
-  const changeJobStatus = status => {
-    const open = book.items.filter(t => t.jobId === job.id && !t.archived && t.status !== 'done').length;
-    if (status === 'done' && open && !confirm(`Complete this job with ${open} unfinished task${open === 1 ? '' : 's'}? They will be kept in Plan and Board, but removed from Today and Week until you reactivate the job.`)) return;
-    set('Job status', { status });
-  };
+  const changeJobStatus = status => setJobStatus(job.id, status);
 
   const newPhase = h('input', {
     id: 'd-phases', placeholder: 'New phase name', autocomplete: 'off',
@@ -4134,7 +4233,7 @@ function jobEditor(job) {
         iconBtn('archive', job.archived ? 'Restore job' : 'Archive job', () => set(job.archived ? 'Restore job' : 'Archive job', { archived: !job.archived })),
         iconBtn('trash', 'Delete job', () => removeJob(job.id)),
         iconBtn('x', 'Close (Esc)', closeDrawer))),
-    liveText('d-title', job.title, typed('title', 'Rename job'), { class: 'drawer-title', 'aria-label': 'Job name', maxlength: 500, placeholder: 'Job name' }),
+    field('Job name', liveText('d-title', job.title, typed('title', 'Rename job'), { class: 'drawer-title', maxlength: 500, placeholder: 'Job name' }), { id: 'd-title' }),
     h('p', { class: 'field-hint' }, 'Job → optional phases → tasks. A phase groups tasks; add the actual work with Add task. Changes save automatically.'),
     btn('Add task without a phase', () => createTask(job.id), { kind: 'primary', iconName: 'plus' }),
     field('Outcome', liveText('d-outcome', job.outcome, typed('outcome', 'Edit outcome'), { multiline: true, rows: 2, placeholder: 'What will exist when this job is done?' }), { id: 'd-outcome' }),
@@ -4376,14 +4475,15 @@ function planOn(id, day) {
   act(day ? 'Plan day' : 'Unplan', d => patchItem(d, id, { plannedDay: day }, today()));
 }
 
-function dayMenu(anchor, t, days) {
-  showMenu(anchor, [
+function dayItems(t, days) {
+  return [
     { heading: 'Plan for' },
     ...days.map((d, i) => ({ label: `${DAY_LABELS[i]} ${fmtShort(d)}${d === today() ? ' · today' : ''}`, run: () => planOn(t.id, d) })),
     'separator',
     { label: 'Next week', icon: 'arrowRight', run: () => planOn(t.id, addDays(days[0], 7)) },
     t.plannedDay ? { label: 'Remove from week', icon: 'x', run: () => planOn(t.id, '') } : null,
-  ].filter(Boolean));
+    'separator',
+  ].filter(Boolean);
 }
 
 function weekCard(t, days) {
@@ -4394,7 +4494,7 @@ function weekCard(t, days) {
     h('div', { class: 'wcard-body' },
       h('button', { class: 'wcard-title', onclick: () => openDrawer('item', t.id) }, t.title),
       h('div', { class: 'wcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), t.effort && t.status !== 'done' ? h('span', { class: 'effort' }, fmtEffort(t.effort)) : null, dueChip(t), readiness(t))),
-    iconBtn('more', `Plan “${t.title}” for another day`, e => dayMenu(e.currentTarget, t, days), { class: 'icon-btn wcard-menu' }));
+    taskMenuButton(t, { extra: () => dayItems(t, days), className: 'wcard-menu' }));
   return makeDraggable(el, t.id);
 }
 
@@ -4593,7 +4693,8 @@ function jobRow(job) {
       job.archived ? chip('Archived', 'muted') : null,
       job.status !== 'active' ? chip(job.status === 'hold' ? 'On hold' : 'Complete', 'muted') : null,
       h('span', { class: 'job-facts muted' }, `${s.done}/${s.total}`, s.late ? h('span', { class: 'danger' }, ` · ${s.late} late`) : null),
-      iconBtn('focus', ui.focus === job.id ? 'Show all jobs' : `Focus on ${job.title}`, () => setFocus(job.id), { class: ['icon-btn', 'sm', ui.focus === job.id && 'on'] })),
+      iconBtn('focus', ui.focus === job.id ? 'Show all jobs' : `Focus on ${job.title}`, () => setFocus(job.id), { class: ['icon-btn', 'sm', ui.focus === job.id && 'on'] }),
+      jobMenuButton(job)),
     h('div', { class: 'pt' }));
 }
 
@@ -4619,6 +4720,7 @@ function mobilePlanList(rows) {
       groupKey = '';
       return h('section', { class: 'mobile-job-head' },
         h('strong', null, `Job: ${row.job.title}`),
+        jobMenuButton(row.job),
         btn('Edit job / phases', () => openDrawer('job', row.job.id), { kind: 'sm' }),
         !row.job.archived ? btn('Add task', () => createTask(row.job.id), { kind: 'sm', iconName: 'plus' }) : null);
     }
@@ -4631,7 +4733,8 @@ function mobilePlanList(rows) {
     return h('div', { class: 'mobile-plan-task' }, doneToggle(t), h('div', null,
       h('button', { class: 'link', onclick: () => openDrawer('item', t.id) }, `${t.kind === 'milestone' ? '◆ Milestone: ' : 'Task: '}${t.title}`),
       h('p', { class: 'muted' }, `Forecast: ${t.start ? fmtShort(t.start) : 'No start'} → ${t.finish ? fmtShort(t.finish) : 'No finish'}`),
-      h('p', { class: 'muted' }, `${fmtEffort(t.effort) || 'No effort estimate'} · ${t.plannedDay ? `Work on ${fmtShort(t.plannedDay)}` : 'No work day'}`)));
+      h('p', { class: 'muted' }, `${fmtEffort(t.effort) || 'No effort estimate'} · ${t.plannedDay ? `Work on ${fmtShort(t.plannedDay)}` : 'No work day'}`)),
+      taskMenuButton(t));
   }));
 }
 
@@ -4671,7 +4774,8 @@ function itemRowPlan(t, range) {
         t.kind === 'milestone' ? h('span', { class: 'ms-mark', 'aria-label': 'Milestone' }, '◆') : null, t.title,
         reasons.length ? h('span', { class: 'blocked-dot', 'aria-label': 'Blocked' }) : null),
       h('span', { class: ['item-dates', late && 'danger', !dates && 'muted'] }, dates || 'No dates'),
-      h('span', { class: 'item-effort' }, t.status === 'done' ? '' : fmtEffort(t.effort))),
+      h('span', { class: 'item-effort' }, t.status === 'done' ? '' : fmtEffort(t.effort)),
+      taskMenuButton(t)),
     track(t, range, { late, blocked, slip: s }));
 }
 
@@ -4838,7 +4942,9 @@ function boardCard(t) {
   const blocked = isBlocked(book, t, today());
   const waiting = blocked ? [] : waitingOn(book, t);
   const el = h('article', { class: ['bcard', t.kind === 'milestone' && 'is-ms'], style: { '--job': jobColor(job) }, 'data-item': t.id },
-    h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
+    h('div', { class: 'bcard-head' },
+      h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
+      taskMenuButton(t)),
     h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
     blocked ? h('p', { class: 'bcard-why' }, blockers(book, t).join(' · ')) : null,
     waiting.length ? h('p', { class: 'bcard-after' }, `After ${waiting.map(w => `“${w.title}”`).join(', ')}`) : null,
@@ -5041,7 +5147,8 @@ function sidebar() {
       }, h('span', { class: 'dot' }), h('span', { class: 'job-name' }, j.title || 'Untitled job'),
       j.status !== 'active' ? h('span', { class: 'chip' }, j.status === 'hold' ? 'On hold' : 'Complete') : null,
       s.late ? h('span', { class: 'late-dot', title: `${s.late} late` }) : null,
-      h('span', { class: 'badge', title: `${s.open} open` }, String(s.open))));
+      h('span', { class: 'badge', title: `${s.open} open` }, String(s.open))),
+      jobMenuButton(j));
     })),
     jobs.length ? null : h('p', { class: 'jobs-empty' }, 'No jobs yet.'),
     h('div', { class: 'side-foot' },

@@ -592,6 +592,57 @@ try {
     await page.key('Escape', { keyCode: 27 });
   });
 
+  await check('a11y: job and task actions have a second way in through ⋯ menus, with visible name labels', async () => {
+    const jobId = await ev('document.querySelector(".jobs .job-link.on") ? (() => { const b = document.querySelector(".jobs .job-link.on"); return [...document.querySelectorAll(".jobs li")].indexOf(b.closest("li")); })() : 0');
+    const menuBtn = `.jobs li:nth-child(${jobId + 1}) .job-menu`;
+    const originalJob = await ev(`document.querySelector('${menuBtn}').closest('li').querySelector('.job-name').textContent`);
+    // Rename from the sidebar menu without opening the panel.
+    await ev('window.prompt = () => "Renamed by menu"; true');
+    await page.click(menuBtn);
+    assert.equal(await ev(`document.querySelector('${menuBtn}').getAttribute('aria-expanded')`), 'true');
+    await page.clickText('.menu-item', 'Rename…');
+    await page.wait(300);
+    assert.match(await text('.jobs'), /Renamed by menu/);
+    // Status from the menu goes through the same confirmation as the panel.
+    await ev('window.__confirmText = ""; window.confirm = m => { window.__confirmText = m; return true; }; true');
+    await page.click(menuBtn);
+    await page.clickText('.menu-item', 'Mark complete');
+    assert.match(await ev('window.__confirmText'), /unfinished task/);
+    assert.match(await text('.jobs'), /Complete/);
+    await page.click(menuBtn);
+    assert.equal(await ev('[...document.querySelectorAll(".menu-item")].find(b => b.textContent.includes("Complete (current)")).disabled'), true);
+    await page.clickText('.menu-item', 'Mark active');
+    await ev('window.confirm = () => true; true');
+    // Edit job from the menu opens the panel, whose name field has a visible label.
+    await page.click(menuBtn);
+    await page.clickText('.menu-item', 'Edit job…');
+    assert.equal(await ev('document.querySelector("label[for=d-title]").textContent'), 'Job name');
+    assert.equal(await ev('document.getElementById("d-title").value'), 'Renamed by menu');
+    assert.notEqual(await ev('getComputedStyle(document.getElementById("d-title")).borderTopColor'), 'rgba(0, 0, 0, 0)');
+    await page.key('Escape', { keyCode: 27 });
+    // Task rows: rename from the row menu.
+    await nav(1);
+    const taskId = await ev('document.querySelector(".today-main .row-item").dataset.item');
+    await ev('window.prompt = () => "Task renamed by menu"; true');
+    await page.click(`.today-main [data-item="${taskId}"] .task-menu`);
+    await page.clickText('.menu-item', 'Rename…');
+    await page.wait(600);
+    const before = await ev(`document.querySelector('.today-main [data-item="${taskId}"] .row-title').textContent`);
+    assert.equal(before, 'Task renamed by menu');
+    assert.equal((await recoveryBook()).items.find(t => t.id === taskId).title, 'Task renamed by menu');
+    await ev('window.prompt = () => "Today task"; true');
+    await page.click(`.today-main [data-item="${taskId}"] .task-menu`);
+    await page.clickText('.menu-item', 'Rename…');
+    await page.wait(600);
+    await ev(`window.prompt = () => ${JSON.stringify(originalJob)}; true`);
+    await page.click(menuBtn);
+    await page.clickText('.menu-item', 'Rename…');
+    await page.wait(300);
+    assert.match(await text('.jobs'), new RegExp(originalJob));
+    await ev('window.prompt = (m, d) => d; true');
+    assert.ok(await count('.today-main .row-item .task-menu') === await count('.today-main .row-item'), 'every Today row has a menu');
+  });
+
   await check('UX: blocked moves explain rejection and Resolve blocker clears the constraint', async () => {
     await nav(4);
     for (let attempt = 0; attempt < 3; attempt++) {

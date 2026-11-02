@@ -6,10 +6,10 @@ import { COLORS, JOB_STATUS, LOG_TYPES, NOTE_PAGES } from '../core/model.js';
 import { fmtDate, fmtShort, relDay } from '../core/dates.js';
 import { fmtEffort, fmtRepeat, parseEffort } from '../core/parse.js';
 import { blockers, dateConflicts, dependents, itemOf, jobOf, liveJobs, phasesOf, slip } from '../core/query.js';
-import { addDep, addPhase, addStep, deletePhase, duplicateItem, movePhase, moveStep, patchItem, patchJob, patchStep, removeDep, removeStep, renamePhase } from '../core/ops.js';
+import { addDep, addPhase, addStep, deletePhase, movePhase, moveStep, patchItem, patchJob, patchStep, removeDep, removeStep, renamePhase } from '../core/ops.js';
 import { act, closeDrawer, openDrawer, rerender, setView, store, today, ui } from './state.js';
 import { btn, chip, iconBtn, jobColor, segmented } from './components.js';
-import { STANDARD_PHASES, createTask, removeItem, removeJob, setItemStatus } from './commands.js';
+import { STANDARD_PHASES, createTask, duplicateTask, removeItem, removeJob, setItemStatus, setJobStatus } from './commands.js';
 import { personSelect, showPeople } from './people.js';
 import { deleteLogEntry, isOverdue, linkLog, logEntry, parties, patchLogEntry, unlinkLog } from '../core/lastplanner.js';
 import { createLogEntry, setLogStatus } from './views/lookahead.js';
@@ -99,11 +99,11 @@ function itemEditor(t) {
     h('div', { class: 'drawer-head', style: { '--job': jobColor(job) } },
       h('div', { class: 'drawer-crumbs' }, h('span', { class: 'dot' }), job.title, t.archived ? chip('Archived', 'muted') : null),
       h('div', { class: 'drawer-head-actions' },
-        iconBtn('copy', 'Duplicate', () => { const c = act('Duplicate', dd => duplicateItem(dd, t.id)); if (c) openDrawer('item', c.id, 'title'); }),
+        iconBtn('copy', 'Duplicate', () => duplicateTask(t.id)),
         iconBtn('archive', t.archived ? 'Restore from archive' : 'Archive', () => set(t.archived ? 'Restore' : 'Archive', { archived: !t.archived })),
         iconBtn('trash', 'Delete', () => removeItem(t.id)),
         iconBtn('x', 'Close (Esc)', closeDrawer))),
-    liveText('d-title', t.title, typed('title', 'Rename'), { class: 'drawer-title', 'aria-label': 'Title', maxlength: 500, placeholder: 'Task name' }),
+    field('Task name', liveText('d-title', t.title, typed('title', 'Rename'), { class: 'drawer-title', maxlength: 500, placeholder: 'Task name' }), { id: 'd-title' }),
     h('p', { class: 'field-hint' }, `Job: ${job.title} → ${book.phases.find(p => p.id === t.phaseId)?.title || 'No phase'} → ${isMs ? 'Milestone' : 'Task'}. Changes save automatically.`),
     h('div', { class: 'drawer-row' },
       segmented([['task', 'Task'], ['milestone', '◆ Milestone']], t.kind, k => set('Change kind', { kind: k, finish: t.finish || t.start || today() }), 'Kind'),
@@ -260,11 +260,7 @@ function jobEditor(job) {
   const typed = (key, label) => value => act(label, dd => patchJob(dd, job.id, { [key]: value }), { key: `job-${key}:${job.id}`, quiet: true });
   const phases = phasesOf(book, job.id);
   const count = id => book.items.filter(t => t.phaseId === id && !t.archived).length;
-  const changeJobStatus = status => {
-    const open = book.items.filter(t => t.jobId === job.id && !t.archived && t.status !== 'done').length;
-    if (status === 'done' && open && !confirm(`Complete this job with ${open} unfinished task${open === 1 ? '' : 's'}? They will be kept in Plan and Board, but removed from Today and Week until you reactivate the job.`)) return;
-    set('Job status', { status });
-  };
+  const changeJobStatus = status => setJobStatus(job.id, status);
 
   const newPhase = h('input', {
     id: 'd-phases', placeholder: 'New phase name', autocomplete: 'off',
@@ -288,7 +284,7 @@ function jobEditor(job) {
         iconBtn('archive', job.archived ? 'Restore job' : 'Archive job', () => set(job.archived ? 'Restore job' : 'Archive job', { archived: !job.archived })),
         iconBtn('trash', 'Delete job', () => removeJob(job.id)),
         iconBtn('x', 'Close (Esc)', closeDrawer))),
-    liveText('d-title', job.title, typed('title', 'Rename job'), { class: 'drawer-title', 'aria-label': 'Job name', maxlength: 500, placeholder: 'Job name' }),
+    field('Job name', liveText('d-title', job.title, typed('title', 'Rename job'), { class: 'drawer-title', maxlength: 500, placeholder: 'Job name' }), { id: 'd-title' }),
     h('p', { class: 'field-hint' }, 'Job → optional phases → tasks. A phase groups tasks; add the actual work with Add task. Changes save automatically.'),
     btn('Add task without a phase', () => createTask(job.id), { kind: 'primary', iconName: 'plus' }),
     field('Outcome', liveText('d-outcome', job.outcome, typed('outcome', 'Edit outcome'), { multiline: true, rows: 2, placeholder: 'What will exist when this job is done?' }), { id: 'd-outcome' }),

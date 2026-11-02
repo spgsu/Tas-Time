@@ -1,5 +1,6 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // App frame: sidebar, top bar (quick add + file status), main view and drawer.
+import { jobMenuButton } from './actions.js';
 import { appMark, fill, h, icon } from './dom.js';
 import { fmtEffort, parseQuickAdd } from '../core/parse.js';
 import { fmtDate } from '../core/dates.js';
@@ -107,7 +108,8 @@ function sidebar() {
       }, h('span', { class: 'dot' }), h('span', { class: 'job-name' }, j.title || 'Untitled job'),
       j.status !== 'active' ? h('span', { class: 'chip' }, j.status === 'hold' ? 'On hold' : 'Complete') : null,
       s.late ? h('span', { class: 'late-dot', title: `${s.late} late` }) : null,
-      h('span', { class: 'badge', title: `${s.open} open` }, String(s.open))));
+      h('span', { class: 'badge', title: `${s.open} open` }, String(s.open))),
+      jobMenuButton(j));
     })),
     jobs.length ? null : h('p', { class: 'jobs-empty' }, 'No jobs yet.'),
     h('div', { class: 'side-foot' },

@@ -11,6 +11,7 @@ import { setItemStatus } from '../commands.js';
 import { btn, dueChip, jobColor, jobTag } from '../components.js';
 import { makeDraggable, makeDropZone } from '../dnd.js';
 import { welcome } from './welcome.js';
+import { taskMenuButton } from '../actions.js';
 
 const COLUMNS = [['todo', 'To do'], ['doing', 'Doing'], ['blocked', 'Blocked'], ['done', 'Done']];
 const DONE_WINDOW = 14;
@@ -57,7 +58,9 @@ function boardCard(t) {
   const blocked = isBlocked(book, t, today());
   const waiting = blocked ? [] : waitingOn(book, t);
   const el = h('article', { class: ['bcard', t.kind === 'milestone' && 'is-ms'], style: { '--job': jobColor(job) }, 'data-item': t.id },
-    h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
+    h('div', { class: 'bcard-head' },
+      h('button', { class: 'bcard-title', onclick: () => openDrawer('item', t.id) }, t.kind === 'milestone' ? '◆ ' : '', t.title),
+      taskMenuButton(t)),
     h('div', { class: 'bcard-meta' }, jobTag(job), h('span', { class: 'muted' }, personName(book, t.assigneeId)), h('span', { class: 'muted' }, phaseTitle(book, t.phaseId))),
     blocked ? h('p', { class: 'bcard-why' }, blockers(book, t).join(' · ')) : null,
     waiting.length ? h('p', { class: 'bcard-after' }, `After ${waiting.map(w => `“${w.title}”`).join(', ')}`) : null,

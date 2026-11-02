@@ -1,7 +1,7 @@
 // Copyright (c) 2026 Selami Pazarbasi. SPDX-License-Identifier: MIT
 // User commands shared by menus, buttons and keyboard shortcuts.
 import { act, notify, openDrawer, rerender, store, ui, today } from './state.js';
-import { addItem, addJob, deleteItem, deleteJob, patchItem } from '../core/ops.js';
+import { addItem, addJob, deleteItem, deleteJob, duplicateItem, patchItem, patchJob } from '../core/ops.js';
 import { itemOf, jobOf, liveJobs } from '../core/query.js';
 import { fmtRepeat, parseQuickAdd } from '../core/parse.js';
 import { fmtDate } from '../core/dates.js';
@@ -89,4 +89,34 @@ export function removeJob(id) {
   ui.drawer = null;
   rerender();
   notify(`Deleted job “${j.title}”`, { action: { label: 'Undo', run: undo } });
+}
+
+export function duplicateTask(id) {
+  const copy = act('Duplicate', d => duplicateItem(d, id));
+  if (copy) openDrawer('item', copy.id, 'title');
+  return copy;
+}
+
+/** Completing a job with open work asks first; the work is kept, only paused in Today and Week. */
+export function setJobStatus(id, status) {
+  const open = store.book.items.filter(t => t.jobId === id && !t.archived && t.status !== 'done').length;
+  if (status === 'done' && open && !confirm(`Complete this job with ${open} unfinished task${open === 1 ? '' : 's'}? They will be kept in Plan and Board, but removed from Today and Week until you reactivate the job.`)) return null;
+  return act('Job status', d => patchJob(d, id, { status }));
+}
+
+export function setJobArchived(id, archived) {
+  return act(archived ? 'Archive job' : 'Restore job', d => patchJob(d, id, { archived }));
+}
+
+/** Rename without opening the panel: a second way to the same change. */
+export function renameJob(id) {
+  const j = jobOf(store.book, id);
+  const name = j && prompt('Rename job', j.title);
+  if (name && name.trim() && name.trim() !== j.title) act('Rename job', d => patchJob(d, id, { title: name.trim().slice(0, 500) }));
+}
+
+export function renameTask(id) {
+  const t = itemOf(store.book, id);
+  const name = t && prompt('Rename task', t.title);
+  if (name && name.trim() && name.trim() !== t.title) act('Rename', d => patchItem(d, id, { title: name.trim().slice(0, 500) }, today()));
 }
