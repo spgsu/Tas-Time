@@ -64,3 +64,10 @@
 - A table of 26 damaged or hostile files: all refused with readable messages and no crashes. Hostile titles and log subjects render as text.
 - Found while validating the release: the recovery copy's 400 ms debounce was postponed indefinitely by continuous renders. It now runs at least every 2 s; the browser check that exposed it (by reading too soon) now waits for the write.
 - Validation: 64/64 unit tests, and 51/51 real-browser checks passed in three consecutive runs.
+
+## Release — v3.5.0 (action menus)
+
+- Every job and task action now has a second way in: a ⋯ menu on sidebar jobs, Plan rows (desktop and phone), Board cards, Week cards and Today/Lookahead/Assignments rows. Status, archive, duplicate and delete share one code path with the editor panel, including the unfinished-task confirmation when completing a job.
+- The editor panel's name field has a visible "Job name" / "Task name" label and border; before, it looked like a heading and users did not find it.
+- An open job panel now follows the job picked in the sidebar. Found while validating: the first version of the browser check silently skipped the switch (only one job existed); it now creates a second job, and fails with the fix removed.
+- Validation: 64/64 unit tests and 52/52 real-browser checks passed.

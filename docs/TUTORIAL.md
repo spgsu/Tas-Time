@@ -417,7 +417,7 @@ A job is not finished when the last task is ticked. It is finished when you have
 2. **Check for leftovers.** On the **Plan**, make sure *Done* is ticked so finished work shows, and look for anything still open. Either finish it, or delete it if it no longer matters.
 3. **Mark the job Complete.** Click the job name, and under **Status** choose **Complete**.
 
-On hold and Complete pause the job's tasks in Today and Week. Plan, Board and Notes keep them accessible. Completing with unfinished tasks asks for confirmation; those tasks are kept. Set the job back to Active to resume daily planning. Use **Edit job** in the filter banner, or click the job title in Plan. On phones, the **⋯** menu includes job selection, New job, help and appearance.
+On hold and Complete pause the job's tasks in Today and Week. Plan, Board and Notes keep them accessible. Completing with unfinished tasks asks for confirmation; those tasks are kept. Set the job back to Active to resume daily planning. Use **Edit job** in the filter banner, click the job title in Plan, or choose **Edit job…** from the job's **⋯** menu. The **⋯** menus on jobs and tasks also rename, change status, archive, duplicate and delete without opening the panel. On phones, the **⋯** menu includes job selection, New job, help and appearance.
 4. **Archive it.** In the job panel, click the archive icon. The job disappears from your daily views but nothing is lost: on the Plan, tick **Archived** to see it again, and restore it from its panel at any time.
 
 ### Hold a short retrospective
