@@ -619,6 +619,18 @@ try {
     assert.equal(await ev('document.querySelector("label[for=d-title]").textContent'), 'Job name');
     assert.equal(await ev('document.getElementById("d-title").value'), 'Renamed by menu');
     assert.notEqual(await ev('getComputedStyle(document.getElementById("d-title")).borderTopColor'), 'rgba(0, 0, 0, 0)');
+    // Picking another job in the sidebar switches the open job panel to it.
+    const jobsBefore = await count('.jobs li');
+    await page.click('.jobs-head .icon-btn');
+    assert.equal(await count('.jobs li'), jobsBefore + 1);
+    assert.equal(await ev('document.getElementById("d-title").value'), 'Untitled job');
+    await page.clickText('.jobs .job-link', 'Renamed by menu');
+    assert.equal(await ev('document.getElementById("d-title").value'), 'Renamed by menu', 'panel follows the sidebar selection');
+    await page.clickText('.jobs .job-link', 'Untitled job');
+    assert.equal(await ev('document.getElementById("d-title").value'), 'Untitled job');
+    await page.click('.drawer [aria-label="Delete job"]');
+    assert.equal(await count('.jobs li'), jobsBefore);
+    await page.clickText('.jobs .job-link', 'Renamed by menu');
     await page.key('Escape', { keyCode: 27 });
     // Task rows: rename from the row menu.
     await nav(1);

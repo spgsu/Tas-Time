@@ -1670,6 +1670,8 @@ function setFocus(jobId) {
   if (ui.focus) ui.notesJob = ui.focus;
   ui.quickJob = ui.focus;
   ui.quickPhase = '';
+  // An open job panel follows the selection; otherwise it keeps editing a job the user has left.
+  if (ui.focus && ui.drawer?.type === 'job' && ui.drawer.id !== ui.focus) ui.drawer = { type: 'job', id: ui.focus, focusField: '' };
   rerender();
 }
 
